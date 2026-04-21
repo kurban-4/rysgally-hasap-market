@@ -1,0 +1,23 @@
+[package]
+name = "rysgally-hasap-market"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2021"
+
+[lib]
+name = "rysgally_hasap_market_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+# ВОТ ЗДЕСЬ БЫЛА ОШИБКА. Нужно tauri-build, а не просто tauri
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+# Здесь мы включаем devtools, чтобы метод open_devtools заработал
+tauri = { version = "2.0", features = ["devtools", "image-png", "image-ico"] }
+tauri-plugin-opener = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tauri-plugin-shell = "2.0"
+tauri-plugin-updater = { version = "2", features = ["rustls-tls"] }

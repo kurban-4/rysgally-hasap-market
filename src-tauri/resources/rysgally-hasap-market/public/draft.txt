@@ -1,0 +1,967 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="desktop-app-layout">
+
+    <aside class="app-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <div class="brand-text">
+                <h2>rysgally-hasap-market<span>Nabat</span></h2>
+                <span class="version">POS Terminal v2.0</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active">
+                <i class="bi bi-display"></i>
+                <span>{{__("app.sales_terminal_title")}}</span>
+            </a>
+            <a href="{{ route('storage.index') }}" class="nav-item">
+                <i class="bi bi-box-seam"></i>
+                <span>Склад (Storage)</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="bi bi-truck"></i>
+                <span>Опт (Wholesale)</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="bi bi-people"></i>
+                <span>Клиенты</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="bi bi-graph-up"></i>
+                <span>Отчеты</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar">{{ substr(auth()->user()->name ?? 'A', 0, 1) }}</div>
+                <div class="info">
+                    <span class="name">{{ auth()->user()->name ?? 'Администратор' }}</span>
+                    <span class="role">{{__("app.current_shift_label")}}</span>
+                </div>
+            </div>
+            <div class="clock-widget" id="realtime-clock">00:00:00</div>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        
+        <header class="main-header">
+            <div class="stat-card">
+                <div class="stat-icon bg-teal-light"><i class="bi bi-currency-dollar text-teal"></i></div>
+                <div class="stat-data">
+                    <span class="label">{{__("app.stat_total_revenue")}}</span>
+                    <span class="value">{{ number_format($totalMoney ?? 0, 2) }} <small>TMT</small></span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-light"><i class="bi bi-cart-check text-primary"></i></div>
+                <div class="stat-data">
+                    <span class="label">{{__("app.stat_items_sold")}}</span>
+                    <span class="value">{{ $sales->sum('quantity') }} <small>шт.</small></span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon bg-red-light"><i class="bi bi-exclamation-octagon text-danger"></i></div>
+                <div class="stat-data">
+                    <span class="label">{{__("app.stat_low_stock_pos")}}</span>
+                    <span class="value text-danger">{{ \App\Models\Storage::where('quantity', '<', 10)->count() }} <small>{{__("app.unit_pcs")}}.</small></span>
+                </div>
+            </div>
+
+            <div class="system-status">
+                <span class="dot pulse"></span>
+                <span>{{__("app.status_system_ready")}}</span>
+            </div>
+        </header>
+
+        <div class="workspace">
+            
+            <div class="workspace-left">
+                <div class="scanner-panel panel-card">
+                    <form id="main-sales-form" class="scanner-form">
+                        @csrf
+                        <div class="type-toggles">
+                            <input type="radio" class="btn-check" name="sale_type" id="box_node" value="box" checked>
+                            <label class="toggle-btn" for="box_node">
+                                КОРОБКА <span class="hotkey">F2</span>
+                            </label>
+
+                            <input type="radio" class="btn-check" name="sale_type" id="unit_node" value="unit">
+                            <label class="toggle-btn" for="unit_node">
+                                ПЛАСТИНКА <span class="hotkey">F3</span>
+                            </label>
+                        </div>
+
+                        <div class="barcode-wrapper">
+                            <i class="bi bi-upc-scan scan-icon"></i>
+                            <input type="text" name="barcode" id="barcode-focus" class="barcode-input" autofocus required placeholder="Сканируйте штрих-код или введите ID..." autocomplete="off">
+                            <button type="submit" class="btn-submit-scan">
+                                ДОБАВИТЬ <i class="bi bi-arrow-return-left ms-1"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="table-panel panel-card">
+                    <div class="panel-header">
+                        <h5>{{__("app.recent_transactions_title")}}</h5>
+                        <span class="badge-custom">{{__("app.label_last_scan")}} <strong id="last-scan-display">---</strong></span>
+                    </div>
+                    <div class="table-scroll-container">
+                        <table class="table pos-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{{__("app.table_preparation")}}</th>
+                                    <th class="text-center">{{__("app.table_quantity_short")}} / ТИП</th>
+                                    <th class="text-end">{{__("app.table_price")}}</th>
+                                    <th class="text-center">{{__("app.table_time")}}</th>
+                                    <th class="text-center"><i class="bi bi-gear"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($sales as $sale)
+                                <tr>
+                                    <td class="text-muted fw-bold">#{{ $sale->id }}</td>
+                                    <td>
+                                        <div class="med-name">
+                                            <i class="bi bi-capsule text-teal me-2"></i>
+                                            {{ $sale->product->name }}
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="qty-badge">
+                                            {{ $sale->quantity }} {{ $sale->sale_type == 'box' ? 'кор.' : 'пласт.' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold text-teal fs-5">{{ number_format($sale->total_price, 2) }}</td>
+                                    <td class="text-center text-muted small">{{ $sale->created_at->format('H:i:s') }}</td>
+                                    <td class="text-center">
+                                        <form action="{{ route('sales.destroy', $sale->id) }}" method="POST" class="m-0">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn-delete-row" title="Удалить">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                                        {{__("app.no_sales_data")}}
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workspace-right">
+                <div class="action-panel panel-card mb-3">
+                    <h6 class="panel-title">{{__("app.shift_management_title")}}</h6>
+                    <button class="action-btn btn-print mb-3" onclick="window.print()">
+                        <i class="bi bi-printer"></i> {{__("app.btn_print_report")}} <span class="hotkey dark">F10</span>
+                    </button>
+                    <form action="{{ route('sales.close') }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="action-btn btn-close-shift">
+                            <i class="bi bi-door-closed"></i> {{__("app.btn_close_shift")}}
+                        </button>
+                    </form>
+                </div>
+
+                <div class="alert-panel bg-dark">
+                    <h6 class="text-uppercase small fw-bold opacity-50 mb-3 text-white">{{__("app.inventory_card_title")}}</h6>
+                    <div class="d-flex align-items-center">
+                        <div class="alert-icon"><i class="bi bi-exclamation-triangle-fill text-warning"></i></div>
+                        <div class="ms-3">
+                            <h2 class="display-6 fw-bold mb-0 text-warning lh-1">{{ \App\Models\Storage::where('quantity', '<', 10)->count() }}</h2>
+                            <p class="mb-0 fw-bold text-white">{{__("app.label_out_of_stock")}}</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('storage.index') }}" class="btn-go-storage mt-3">{{__("app.link_go_to_storage")}} <i class="bi bi-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('barcode-focus');
+    const form = document.getElementById('main-sales-form');
+
+    // 1. Автофокус сканера
+    if (input) {
+        input.focus();
+        document.addEventListener('click', (e) => {
+            // Не забирать фокус, если кликнули по другой форме/кнопке
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                input.focus();
+            }
+        });
+    }
+
+    // 2. Часы реального времени
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('realtime-clock').innerText = now.toLocaleTimeString('ru-RU');
+    }, 1000);
+
+    // 3. Горячие клавиши (F2, F3, F10)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            document.getElementById('box_node').checked = true;
+        } else if (e.key === 'F3') {
+            e.preventDefault();
+            document.getElementById('unit_node').checked = true;
+        } else if (e.key === 'F10') {
+            e.preventDefault();
+            window.print();
+        }
+    });
+
+    // 4. AJAX Отправка формы (с тихим обновлением)
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            const formData = new FormData(form);
+
+            fetch("{{ route('sales.store') }}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = ''; 
+                    // Для десктопа лучше делать reload() для надежности, 
+                    // или оставить твой AJAX метод обновления таблиц. 
+                    // Оставляем твой метод:
+                    fetch(window.location.href)
+                        .then(res => res.text())
+                        .then(html => {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            
+                            const oldTable = document.querySelector('.table-scroll-container');
+                            const newTable = doc.querySelector('.table-scroll-container');
+                            if (oldTable && newTable) oldTable.innerHTML = newTable.innerHTML;
+
+                            const oldStats = document.querySelector('.main-header');
+                            const newStats = doc.querySelector('.main-header');
+                            if (oldStats && newStats) oldStats.innerHTML = newStats.innerHTML;
+                        });
+                } else {
+                    alert(data.message || 'Ошибка');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка AJAX:', error);
+                location.reload();
+            });
+        });
+    }
+});
+</script>
+
+<style>
+:root {
+    --primary: #E8722A;
+    --primary-dark: #0c5e66;
+    --bg-color: #eef2f3;
+    --panel-bg: #ffffff;
+    --text-main: #2d3748;
+    --text-muted: #718096;
+    --border-color: #e2e8f0;
+}
+
+/* Сброс и структура */
+body { margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; background: var(--bg-color); }
+
+.desktop-app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+/* 1. SIDEBAR */
+.app-sidebar {
+    width: 260px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.sidebar-brand {
+    padding: 25px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.brand-icon {
+    background: white; color: var(--primary);
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+}
+
+.brand-text h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+.brand-text h2 span { color: #81e6d9; }
+.brand-text .version { font-size: 0.7rem; opacity: 0.7; letter-spacing: 1px; }
+
+.sidebar-nav { padding: 20px 10px; flex: 1; }
+
+.nav-item {
+    display: flex; align-items: center; gap: 15px;
+    padding: 12px 15px; color: rgba(255,255,255,0.7);
+    text-decoration: none; border-radius: 12px; margin-bottom: 5px;
+    transition: all 0.2s; font-weight: 500;
+}
+.nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+.nav-item.active { background: white; color: var(--primary); font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.1);
+}
+
+.user-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+.user-profile .avatar { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+.user-profile .name { display: block; font-weight: 700; font-size: 0.9rem; }
+.user-profile .role { font-size: 0.7rem; opacity: 0.7; text-transform: uppercase; }
+.clock-widget { font-family: monospace; font-size: 1.2rem; font-weight: bold; text-align: center; color: #81e6d9; }
+
+/* 2. MAIN AREA */
+.app-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* HEADER STATS */
+.main-header {
+    height: 80px; background: white;
+    display: flex; align-items: center; padding: 0 25px;
+    gap: 20px; border-bottom: 1px solid var(--border-color);
+}
+
+.stat-card { display: flex; align-items: center; gap: 15px; padding-right: 20px; border-right: 1px solid #eee; }
+.stat-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; }
+.bg-teal-light { background: rgba(16, 122, 132, 0.1); }
+.text-teal { color: var(--primary); }
+.bg-blue-light { background: rgba(13, 110, 253, 0.1); }
+.bg-red-light { background: rgba(220, 53, 69, 0.1); }
+.stat-data .label { display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+.stat-data .value { font-size: 1.2rem; font-weight: 800; color: var(--text-main); }
+
+.system-status { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 600; color: #48bb78; background: rgba(72,187,120,0.1); padding: 8px 15px; border-radius: 20px; }
+.dot.pulse { width: 8px; height: 8px; background: #48bb78; border-radius: 50%; animation: pulse-green 2s infinite; }
+
+/* WORKSPACE (Лейаут внутри) */
+.workspace {
+    flex: 1; display: flex; gap: 20px; padding: 20px;
+    overflow: hidden;
+}
+.workspace-left { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.workspace-right { width: 320px; display: flex; flex-direction: column; }
+
+.panel-card { background: white; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid var(--border-color); }
+
+/* SCANNER FORM */
+.scanner-panel { padding: 20px; }
+.type-toggles { display: flex; gap: 10px; margin-bottom: 15px; }
+.toggle-btn { flex: 1; text-align: center; padding: 10px; border: 2px solid #edf2f7; border-radius: 12px; cursor: pointer; font-weight: 700; color: var(--text-muted); transition: 0.2s; font-size: 0.85rem; }
+.btn-check:checked + .toggle-btn { border-color: var(--primary); background: rgba(16, 122, 132, 0.05); color: var(--primary); }
+.hotkey { background: #e2e8f0; color: #4a5568; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 5px; }
+.btn-check:checked + .toggle-btn .hotkey { background: var(--primary); color: white; }
+
+.barcode-wrapper { display: flex; background: #f8fafc; border: 2px solid #cbd5e0; border-radius: 14px; overflow: hidden; transition: 0.2s; }
+.barcode-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 122, 132, 0.2); background: white; }
+.scan-icon { padding: 15px; font-size: 1.5rem; color: var(--primary); }
+.barcode-input { flex: 1; border: none; background: transparent; font-size: 1.2rem; font-weight: 600; color: var(--text-main); outline: none; }
+.btn-submit-scan { background: var(--primary); color: white; border: none; padding: 0 25px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.btn-submit-scan:hover { background: var(--primary-dark); }
+
+/* TABLE PANEL */
+.table-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 15px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.panel-header h5 { margin: 0; font-weight: 700; color: var(--text-main); }
+.badge-custom { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted); }
+
+.table-scroll-container { flex: 1; overflow-y: auto; }
+.pos-table th { position: sticky; top: 0; background: #f8fafc; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); padding: 12px 20px; border-bottom: 1px solid var(--border-color); z-index: 2; }
+.pos-table td { padding: 12px 20px; vertical-align: middle; border-bottom: 1px solid #f1f5f9; }
+.med-name { font-weight: 600; color: var(--text-main); }
+.qty-badge { background: #edf2f7; color: #4a5568; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+.btn-delete-row { background: none; border: none; color: #a0aec0; cursor: pointer; transition: 0.2s; font-size: 1.2rem; }
+.btn-delete-row:hover { color: #e53e3e; transform: scale(1.1); }
+
+/* RIGHT PANEL (ACTIONS) */
+.action-panel { padding: 20px; }
+.panel-title { font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 15px; font-size: 0.8rem; }
+.action-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; transition: 0.2s; }
+.btn-print { background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color); }
+.btn-print:hover { background: #e2e8f0; }
+.btn-print .hotkey.dark { background: #cbd5e0; color: #2d3748; }
+.btn-close-shift { background: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; }
+.btn-close-shift:hover { background: #e53e3e; color: white; }
+
+.alert-panel { padding: 25px; border-radius: 16px; background: #2d3748; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.alert-icon { width: 50px; height: 50px; background: rgba(255, 193, 7, 0.2); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; }
+.btn-go-storage { display: inline-block; padding: 10px 20px; background: rgba(255,255,255,0.1); color: white; text-decoration: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; transition: 0.2s; }
+.btn-go-storage:hover { background: rgba(255,255,255,0.2); color: white; }
+
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(72, 187, 120, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+}
+</style>
+@endsection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@extends('layouts.app')
+
+@section('content')
+@include('app.navbar')
+<div class="main-wrapper" style="background: #f0f4f4; min-height: 100vh; font-family: 'Inter', sans-serif; padding-bottom: 50px;">
+
+    <div class="container-fluid py-5" style="background: linear-gradient(135deg, #E8722A); border-radius: 0 0 40px 40px; box-shadow: 0 15px 30px rgba(16, 122, 132, 0.2);">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="display-5 fw-bold text-white mb-1">{{__("app.sales_terminal_title")}}</h1>
+                    <div id="digital-clock" class="text-white-50 fs-5 fw-light"></div>
+                </div>
+                <div class="col-md-6 text-md-end mt-4 mt-md-0">
+                    <div class="d-inline-block p-3 rounded-4" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);">
+                        <span class="text-white-50 d-block small text-uppercase fw-bold">{{__("app.current_shift_label")}}</span>
+                        <h4 class="text-white mb-0">{{ auth()->user()->name ?? 'Администратор' }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" style="margin-top: -40px;">
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 25px;">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-4 me-3" style="background: rgba(16, 122, 132, 0.1); color: #E8722A;">
+                            <i class="bi bi-currency-dollar fs-3"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0 fw-bold text-uppercase">{{__("app.stat_total_revenue")}}</p>
+                            <h3 class="fw-bold mb-0">{{ number_format($totalMoney ?? 0, 2) }} <small class="fs-6">TMT</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 25px;">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-4 me-3 text-primary" style="background: rgba(13, 110, 253, 0.1);">
+                            <i class="bi bi-cart-check fs-3"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0 fw-bold text-uppercase">{{__("app.stat_items_sold")}}</p>
+                            <h3 class="fw-bold mb-0">{{ $sales->sum('quantity') }} <small class="fs-6">шт.</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 25px;">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-4 me-3 text-danger" style="background: rgba(220, 53, 69, 0.1);">
+                            <i class="bi bi-exclamation-octagon fs-3"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted small mb-0 fw-bold text-uppercase">{{__("app.stat_low_stock_pos")}}</p>
+                            <h3 class="fw-bold mb-0">{{ \App\Models\Storage::where('quantity', '<', 10)->count() }} <small class="fs-6">{{__("app.unit_pcs")}}.</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg mb-4" style="border-radius: 25px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="rounded-circle p-3 me-3" style="background: rgba(16, 122, 132, 0.1);">
+                                <i class="bi bi-upc-scan" style="color: #E8722A; font-size: 1.5rem;"></i>
+                            </div>
+                            <h4 class="fw-bold mb-0" style="color: #E8722A;">{{__("app.scan_product_title")}}</h4>
+                        </div>
+
+                        <div class="premium-sales-container">
+                            <form id="main-sales-form" class="p-2">
+                                @csrf
+
+                                <div class="sale-type-toggle-wrapper mb-4">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="radio" class="btn-check" name="sale_type" id="box_node" value="box" checked>
+                                            <label class="sale-type-card" for="box_node">
+                                                <span class="label-text">Коробка</span>
+                                                <div class="active-indicator"></div>
+                                            </label>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="radio" class="btn-check" name="sale_type" id="unit_node" value="unit">
+                                            <label class="sale-type-card" for="unit_node">
+                                                <span class="label-text">Пластинка</span>
+                                                <div class="active-indicator"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="barcode-input-wrapper">
+                                    <div class="input-group-custom">
+                                        <div class="input-icon">
+                                            <i class="bi bi-upc-scan"></i>
+                                        </div>
+                                        <input type="text"
+                                            name="barcode"
+                                            id="barcode-focus"
+                                            class="modern-input"
+                                            autofocus
+                                            required
+                                            placeholder="Сканируйте штрих-код..."
+                                            autocomplete="off">
+                                        <button type="submit" class="modern-submit-btn">
+                                            <span>ДОБАВИТЬ</span>
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div class="input-status-hint">
+                                        <span class="dot pulse"></span> Система готова к вводу
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="mt-3 px-2 d-flex justify-content-between align-items-center">
+                            <span class="text-muted small animate-pulse"><i class="bi bi-broadcast text-success me-1"></i> {{__("app.status_system_ready")}}</span>
+                            <span class="badge bg-light text-dark border p-2 px-3" style="border-radius: 10px;">{{__("app.label_last_scan")}} <strong id="last-scan-display">---</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-lg" style="border-radius: 25px; overflow: hidden;">
+                    <div class="card-header bg-white border-0 p-4">
+                        <h5 class="fw-bold mb-0">{{__("app.recent_transactions_title")}}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <table class="table table-hover align-middle mb-0">
+    <thead style="background: #f8fcfc;">
+        <tr>
+            <th class="ps-4 py-3 text-muted small">ID</th>
+            <th class="py-3 text-muted small">{{__("app.table_preparation")}}</th>
+            <th class="py-3 text-muted small">{{__("app.table_quantity_short")}}</th>
+            {{-- Новая колонка скидки --}}
+            <th class="py-3 text-muted small">Скидка</th>
+            <th class="py-3 text-muted small">{{__("app.table_price")}} (Итого)</th>
+            <th class="pe-4 py-3 text-muted small text-end">{{__("app.table_time")}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse($sales as $sale)
+        <tr>
+            <td class="ps-4 fw-bold text-muted">#{{ $sale->id }}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="p-2 rounded-3 me-3" style="background: #f0f7f7; color: #E8722A;"><i class="bi bi-capsule"></i></div>
+                    <span class="fw-bold">{{ $sale->product->name }}</span>
+                </div>
+            </td>
+            <td>
+                <span class="badge rounded-pill bg-light text-dark border px-3">
+                    {{ $sale->quantity }} 
+                    {{ $sale->sale_type == 'box' ? 'кор.' : 'пласт.' }}
+                </span>
+            </td>
+            {{-- Вывод скидки --}}
+            <td>
+                @if($sale->product->discount > 0)
+                    <span class="badge bg-soft-danger text-danger" style="background: #fff1f0;">
+                        -{{ $sale->product->discount }}%
+                    </span>
+                @else
+                    <span class="text-muted small">0%</span>
+                @endif
+            </td>
+            {{-- Финальная цена --}}
+            <td class="fw-bold" style="color: #E8722A;">
+                {{ number_format($sale->total_price, 2) }} <small>TMT</small>
+            </td>
+            <td class="pe-4 text-end text-muted small">{{ $sale->created_at->format('H:i:s') }}</td>
+            <td>
+                <form action="{{ route('sales.destroy', $sale->id) }}" method="POST" onsubmit="return confirm('Are you sure?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn-delete-lux">
+                        <i class="bi bi-trash3"></i>
+                    </button>
+                </form>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="7" class="text-center py-5 text-muted">{{__("app.no_sales_data")}}</td>
+        </tr>
+        @endforelse
+    </tbody>
+</table>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg mb-4" style="border-radius: 25px;">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-4 border-bottom pb-2">{{__("app.shift_management_title")}}</h6>
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-lg text-white shadow-sm" style="background: #E8722A; border-radius: 15px;">
+                                <i class="bi bi-printer me-2"></i> {{__("app.btn_print_report")}}
+                            </button>
+                            <form action="{{ route('sales.close') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-lg btn-outline-danger w-100" style="border-radius: 15px;">
+                                    <i class="bi bi-door-closed me-2"></i> {{__("app.btn_close_shift")}}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-lg text-white" style="border-radius: 25px; background: #2d3436;">
+                    <div class="card-body p-4">
+                        <h6 class="text-uppercase small fw-bold opacity-50 mb-3">{{__("app.inventory_card_title")}}</h6>
+                        <div class="d-flex align-items-center">
+                            <h2 class="display-5 fw-bold mb-0 text-warning">{{ \App\Models\Storage::where('quantity', '<', 10)->count() }}</h2>
+                            <div class="ms-3">
+                                <p class="mb-0 fw-bold">{{__("app.label_out_of_stock")}}</p>
+                                <a href="{{ route('storage.index') }}" class="text-white-50 small text-decoration-none">{{__("app.link_go_to_storage")}}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('barcode-focus');
+        const form = document.getElementById('main-sales-form');
+
+        if (input) {
+            input.focus();
+            document.addEventListener('click', () => input.focus());
+        }
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+
+                fetch("{{ route('sales.store') }}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            input.value = '';
+                            fetch(window.location.href)
+                                .then(res => res.text())
+                                .then(html => {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+
+                                    // Мы просто ищем основные блоки по их классам, если ID нет
+                                    const oldTable = document.querySelector('.table-responsive');
+                                    const newTable = doc.querySelector('.table-responsive');
+                                    if (oldTable && newTable) oldTable.innerHTML = newTable.innerHTML;
+
+                                    const oldStats = document.querySelector('.row.g-4.mb-4');
+                                    const newStats = doc.querySelector('.row.g-4.mb-4');
+                                    if (oldStats && newStats) oldStats.innerHTML = newStats.innerHTML;
+
+                                    console.log("Успешно обновлено: " + data.message);
+                                });
+                        } else {
+                            alert(data.message || 'Ошибка');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Ошибка AJAX:', error);
+                        // Если произошла ошибка, просто перезагрузим страницу как обычно
+                        location.reload();
+                    });
+            });
+        }
+    });
+</script>
+
+<style>
+    .card {
+        transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .animate-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .btn-delete-lux {
+        background: transparent;
+        border: none;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        padding: 5px 10px;
+    }
+
+    .btn-delete-lux:hover {
+        color: #dc3545;
+        /* Soft red for warning */
+        transform: translateX(3px);
+    }
+
+    .btn-delete-lux i {
+        font-size: 1rem;
+    }
+
+    /* Основные переменные */
+    :root {
+        --primary-color: #E8722A;
+        --primary-light: rgba(16, 122, 132, 0.1);
+        --primary-soft: rgba(16, 122, 132, 0.05);
+    }
+
+    /* Карточки выбора типа (Box/Unit) */
+    .sale-type-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+        background: #fff;
+        border: 2px solid #edf2f7;
+        border-radius: 18px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sale-type-card .icon-circle {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+        transition: transform 0.3s ease;
+    }
+
+    .sale-type-card .label-text {
+        font-weight: 600;
+        color: #4a5568;
+        font-size: 0.9rem;
+    }
+
+    /* Эффекты при выборе радиокнопки */
+    .btn-check:checked+.sale-type-card {
+        border-color: var(--primary-color);
+        background: var(--primary-soft);
+        box-shadow: 0 10px 15px -3px rgba(16, 122, 132, 0.15);
+    }
+
+    .btn-check:checked+.sale-type-card .label-text {
+        color: var(--primary-color);
+    }
+
+    .btn-check:checked+.sale-type-card .icon-circle {
+        transform: scale(1.2);
+    }
+
+    /* Современное поле ввода */
+    .input-group-custom {
+        display: flex;
+        background: #fff;
+        border-radius: 20px;
+        padding: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .input-group-custom:focus-within {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .input-icon {
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+
+    .modern-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #2d3748;
+        background: transparent;
+    }
+
+    /* Кнопка ДОБАВИТЬ */
+    .modern-submit-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        padding: 10px 25px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .modern-submit-btn:hover {
+        background: #0d636b;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 122, 132, 0.3);
+    }
+
+    .modern-submit-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Подсказка статуса */
+    .input-status-hint {
+        margin-top: 12px;
+        font-size: 0.8rem;
+        color: #718096;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dot.pulse {
+        width: 8px;
+        height: 8px;
+        background: #48bb78;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-green 2s infinite;
+    }
+
+    @keyframes pulse-green {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 6px rgba(72, 187, 120, 0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
+        }
+    }
+</style>
+
+@endsection
