@@ -1,0 +1,169 @@
+.bg-image {
+    background-image: url("../images/black-plain-concrete-textured-background.jpg");
+    background-color: #cccccc;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+}
+
+.bg-shadow {
+    background-color: rgba(0, 0, 0, .5);
+}
+
+a.hover-1 {
+    position: relative;
+    color: white !important;
+}
+
+a.hover-1:hover {
+    color: orange !important;
+}
+
+
+a.hover-1:hover::before {
+    content: '';
+    position: absolute;
+    animation: hover-1 5s infinite;
+    top: 35px;
+    width: 106px;
+    height: 2px;
+    background-color: orange !important;
+    transition: .5s all;
+}
+
+@keyframes hover-1 {
+    0% {
+        width: 0;
+        height: 0;
+    }
+
+    50% {
+        width: 106px;
+        height: 2px;
+    }
+
+    75% {
+        width: 0;
+        height: 0;
+    }
+
+    100% {
+        width: 0;
+        height: 0;
+    }
+
+}
+
+/* #product-search::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+} */
+
+.offcanvas {
+    /* Bootstrap'in varsayılan gölgesini ve arka planını sıfırlıyoruz */
+    background-color: transparent !important;
+}
+
+/* Sepet içindeki yazıların okunabilirliği için gölge */
+.offcanvas-body,
+.offcanvas-header {
+    background-color: rgba(0, 0, 0, 0.2);
+    /* Çok hafif bir karartı ekler */
+}
+
+.offcanvas-backdrop.show {
+    opacity: 0.2;
+    /* Arkadaki siyahlığı azaltır, saydamlık hissini artırır */
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #f4f7fe;
+    color: #1e293b;
+}
+
+.page-header {
+    background: white;
+    padding: 60px 0;
+    margin-bottom: 40px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Стиль карточки отдела */
+.dept-card {
+    border: none;
+    border-radius: 20px;
+    background: white;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.dept-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.dept-icon {
+    width: 50px;
+    height: 50px;
+    background: #eff6ff;
+    color: #3b82f6;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.dept-badge {
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.btn-view {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    width: 100%;
+    border-radius: 10px;
+    padding: 10px;
+    transition: 0.2s;
+}
+
+.btn-view:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.nav-link:hover {
+    color: white !important;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #fdfdfd;
+}
+
+.hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 20px 0 100px 0;
+    color: white;
+    border-bottom-left-radius: 60px;
+    border-bottom-right-radius: 60px;
+}
+
+.hero h1 {
+    font-weight: 800;
+    letter-spacing: -1px;
+}

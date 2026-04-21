@@ -1,0 +1,67 @@
+1. Route::name()
+Bu metod belli bir ugura (route) at bermek üçin ulanylýar.
+
+Näme üçin gerek? Eger ertir bir gün saýtyňyzyň URL-yny (meselem, /habarlar-y /taze-habarlar diýip) üýtgetseňiz, koduňyzyň içindäki ähli çykgytlary (linkleri) ýeke-ýeke düzedip ýörmezlik üçin diňe şol ady ulanmak ýeterlikdir.
+
+Mysal: Route::get('/profile', ...)->name('profilim');
+
+2. Route::put()
+Bu ugur (route) metody maglumatlary täzelemek (update) üçin ulanylýar.
+
+Manysy: Adatça täze maglumat goşmak üçin POST ulanylsa, bar bolan maglumaty üýtgetmek ýa-da üstüni doldurmak üçin PUT ulanylýar.
+
+3. php artisan migrate:fresh
+Bu terminalda ýazylýan gaty güýçli komandadyr.
+
+Näme edýär? Maglumatlar binasyndaky (database) ähli tablisalary pozýar we ähli migrasiýalary täzeden (noldan) işleýär.
+
+Üns beriň: Bu komanda ähli maglumatlaryňyzy öçürýändigi üçin, ony diňe proýektiň iň başynda ýa-da test wagtynda ulanmak maslahat berilýär.
+
+4. index()
+Bu funksiýa köplenç Controller-iň içinde bolup, sanawy görkezmek üçin ulanylýar.
+
+Düzgün: Meselem, saýtda ähli mugallymlaryň sanawyny görkezjek bolsaňyz, şol kody Controller-iň index() funksiýasynyň içine ýazýarsyňyz.
+
+5. $table->bigInteger()
+Bu migrasiýa faýlynyň içinde, maglumatlar binasynda uly sanly sütün döretmek üçin ulanylýar.
+                    @foreach($products as $product)
+                    <div class="product-card-modern position-relative">
+                        <a href="{{ route('client.shop.show', $product->id) }}" class="full-card-link"></a>
+
+                        <div class="card-visuals">
+                            <div class="category-badge">{{ $product->category }}</div>
+
+                            <div class="product-image-holder mt-5">
+                                @if($product->image && file_exists(public_path($product->image)))
+                                <img src="{{ asset($product->image) }}" alt="{{ $product->name }}" class="main-product-img">
+                                @else
+                                <div class="product-main-icon">
+                                    <i class="fas fa-prescription-bottle-alt"></i>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="product-info-premium">
+                            <h3 class="product-title">{{ $product->name }}</h3>
+                            <p class="product-snippet">{{ Str::limit($product->description, 85) }}</p>
+
+                            <div class="meta-row d-flex justify-content-between align-items-center mb-4">
+                                <div class="price-stack">
+                                    <span class="main-price">${{ number_format($product->price, 2) }}</span>
+                                </div>
+                                <div class="stock-status {{ ($product->storage->quantity ?? 0) > 0 ? 'in-stock' : 'out-of-stock' }}">
+                                    {{ $product->storage->quantity ?? 0 }} Available
+                                </div>
+                            </div>
+
+                            <button class="add-cart-btn-premium position-relative"
+                                style="z-index: 10;"
+                                onclick="event.stopPropagation(); addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }})">
+                                <span class="btn-text">Add to Market Bag</span>
+                                <span class="btn-icon"><i class="fas fa-shopping-cart"></i></span>
+                            </button>
+                        </div>
+                    </div>
+                    @endforeach
+

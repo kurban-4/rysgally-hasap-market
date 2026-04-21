@@ -1,0 +1,51 @@
+.bg-image-intre {
+    background-image: url("../img/hero-carousel/hero-carousel-3.jpg");
+    background-color: black;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+}
+.bg-image-intre2 {
+    background-image: url("../img/events-bg.jpg");
+    background-color: black;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+}
+.bg-image-intre3 {
+    background-image: url("../img/testimonials-bg.jpg");
+    background-color: black;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center;
+    background-size: cover;
+}
+
+.bg-shadow {
+    background-color: rgba(7, 6, 6, 0.717);
+}
+
+a.hover-1 {
+    position: relative;
+    color: white!important;
+}
+
+a.hover-1:hover {
+    color: red!important;
+}
+.card {
+    cursor: pointer;
+    transition: ease 0.5s;
+}
+.card:hover {
+    transform: translateY(-15px);
+}
+.card1 {
+    cursor: pointer;
+    transition: ease 0.7s;
+}
+.card1:hover {
+    transform: translateY(-10px);
+}
