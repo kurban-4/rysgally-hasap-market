@@ -11,8 +11,8 @@
         </a>
         <div class="p-4 bg-white rounded-4 shadow-sm flex-grow-1 d-flex justify-content-between align-items-center" style="border-left: 6px solid #E8722A;">
             <div>
-                <h2 class="fw-black mb-0" style="color: #1a3a3a;">Общая выручка</h2>
-                <p class="text-muted small fw-bold text-uppercase mb-0 mt-1" style="letter-spacing: 0.1em;">Сводка по всем кассам</p>
+                <h2 class="fw-black mb-0" style="color: #1a3a3a;">{{ __('app.revenue_all_time') }}</h2>
+                <p class="text-muted small fw-bold text-uppercase mb-0 mt-1" style="letter-spacing: 0.1em;">{{ __('app.revenue_subtitle') }}</p>
             </div>
             <div class="p-3 rounded-4 text-white d-none d-md-flex align-items-center justify-content-center shadow-sm" style="background: #E8722A; width: 52px; height: 52px;">
                 <i class="bi bi-cash-stack fs-4"></i>
@@ -32,7 +32,7 @@
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
                     style="border-top: 4px solid #E8722A !important; cursor: pointer;">
                     <p class="text-muted small fw-bold text-uppercase mb-2">
-                        Сегодня
+                        {{ __('app.admin_today') }}
                         <span class="d-block text-lowercase fw-normal mt-1">
                             ({{ now()->format('d.m.Y') }})
                         </span>
@@ -51,7 +51,7 @@
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
                     style="border-top: 4px solid #f59e0b !important; cursor: pointer;">
                     <p class="text-muted small fw-bold text-uppercase mb-2">
-                        Неделя
+                        {{ __('app.admin_week') }}
                         <span class="d-block text-lowercase fw-normal mt-1">
                             ({{ now()->startOfWeek()->format('d.m.Y') }} — {{ now()->endOfWeek()->format('d.m.Y') }})
                         </span>
@@ -70,7 +70,7 @@
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
                     style="border-top: 4px solid #8b5cf6 !important; cursor: pointer;">
                     <p class="text-muted small fw-bold text-uppercase mb-2">
-                        Месяц
+                        {{ __('app.admin_month') }}
                         <span class="d-block text-lowercase fw-normal mt-1">
                             ({{ now()->startOfMonth()->format('d.m.Y') }} — {{ now()->endOfMonth()->format('d.m.Y') }})
                         </span>
@@ -109,20 +109,20 @@
                 <div class="col-12 col-md-auto">
                     <p class="fw-black mb-0 text-dark d-flex align-items-center gap-2">
                         <i class="bi bi-funnel-fill" style="color: #E8722A;"></i>
-                        Фильтр
+                        {{ __('app.revenue_filter') }}
                     </p>
                 </div>
                 <div class="col-12 col-md-3">
-                    <label class="small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.08em;">От</label>
+                    <label class="small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.08em;">{{ __('app.revenue_from') }}</label>
                     <input type="date" name="from" value="{{ request('from') }}" class="form-control border-0 rounded-3 fw-bold" style="background: #f4f7f6; color: #E8722A;">
                 </div>
                 <div class="col-12 col-md-3">
-                    <label class="small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.08em;">До</label>
+                    <label class="small fw-bold text-muted text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.08em;">{{ __('app.revenue_to') }}</label>
                     <input type="date" name="to" value="{{ request('to') }}" class="form-control border-0 rounded-3 fw-bold" style="background: #f4f7f6; color: #E8722A;">
                 </div>
                 <div class="col-12 col-md-auto d-flex gap-2">
                     <button type="submit" class="btn fw-black rounded-3 px-4 text-white" style="background: #E8722A;">
-                        <i class="bi bi-search me-1"></i> Поиск
+                        <i class="bi bi-search me-1"></i> {{ __('app.revenue_search') }}
                     </button>
 <a href="{{ route('boss.revenue.export') }}?from={{ request('from') }}&to={{ request('to') }}"
    class="btn fw-bold rounded-3 px-3 btn-outline-success"
@@ -131,7 +131,7 @@
 </a>
                     @if(request('from') || request('to'))
                     <a href="{{ route('boss.revenue') }}" class="btn btn-light fw-bold rounded-3 px-4">
-                        <i class="bi bi-x-lg me-1"></i> Сбросить
+                        <i class="bi bi-x-lg me-1"></i> {{ __('app.revenue_reset') }}
                     </a>
                     @endif
                 </div>
@@ -141,17 +141,17 @@
                     <a href="{{ route('boss.revenue') }}?from={{ now()->format('Y-m-d') }}&to={{ now()->format('Y-m-d') }}"
                         class="badge rounded-pill px-3 py-2 text-decoration-none fw-bold transition-hover"
                         style="background: {{ request('from') == now()->format('Y-m-d') && request('to') == now()->format('Y-m-d') ? '#E8722A' : '#e0f2f4' }}; color: {{ request('from') == now()->format('Y-m-d') && request('to') == now()->format('Y-m-d') ? 'white' : '#E8722A' }};">
-                        Сегодня ({{ now()->format('d.m') }})
+                        {{ __('app.revenue_today_short') }} ({{ now()->format('d.m') }})
                     </a>
                     <a href="{{ route('boss.revenue') }}?from={{ now()->startOfWeek()->format('Y-m-d') }}&to={{ now()->endOfWeek()->format('Y-m-d') }}"
                         class="badge rounded-pill px-3 py-2 text-decoration-none fw-bold transition-hover"
                         style="background: #fef3c7; color: #92400e;">
-                        Эта неделя ({{ now()->startOfWeek()->format('d.m') }}-{{ now()->endOfWeek()->format('d.m') }})
+                        {{ __('app.revenue_this_week') }} ({{ now()->startOfWeek()->format('d.m') }}-{{ now()->endOfWeek()->format('d.m') }})
                     </a>
                     <a href="{{ route('boss.revenue') }}?from={{ now()->startOfMonth()->format('Y-m-d') }}&to={{ now()->endOfMonth()->format('Y-m-d') }}"
                         class="badge rounded-pill px-3 py-2 text-decoration-none fw-bold transition-hover"
                         style="background: #ede9fe; color: #5b21b6;">
-                        Этот месяц ({{ now()->format('m.Y') }})
+                        {{ __('app.revenue_this_month') }} ({{ now()->format('m.Y') }})
                     </a>
                     <a href="{{ route('boss.revenue') }}"
                         class="badge rounded-pill px-3 py-2 text-decoration-none fw-bold transition-hover"
@@ -168,13 +168,13 @@
     <div class="alert border-0 rounded-4 mb-4 d-flex align-items-center gap-3 shadow-sm" style="background: #e0f2f4;">
         <i class="bi bi-calendar-check fs-5" style="color: #E8722A;"></i>
         <div>
-            <span class="fw-black" style="color: #E8722A;">Результаты за период:</span>
+            <span class="fw-black" style="color: #E8722A;">{{ __('app.revenue_period_results') }}</span>
             <span class="text-dark fw-bold ms-2">
-                {{ request('from') ? \Carbon\Carbon::parse(request('from'))->format('d.m.Y') : 'начало' }}
+                {{ request('from') ? \Carbon\Carbon::parse(request('from'))->format('d.m.Y') : __('app.revenue_period_start') }}
                 —
-                {{ request('to') ? \Carbon\Carbon::parse(request('to'))->format('d.m.Y') : 'сегодня' }}
+                {{ request('to') ? \Carbon\Carbon::parse(request('to'))->format('d.m.Y') : __('app.revenue_period_end') }}
             </span>
-            <span class="ms-3 fw-black" style="color: #E8722A;">Итог: {{ number_format($filteredTotal, 2) }} TMT</span>
+            <span class="ms-3 fw-black" style="color: #E8722A;">{{ __('app.revenue_period_total') }} {{ number_format($filteredTotal, 2) }} TMT</span>
         </div>
     </div>
     @endif
@@ -182,10 +182,10 @@
     {{-- TILLS TABLE --}}
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-black mb-0" style="color: #1a3a3a;">Кассы</h5>
+            <h5 class="fw-black mb-0" style="color: #1a3a3a;">{{ __('app.revenue_tills') }}</h5>
             <span class="badge rounded-pill px-3 py-2 fw-bold"
                 style="background: #e0f2f4; color: #E8722A;">
-                {{ $tills->count() }} касс(ы)
+                {{ $tills->count() }} {{ __('app.revenue_tills_count', ['count' => $tills->count()]) }}
             </span>
         </div>
 
@@ -194,12 +194,12 @@
                 <thead>
                     <tr style="border-bottom: 2px solid #e5e7eb;">
                         <th class="ps-3 py-3 text-muted small fw-bold text-uppercase">#</th>
-                        <th class="py-3 text-muted small fw-bold text-uppercase">Касса</th>
-                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">Сегодня</th>
-                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">Неделя</th>
-                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">Месяц</th>
-                        <th class="py-3 text-muted small fw-bold text-uppercase text-end pe-3">Всё время</th>
-                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">Детали</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase">{{ __('app.admin_table_till_name') }}</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">{{ __('app.admin_today') }}</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">{{ __('app.admin_week') }}</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">{{ __('app.admin_month') }}</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase text-end pe-3">{{ __('app.admin_all_time') }}</th>
+                        <th class="py-3 text-muted small fw-bold text-uppercase text-center">{{ __('app.admin_table_details') }}</th>
                     </tr>
                 </thead>
 
@@ -249,7 +249,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-5">
                             <i class="bi bi-inbox text-muted d-block mb-2" style="font-size: 2rem; opacity: 0.4;"></i>
-                            <span class="text-muted fw-bold">Кассы не найдены</span>
+                            <span class="text-muted fw-bold">{{ __('app.revenue_no_tills') }}</span>
                         </td>
                     </tr>
                     @endforelse
