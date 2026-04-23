@@ -14,7 +14,7 @@
                 <h1 class="page-title">{{ __('app.shift_logs_title') }}</h1>
                 <p class="page-sub">{{ now()->format('d.m.Y') }} — {{ __('app.shift_logs_subtitle') }}</p>
             </div>
-            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-light">
+            <a href="{{ route('boss.dashboard') }}" class="btn btn-outline-light">
                 <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
             </a>
         </div>
