@@ -63,6 +63,23 @@ fn main() {
                         }
                     }
                 }
+// 3. SEED - only if users table is empty
+if let Ok(cmd) = handle.shell().sidecar("php") {
+    if let Ok((mut rx, _)) = cmd
+        .args(["-c", php_ini.to_str().unwrap_or_default(), "artisan", "tinker", "--execute",
+               "if (\\DB::table('users')->count() === 0) { \\Artisan::call('db:seed', ['--force' => true]); echo 'Seeded'; } else { echo 'Already seeded'; }"])
+        .current_dir(&project_dir)
+        .env("DB_CONNECTION", "sqlite")
+        .env("DB_DATABASE", db_path.to_str().unwrap_or_default())
+        .env("APP_KEY", "base64:mL3/J3Jxsg7yS1WgaxI3mCXuB0iZTeKA5aVRSh9WMxg=")
+        .env("APP_ENV", "production")
+        .env("APP_DEBUG", "false")
+        .spawn() {
+        while let Some(event) = rx.recv().await {
+            if let CommandEvent::Terminated(_) = event { break; }
+        }
+    }
+}
                 // Clear cache
 if let Ok(cmd) = handle.shell().sidecar("php") {
     if let Ok((mut rx, _)) = cmd
