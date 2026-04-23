@@ -63,11 +63,10 @@ fn main() {
                         }
                     }
                 }
-// 3. SEED - only if users table is empty
+// 3. SEED
 if let Ok(cmd) = handle.shell().sidecar("php") {
     if let Ok((mut rx, _)) = cmd
-        .args(["-c", php_ini.to_str().unwrap_or_default(), "artisan", "tinker", "--execute",
-               "if (\\DB::table('users')->count() === 0) { \\Artisan::call('db:seed', ['--force' => true]); echo 'Seeded'; } else { echo 'Already seeded'; }"])
+        .args(["-c", php_ini.to_str().unwrap_or_default(), "artisan", "db:seed", "--force"])
         .current_dir(&project_dir)
         .env("DB_CONNECTION", "sqlite")
         .env("DB_DATABASE", db_path.to_str().unwrap_or_default())
