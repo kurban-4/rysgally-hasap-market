@@ -46,11 +46,14 @@ jobs:
 
       - name: Build Static PHP (macOS)
         if: matrix.os == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           curl -L https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-macos-aarch64.tar.gz -o spc.tar.gz
           tar -xzf spc.tar.gz
           chmod +x spc
-          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          ./spc doctor --auto-fix
+          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype" --prefer-pre-built
           ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
           cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
           chmod +x src-tauri/binaries/php-aarch64-apple-darwin
@@ -58,9 +61,12 @@ jobs:
       - name: Build Static PHP (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          .\spc.exe doctor --auto-fix
+          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype" --prefer-pre-built
           .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
           Copy-Item "buildroot/bin/php.exe" -Destination "src-tauri/binaries/php-x86_64-pc-windows-msvc.exe"
 
