@@ -490,6 +490,97 @@ document.addEventListener('DOMContentLoaded', function() {
     }, true); 
     setupResponsive();
     window.addEventListener('resize', setupResponsive);
+    
+    // Auto-print receipt after checkout
+    const checkoutForm = document.querySelector('form[action="{{ route("sales.cart.checkout") }}"]');
+    const checkoutButton = document.getElementById('btn-pay');
+    
+    if (checkoutForm && checkoutButton) {
+        checkoutButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(checkoutForm);
+            const tillIdField = document.getElementById('checkout_till_id');
+            
+            // Set till_id if not set
+            if (!tillIdField.value) {
+                const deviceType = localStorage.getItem('device_type');
+                const tillId = localStorage.getItem('till_id');
+                if (deviceType === 'till' && tillId) {
+                    tillIdField.value = tillId;
+                }
+            }
+            
+            // Disable button
+            checkoutButton.disabled = true;
+            checkoutButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+            
+            // Submit checkout via AJAX
+            fetch(checkoutForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.receipt_url) {
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success mx-4 mt-3';
+                    alertDiv.innerHTML = data.message + ' <small>(Printing receipt...)</small>';
+                    document.querySelector('.app-main').insertBefore(alertDiv, document.querySelector('.app-main').firstChild);
+                    
+                    // Auto-print receipt
+                    setTimeout(() => {
+                        const printWindow = window.open(data.receipt_url, '_blank', 'width=400,height=600');
+                        
+                        if (printWindow) {
+                            printWindow.onload = function() {
+                                setTimeout(() => {
+                                    printWindow.print();
+                                    setTimeout(() => {
+                                        printWindow.close();
+                                    }, 1000);
+                                }, 500);
+                            };
+                        } else {
+                            // Fallback: open in same window
+                            window.location.href = data.receipt_url;
+                        }
+                    }, 1000);
+                    
+                    // Clear cart after delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                    
+                } else {
+                    // Handle error
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Checkout error:', error);
+                // Fallback to normal form submission
+                checkoutForm.submit();
+            })
+            .finally(() => {
+                // Re-enable button after delay
+                setTimeout(() => {
+                    checkoutButton.disabled = false;
+                    checkoutButton.innerHTML = '<i class="bi bi-wallet2 fs-4"></i> CHECKOUT <span class="hotkey dark ms-2">F12</span>';
+                }, 3000);
+            });
+        });
+    }
 });
 
 window.toggleRightPanel = function() {
@@ -988,98 +1079,5 @@ body { margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; background: va
 .btn-start-shift:hover { background: #6B4E2A; color: white; }
 </style>
 
-<script>
-// Auto-print receipt after checkout
-document.addEventListener('DOMContentLoaded', function() {
-    const checkoutForm = document.querySelector('form[action="{{ route("sales.cart.checkout") }}"]');
-    const checkoutButton = document.getElementById('btn-pay');
-    
-    if (checkoutForm && checkoutButton) {
-        checkoutButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(checkoutForm);
-            const tillIdField = document.getElementById('checkout_till_id');
-            
-            // Set till_id if not set
-            if (!tillIdField.value) {
-                const deviceType = localStorage.getItem('device_type');
-                const tillId = localStorage.getItem('till_id');
-                if (deviceType === 'till' && tillId) {
-                    tillIdField.value = tillId;
-                }
-            }
-            
-            // Disable button
-            checkoutButton.disabled = true;
-            checkoutButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-            
-            // Submit checkout via AJAX
-            fetch(checkoutForm.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success && data.receipt_url) {
-                    // Show success message
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-success mx-4 mt-3';
-                    alertDiv.innerHTML = data.message + ' <small>(Printing receipt...)</small>';
-                    document.querySelector('.app-main').insertBefore(alertDiv, document.querySelector('.app-main').firstChild);
-                    
-                    // Auto-print receipt
-                    setTimeout(() => {
-                        const printWindow = window.open(data.receipt_url, '_blank', 'width=400,height=600');
-                        
-                        if (printWindow) {
-                            printWindow.onload = function() {
-                                setTimeout(() => {
-                                    printWindow.print();
-                                    setTimeout(() => {
-                                        printWindow.close();
-                                    }, 1000);
-                                }, 500);
-                            };
-                        } else {
-                            // Fallback: open in same window
-                            window.location.href = data.receipt_url;
-                        }
-                    }, 1000);
-                    
-                    // Clear cart after delay
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
-                    
-                } else {
-                    // Handle error
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Checkout error:', error);
-                // Fallback to normal form submission
-                checkoutForm.submit();
-            })
-            .finally(() => {
-                // Re-enable button after delay
-                setTimeout(() => {
-                    checkoutButton.disabled = false;
-                    checkoutButton.innerHTML = '<i class="bi bi-wallet2 fs-4"></i> CHECKOUT <span class="hotkey dark ms-2">F12</span>';
-                }, 3000);
-            });
-        });
-    }
-});
 </script>
 @endsection
