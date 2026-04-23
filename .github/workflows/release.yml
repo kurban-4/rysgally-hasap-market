@@ -54,7 +54,7 @@ jobs:
           chmod +x spc
           ./spc doctor --auto-fix
           ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype" --prefer-pre-built
-          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
           cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
           chmod +x src-tauri/binaries/php-aarch64-apple-darwin
 
@@ -66,9 +66,9 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
           .\spc.exe doctor --auto-fix
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype" --prefer-pre-built
-          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
-          Copy-Item "buildroot/bin/php.exe" -Destination "src-tauri/binaries/php-x86_64-pc-windows-msvc.exe"
+          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype" --prefer-pre-built
+          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
 
       - name: Install Composer dependencies
         run: |
