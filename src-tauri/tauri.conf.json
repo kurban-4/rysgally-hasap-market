@@ -10,12 +10,12 @@
     "frontendDist": "http://127.0.0.1:8001"
   },
   "bundle": {
-    "resources": {
-      "resources/rysgally-hasap-market/**": "resources/rysgally-hasap-market",
-      "resources/rysgally-hasap-market/server.php": "resources/rysgally-hasap-market/server.php",
-      "resources/rysgally-hasap-market/.env": "resources/rysgally-hasap-market/.env",
-      "binaries/php.ini": "binaries/php.ini"
-    },
+    "resources": [
+  "resources/rysgally-hasap-market/**/*",
+  "resources/rysgally-hasap-market/server.php",
+  "resources/rysgally-hasap-market/.env",
+  "binaries/php.ini"
+],
     "externalBin": [
       "binaries/php"
     ],
