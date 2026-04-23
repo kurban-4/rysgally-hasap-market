@@ -44,16 +44,25 @@ jobs:
         shell: bash
         run: mkdir -p src-tauri/binaries
 
-      - name: Prepare Sidecar Binary (macOS)
+      - name: Build Static PHP (macOS)
         if: matrix.os == 'macos-latest'
-        run: cp $(which php) src-tauri/binaries/${{ matrix.php-binary }}
+        run: |
+          curl -L https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-macos-aarch64.tar.gz -o spc.tar.gz
+          tar -xzf spc.tar.gz
+          chmod +x spc
+          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
+          chmod +x src-tauri/binaries/php-aarch64-apple-darwin
 
-      - name: Prepare Sidecar Binary (Windows)
+      - name: Build Static PHP (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $phpPath = (Get-Command php).Source
-          Copy-Item $phpPath -Destination "src-tauri/binaries/${{ matrix.php-binary }}"
+          Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
+          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype"
+          Copy-Item "buildroot/bin/php.exe" -Destination "src-tauri/binaries/php-x86_64-pc-windows-msvc.exe"
 
       - name: Install Composer dependencies
         run: |
