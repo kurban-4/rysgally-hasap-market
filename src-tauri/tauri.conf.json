@@ -4,11 +4,10 @@
   "version": "0.5.0",
   "identifier": "com.annagurban.rysgally-hasap-market",
   "build": {
-    "beforeDevCommand": "cd src-tauri/resources/rysgally-hasap-market && php -S 0.0.0.0:8001 -t public server.php &",
-    "beforeBuildCommand": "cd src-tauri/resources/rysgally-hasap-market && php artisan config:cache && php artisan route:cache && php artisan view:cache",
-    "devUrl": "http://127.0.0.1:8001",
-    "frontendDist": "http://127.0.0.1:8001"
-  },
+  "beforeDevCommand": "cd src-tauri/resources/rysgally-hasap-market && php -S 0.0.0.0:8001 -t public server.php &",
+  "devUrl": "http://127.0.0.1:8001",
+  "frontendDist": "http://127.0.0.1:8001"
+},
   "bundle": {
     "resources": [
   "resources/rysgally-hasap-market/**/*",

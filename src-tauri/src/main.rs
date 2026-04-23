@@ -63,7 +63,35 @@ fn main() {
                         }
                     }
                 }
-
+                // Clear cache
+if let Ok(cmd) = handle.shell().sidecar("php") {
+    if let Ok((mut rx, _)) = cmd
+        .args(["-c", php_ini.to_str().unwrap_or_default(), "artisan", "config:clear"])
+        .current_dir(&project_dir)
+        .env("DB_CONNECTION", "sqlite")
+        .env("DB_DATABASE", db_path.to_str().unwrap_or_default())
+        .env("APP_KEY", "base64:mL3/J3Jxsg7yS1WgaxI3mCXuB0iZTeKA5aVRSh9WMxg=")
+        .env("APP_ENV", "production")
+        .spawn() {
+        while let Some(event) = rx.recv().await {
+            if let CommandEvent::Terminated(_) = event { break; }
+        }
+    }
+}
+if let Ok(cmd) = handle.shell().sidecar("php") {
+    if let Ok((mut rx, _)) = cmd
+        .args(["-c", php_ini.to_str().unwrap_or_default(), "artisan", "route:clear"])
+        .current_dir(&project_dir)
+        .env("DB_CONNECTION", "sqlite")
+        .env("DB_DATABASE", db_path.to_str().unwrap_or_default())
+        .env("APP_KEY", "base64:mL3/J3Jxsg7yS1WgaxI3mCXuB0iZTeKA5aVRSh9WMxg=")
+        .env("APP_ENV", "production")
+        .spawn() {
+        while let Some(event) = rx.recv().await {
+            if let CommandEvent::Terminated(_) = event { break; }
+        }
+    }
+}
                 // 3. PHP SERVER
                 if let Ok(sidecar) = handle.shell().sidecar("php") {
                     if let Ok((mut rx, _)) = sidecar
