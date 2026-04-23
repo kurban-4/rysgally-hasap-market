@@ -82,7 +82,7 @@ fn main() {
                         .spawn() {
 
                         // Wait 2 sec for PHP to start
-                        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                        std::thread::sleep(std::time::Duration::from_secs(2));
 
                         // 4. CREATE WINDOW — only after PHP is ready
                         let _ = WebviewWindowBuilder::new(&handle, "main", WebviewUrl::External("http://127.0.0.1:8001".parse().unwrap()))
