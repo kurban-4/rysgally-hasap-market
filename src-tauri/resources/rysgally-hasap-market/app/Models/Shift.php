@@ -5,9 +5,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Shift extends Model
 {
-    protected $fillable = ['user_id', 'opened_at', 'closed_at', 'total_revenue', 'status'];
-    
-    // Кастуем даты, чтобы удобно работать с ними через библиотеку Carbon
+    protected $fillable = ['user_id', 'till_id', 'opened_at', 'closed_at', 'total_revenue', 'status'];
+
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
@@ -16,5 +15,10 @@ class Shift extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function till()
+    {
+        return $this->belongsTo(Till::class);
     }
 }

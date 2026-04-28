@@ -73,6 +73,10 @@
                                 <div class="order-time">
                                     {{ \Carbon\Carbon::parse($order->order_time)->format('H:i · d M Y') }}
                                 </div>
+                                <div class="order-till">
+                                    <i class="bi bi-cash-stack me-1"></i>
+                                    {{ $order->till->name ?? '—' }}
+                                </div>
                             </div>
                             <div class="order-mobile-right">
                                 <div class="fw-black text-orange">
@@ -103,6 +107,7 @@
                                 <tr>
                                     <th class="ps-3">{{ __('app.customers_table_id') }}</th>
                                     <th>{{ __('app.customers_table_date') }}</th>
+                                    <th>Касса</th>
                                     <th class="text-center">{{ __('app.customers_table_status') }}</th>
                                     <th class="text-end">{{ __('app.customers_table_amount') }}</th>
                                     <th class="text-center pe-3">{{ __('app.customers_table_action') }}</th>
@@ -118,6 +123,12 @@
                                     </td>
                                     <td>
                                         {{ \Carbon\Carbon::parse($order->order_time)->format('H:i · d M Y') }}
+                                    </td>
+                                    <td>
+                                        <span class="till-badge">
+                                            <i class="bi bi-cash-stack me-1"></i>
+                                            {{ $order->till->name ?? '—' }}
+                                        </span>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge-done">{{ __('app.customers_status_completed') }}</span>
@@ -135,7 +146,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="text-center py-5 text-muted">
+                                    <td colspan="6" class="text-center py-5 text-muted">
                                         {{ __('app.customers_no_data') }}
                                     </td>
                                 </tr>
@@ -280,6 +291,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .transaction-id { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; font-weight: 600; color: #6B4E2A; }
 .hash { color: var(--ora); font-weight: 800; margin-right: 2px; }
 
+.till-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(232,114,42,0.08); color: var(--ora);
+    font-size: 0.75rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 50px;
+    white-space: nowrap;
+}
+
 .badge-done {
     display: inline-flex; align-items: center;
     background: #E8F5E9; color: #2E7D32;
@@ -304,6 +323,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .order-mobile-card:last-child { border-bottom: none; }
 .txn-id { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #6B4E2A; }
 .order-time { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+.order-till { font-size: 0.68rem; color: var(--ora); font-weight: 600; margin-top: 2px; }
 .order-mobile-right { text-align: right; }
 .order-mobile-right .fw-black { font-size: 1rem; }
 

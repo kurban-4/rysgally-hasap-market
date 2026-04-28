@@ -27,22 +27,26 @@ class SaleController extends Controller
         return view('sales.index', compact('cart', 'cartTotal', 'totalMoney', 'salesCount', 'activeShift'));
     }
 
-    public function startShift()
-    {
-        $existing = Shift::where('user_id', auth()->id())
-                         ->where('status', 'active')
-                         ->first();
+public function startShift(Request $request)
+{
+    $existing = Shift::where('user_id', auth()->id())
+                     ->where('status', 'active')
+                     ->first();
 
-        if (!$existing) {
-            Shift::create([
-                'user_id'   => auth()->id(),
-                'opened_at' => Carbon::now(),
-                'status'    => 'active',
-            ]);
-        }
+    if (!$existing) {
+        $tillId = $request->input('till_id');
+        $tillId = ($tillId && $tillId !== '0') ? (int) $tillId : null;
 
-        return back()->with('success', 'Смена начата!');
+        Shift::create([
+            'user_id'   => auth()->id(),
+            'till_id'   => $tillId,
+            'opened_at' => Carbon::now(),
+            'status'    => 'active',
+        ]);
     }
+
+    return back()->with('success', 'Смена начата!');
+}
 
 public function addToCart(Request $request)
 {
@@ -65,12 +69,21 @@ public function addToCart(Request $request)
         $storage = $product ? Storage::where('product_id', $product->id)->first() : null;
     } else {
         // Обычный товар (Snickers и т.д.)
-        $storage = Storage::where('barcode', $barcode)->first();
-        if ($storage) {
-            $product = $storage->product;
-        } else {
-            $product = Product::where('barcode', $barcode)->first();
+        // Ищем в новой таблице product_barcodes
+        $productBarcode = \App\Models\ProductBarcode::where('barcode', $barcode)->first();
+        if ($productBarcode) {
+            $product = $productBarcode->product;
             $storage = $product ? Storage::where('product_id', $product->id)->first() : null;
+        } else {
+            // Fallback: ищем в storage.barcode (старая система)
+            $storage = Storage::where('barcode', $barcode)->first();
+            if ($storage) {
+                $product = $storage->product;
+            } else {
+                // Fallback: ищем в product.barcode (старая система)
+                $product = Product::where('barcode', $barcode)->first();
+                $storage = $product ? Storage::where('product_id', $product->id)->first() : null;
+            }
         }
         $qtySold = $manualQty ?? 1; 
     }
@@ -228,7 +241,21 @@ public function addToCart(Request $request)
             ]);
         }
 
-        $product = Product::where('barcode', $barcode)->first();
+        // Ищем в новой таблице product_barcodes
+        $productBarcode = \App\Models\ProductBarcode::where('barcode', $barcode)->first();
+        if ($productBarcode) {
+            $product = $productBarcode->product;
+        } else {
+            // Fallback: ищем в storage.barcode (старая система)
+            $storage = Storage::where('barcode', $barcode)->first();
+            if ($storage) {
+                $product = $storage->product;
+            } else {
+                // Fallback: ищем в product.barcode (старая система)
+                $product = Product::where('barcode', $barcode)->first();
+            }
+        }
+
         if (! $product) {
             Log::warning('Barcode scanned but product not found', ['barcode' => $barcode]);
             return response()->json(['error' => 'Product not found'], 404);

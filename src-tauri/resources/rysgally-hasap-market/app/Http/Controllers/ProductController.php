@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Storage;
+use App\Models\ProductBarcode;
 
 class ProductController extends Controller
 {
@@ -54,12 +55,16 @@ class ProductController extends Controller
         'price'          => 'required|numeric',
         'discount'        => 'nullable|integer|min:0|max:100',
         'unit_type'      => 'required|in:piece,weight',
-        'category'       => 'nullable',
+        'category'       => 'nullable|string|max:255',
+        'manufacturer'   => 'nullable|string|max:255',
+        'description'    => 'nullable|string|max:1000',
         'received_price' => 'nullable|numeric',
-        'barcode'        => 'nullable|string',
-        'product_code'   => 'nullable|string',
+        'barcodes'       => 'nullable|array',
+        'barcodes.*'     => 'nullable|string|max:255',
+        'product_code'   => 'nullable|string|max:255',
         'expiry_date'    => 'nullable|date',
         'produced_date'  => 'nullable|date',
+        'batch_number'   => 'nullable|string|max:255',
     ]);
 
     // Выбираем количество в зависимости от типа
@@ -67,30 +72,69 @@ class ProductController extends Controller
                 ? $request->quantity_weight 
                 : $request->quantity_units;
 
+    // Calculate profit margin
+    $profitMargin = 0;
+    if ($request->price > 0 && $request->received_price > 0) {
+        $profitMargin = (($request->price - $request->received_price) / $request->received_price) * 100;
+    }
+
     $product = Product::create([
         'name'          => $request->name,
         'product_code'  => $request->product_code,
-        'barcode'       => $request->barcode,
         'description'   => $request->description,
         'price'         => $request->price,
         'discount'      => $request->discount ?? 0,
-        'category'      => $request->category ?? 'General',
-        'manufacturer'  => $request->manufacturer ?? 'Unknown',
+        'category'      => $request->category,
+        'manufacturer'  => $request->manufacturer,
         'produced_date' => $request->produced_date,
-        'expiry_date'   => $request->expiry_date, // Обязательно сохраняем дату!
+        'expiry_date'   => $request->expiry_date,
         'received_price'=> $request->received_price,
+        'profit_margin' => $profitMargin,
         'unit_type'     => $request->unit_type,
         'unit_label'    => $request->unit_label ?? ($request->unit_type === 'weight' ? 'kg' : 'pcs'),
     ]);
 
+    // Save multiple barcodes for piece products only
+    if ($request->unit_type === 'piece' && $request->has('barcodes')) {
+        $barcodes = array_filter($request->barcodes, function($barcode) {
+            return !empty(trim($barcode));
+        });
+        
+        // Check for duplicate barcodes
+        $duplicateBarcodes = [];
+        foreach ($barcodes as $barcode) {
+            $trimmedBarcode = trim($barcode);
+            $existingBarcode = ProductBarcode::where('barcode', $trimmedBarcode)->first();
+            
+            if ($existingBarcode) {
+                $duplicateBarcodes[] = $trimmedBarcode;
+            }
+        }
+        
+        if (!empty($duplicateBarcodes)) {
+            // Delete the created product since barcodes are duplicates
+            $product->delete();
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['barcodes' => 'The following barcodes already exist: ' . implode(', ', $duplicateBarcodes)]);
+        }
+        
+        foreach ($barcodes as $barcode) {
+            ProductBarcode::create([
+                'product_id' => $product->id,
+                'barcode' => trim($barcode),
+            ]);
+        }
+    }
+
     Storage::create([
         'product_id'     => $product->id,
         'quantity'       => $quantity ?? 0,
-        'category'       => $request->category ?? 'General',
+        'category'       => $request->category,
         'selling_price'  => $request->price,
         'received_price' => $request->received_price,
         'discount'       => $request->discount ?? 0,
-        'expiry_date'    => $request->expiry_date, // Дублируем в сторадж для логики сроков
+        'expiry_date'    => $request->expiry_date,
         'batch_number'   => $request->batch_number,
     ]);
 

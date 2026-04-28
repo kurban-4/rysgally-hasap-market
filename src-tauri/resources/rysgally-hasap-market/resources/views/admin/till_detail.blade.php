@@ -32,7 +32,7 @@
                         <span class="d-block text-lowercase fw-normal mt-1" style="font-size: 0.65rem; letter-spacing: normal;">({{ now()->format('d.m.Y') }})</span>
                     </p>
                     <h3 class="fw-black mb-0" style="color: #E8722A;">{{ number_format($dayEarned, 2) }}</h3>
-                    <small class="text-muted">TMT</small>
+                    <small class="text-muted">{{ __('app.currency_tmt') }}</small>
                 </div>
             </a>
         </div>
@@ -46,7 +46,7 @@
                         <span class="d-block text-lowercase fw-normal mt-1" style="font-size: 0.65rem; letter-spacing: normal;">({{ now()->startOfWeek()->format('d.m.Y') }} — {{ now()->endOfWeek()->format('d.m.Y') }})</span>
                     </p>
                     <h3 class="fw-black mb-0" style="color: #f59e0b;">{{ number_format($weekEarned, 2) }}</h3>
-                    <small class="text-muted">TMT</small>
+                    <small class="text-muted">{{ __('app.currency_tmt') }}</small>
                 </div>
             </a>
         </div>
@@ -60,7 +60,7 @@
                         <span class="d-block text-lowercase fw-normal mt-1" style="font-size: 0.65rem; letter-spacing: normal;">({{ now()->startOfMonth()->format('d.m.Y') }} — {{ now()->endOfMonth()->format('d.m.Y') }})</span>
                     </p>
                     <h3 class="fw-black mb-0" style="color: #8b5cf6;">{{ number_format($monthEarned, 2) }}</h3>
-                    <small class="text-muted">TMT</small>
+                    <small class="text-muted">{{ __('app.currency_tmt') }}</small>
                 </div>
             </a>
         </div>
@@ -74,7 +74,7 @@
                         <span class="d-block text-lowercase fw-normal mt-1" style="font-size: 0.65rem; letter-spacing: normal;">(до {{ now()->format('d.m.Y') }})</span>
                     </p>
                     <h3 class="fw-black mb-0" style="color: #1e293b;">{{ number_format($totalEarned, 2) }}</h3>
-                    <small class="text-muted">TMT</small>
+                    <small class="text-muted">{{ __('app.currency_tmt') }}</small>
                 </div>
             </a>
         </div>
@@ -241,7 +241,7 @@
                             </span>
                         </td>
                         <td class="pe-3 py-3 text-end fw-black" style="color: #E8722A; font-size: 1rem;">
-                            {{ number_format($med['total'], 2) }} TMT
+                            {{ number_format($med['total'], 2) }} {{ __('app.currency_tmt') }}
                         </td>
                     </tr>
                     @empty
@@ -258,7 +258,7 @@
                     <tr style="border-top: 2px solid #E8722A; background: #f4f7f6;">
                         <td colspan="6" class="ps-3 py-3 fw-black text-end text-uppercase" style="letter-spacing: 0.08em; color: #475569;">{{ __('app.till_total') }}:</td>
                         <td class="pe-3 py-3 text-end fw-black" style="color: #E8722A; font-size: 1.2rem;">
-                            {{ number_format($soldproducts->sum('total'), 2) }} TMT
+                            {{ number_format($soldproducts->sum('total'), 2) }} {{ __('app.currency_tmt') }}
                         </td>
                     </tr>
                 </tfoot>
@@ -266,6 +266,76 @@
             </table>
         </div>
     </div>
+
+    {{-- FINANCIAL SUMMARY --}}
+    @if(count($soldproducts) > 0)
+    <div class="row g-3 mt-4">
+        <div class="col-12">
+            <div class="card bg-white border-0 rounded-4 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-black mb-4" style="color: #1a3a3a;">
+                        <i class="bi bi-cash-stack me-2" style="color: #E8722A;"></i>
+                        {{ __('app.till_financial_summary') }}
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <div class="financial-card received">
+                                <div class="financial-icon">
+                                    <i class="bi bi-arrow-down-circle"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">{{ __('app.till_received_price') }}</div>
+                                    <div class="financial-value">{{ number_format($totalReceivedPrice, 2) }}</div>
+                                    <div class="financial-unit">{{ __('app.currency_tmt') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="financial-card selling">
+                                <div class="financial-icon">
+                                    <i class="bi bi-arrow-up-circle"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">{{ __('app.till_selling_price') }}</div>
+                                    <div class="financial-value">{{ number_format($totalSellingPrice, 2) }}</div>
+                                    <div class="financial-unit">{{ __('app.currency_tmt') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="financial-card profit">
+                                <div class="financial-icon">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">{{ __('app.till_net_profit') }}</div>
+                                    <div class="financial-value {{ $netProfit >= 0 ? 'positive' : 'negative' }}">
+                                        {{ number_format($netProfit, 2) }}
+                                    </div>
+                                    <div class="financial-unit">{{ __('app.currency_tmt') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="financial-card margin">
+                                <div class="financial-icon">
+                                    <i class="bi bi-percent"></i>
+                                </div>
+                                <div class="financial-content">
+                                    <div class="financial-label">{{ __('app.till_profit_margin') }}</div>
+                                    <div class="financial-value {{ $profitMargin >= 0 ? 'positive' : 'negative' }}">
+                                        {{ number_format($profitMargin, 1) }}%
+                                    </div>
+                                    <div class="financial-unit">{{ __('app.till_percentage') }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>
 
@@ -282,6 +352,128 @@
     input[type="date"]:focus {
         outline: none;
         box-shadow: 0 0 0 3px rgba(16, 122, 132, 0.15);
+    }
+
+    /* FINANCIAL CARDS */
+    .financial-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        transition: all 0.2s ease;
+    }
+    
+    .financial-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .financial-card.received {
+        border-left: 4px solid #3b82f6;
+        background: rgba(59, 130, 246, 0.05);
+    }
+    
+    .financial-card.selling {
+        border-left: 4px solid #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .financial-card.profit {
+        border-left: 4px solid #f59e0b;
+        background: rgba(245, 158, 11, 0.05);
+    }
+    
+    .financial-card.margin {
+        border-left: 4px solid #8b5cf6;
+        background: rgba(139, 92, 246, 0.05);
+    }
+    
+    .financial-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .financial-card.received .financial-icon {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+    
+    .financial-card.selling .financial-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+    
+    .financial-card.profit .financial-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+    
+    .financial-card.margin .financial-icon {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+    
+    .financial-content {
+        flex: 1;
+    }
+    
+    .financial-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+    
+    .financial-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        font-family: 'JetBrains Mono', monospace;
+        color: #1f2937;
+        line-height: 1;
+    }
+    
+    .financial-value.positive {
+        color: #10b981;
+    }
+    
+    .financial-value.negative {
+        color: #ef4444;
+    }
+    
+    .financial-unit {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+    
+    @media (max-width: 767px) {
+        .financial-card {
+            padding: 16px;
+            gap: 12px;
+        }
+        
+        .financial-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .financial-value {
+            font-size: 1.25rem;
+        }
+    }
         border: 1px solid #E8722A !important;
     }
 </style>

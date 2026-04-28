@@ -10,10 +10,11 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $orders = Sale::select('transaction_id')
+        $orders = Sale::select('transaction_id', 'till_id')
             ->selectRaw('SUM(total_price) as total_sum')
             ->selectRaw('MAX(created_at) as order_time')
-            ->groupBy('transaction_id')
+            ->with('till')
+            ->groupBy('transaction_id', 'till_id')
             ->orderBy('order_time', 'desc')
             ->get();
 

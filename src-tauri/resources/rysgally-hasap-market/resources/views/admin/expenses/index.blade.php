@@ -30,14 +30,14 @@
         <div class="col-md-4">
             <div class="card border-0 rounded-4 p-4 shadow-sm" style="border-left: 5px solid #ef4444 !important;">
                 <p class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.1em;">{{ __('app.expense_total_spent') }}</p>
-                <h2 class="fw-black text-danger mb-0">{{ number_format($totalExpenses, 2) }} TMT</h2>
+                <h2 class="fw-black text-danger mb-0">{{ number_format($totalExpenses, 2) }} {{ __('app.currency_tmt') }}</h2>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card border-0 rounded-4 p-4 shadow-sm" style="border-left: 5px solid #f59e0b !important;">
                 <p class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.1em;">{{ __('app.expense_this_month') }}</p>
                 <h2 class="fw-black mb-0" style="color: #f59e0b;">
-                    {{ number_format(\App\Models\Expense::whereMonth('created_at', now()->month)->sum('amount'), 2) }} TMT
+                    {{ number_format(\App\Models\Expense::whereMonth('created_at', now()->month)->sum('amount'), 2) }} {{ __('app.currency_tmt') }}
                 </h2>
             </div>
         </div>
@@ -45,7 +45,7 @@
             <div class="card border-0 rounded-4 p-4 shadow-sm" style="border-left: 5px solid #E8722A !important;">
                 <p class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.7rem; letter-spacing: 0.1em;">{{ __('app.expense_today') }}</p>
                 <h2 class="fw-black mb-0" style="color: #E8722A;">
-                    {{ number_format(\App\Models\Expense::whereDate('created_at', today())->sum('amount'), 2) }} TMT
+                    {{ number_format(\App\Models\Expense::whereDate('created_at', today())->sum('amount'), 2) }} {{ __('app.currency_tmt') }}
                 </h2>
             </div>
         </div>
@@ -71,7 +71,7 @@
                         </td>
                         <td class="py-3 fw-bold text-dark">{{ $ex->title }}</td>
                         <td class="py-3 text-end">
-                            <span class="fw-black text-danger">-{{ number_format($ex->amount, 2) }} TMT</span>
+                            <span class="fw-black text-danger">-{{ number_format($ex->amount, 2) }} {{ __('app.currency_tmt') }}</span>
                         </td>
                     </tr>
                     @endforeach
