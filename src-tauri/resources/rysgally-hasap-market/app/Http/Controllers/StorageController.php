@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Storage;
 use App\Models\Product;
+use App\Services\ScaleService;
 
     use App\Http\Controllers\WholesaleController; // Make sure this is imported
 class StorageController extends Controller
@@ -118,6 +119,17 @@ class StorageController extends Controller
             'expiry_date'    => $request->expiry_date,
         ]);
 
+        // Auto-export weighable products to scale on update
+        if (config('scale.auto_export_on_update') && $product->isWeight()) {
+            try {
+                $scaleService = new ScaleService();
+                $scaleService->exportStorage($storageEntry);
+            } catch (\Exception $e) {
+                // Log error but don't fail the update
+                \Log::error("Failed to export storage to scale: " . $e->getMessage());
+            }
+        }
+
         return redirect()->route('storage.index')->with('success', 'Data updated successfully!');
     }
 
@@ -165,7 +177,7 @@ public function export(Request $request)
         // Handle units logic
         $unitType = $item->product->unit_type ?? 'piece';
        if ($unitType === 'weight') {
-    $amount = (float) $item->quantity; 
+    $amount = (float) $item->quantity;
     $unit = 'kg';
 } else {
             $amount = (int)$item->quantity;
@@ -199,6 +211,29 @@ public function export(Request $request)
             'Cache-Control'       => 'max-age=0',
         ]
     );
+}
+
+public function exportToScale($id)
+{
+    $storage = Storage::with('product')->findOrFail($id);
+
+    // Only export weighable products
+    if (!$storage->product || !$storage->product->isWeight()) {
+        return redirect()->back()->with('error', 'Only weighable products can be exported to scale');
+    }
+
+    try {
+        $scaleService = new ScaleService();
+        $success = $scaleService->exportStorage($storage);
+
+        if ($success) {
+            return redirect()->back()->with('success', 'Product exported to scale successfully!');
+        } else {
+            return redirect()->back()->with('error', 'Failed to export product to scale');
+        }
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Error exporting to scale: ' . $e->getMessage());
+    }
 }
     
 }

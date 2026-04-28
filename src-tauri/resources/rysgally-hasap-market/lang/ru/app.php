@@ -848,6 +848,7 @@ return [
     // Storage table price headers
     'storage_table_received_price' => 'Цена получения',
     'storage_table_selling_price' => 'Цена продажи',
+    'storage_export_to_scale' => 'Экспорт на весы',
 
     // Product show page keys
     'product_type_weighable' => 'Весовой',
