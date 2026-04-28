@@ -664,6 +664,7 @@ return [
     // Storage table price headers
     'storage_table_received_price' => 'Alnan bahasy',
     'storage_table_selling_price' => 'Satylýan bahasy',
+    'storage_export_to_scale' => 'Agramlara eksport',
 
     // Product show page keys
     'product_type_weighable' => 'Agramly',

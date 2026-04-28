@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Storage;
 use App\Models\ProductBarcode;
+use App\Services\ScaleService;
 
 class ProductController extends Controller
 {
@@ -137,6 +138,17 @@ class ProductController extends Controller
         'expiry_date'    => $request->expiry_date,
         'batch_number'   => $request->batch_number,
     ]);
+
+    // Auto-export weighable products to scale
+    if (config('scale.auto_export_on_create') && $product->isWeight()) {
+        try {
+            $scaleService = new ScaleService();
+            $scaleService->exportProduct($product);
+        } catch (\Exception $e) {
+            // Log error but don't fail the product creation
+            \Log::error("Failed to export product to scale: " . $e->getMessage());
+        }
+    }
 
     return redirect()->route('storage.index')->with('success', 'Product added successfully!');
 }

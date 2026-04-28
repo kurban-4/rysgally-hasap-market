@@ -847,6 +847,7 @@ return [
     // Storage table price headers
     'storage_table_received_price' => 'Received Price',
     'storage_table_selling_price' => 'Selling Price',
+    'storage_export_to_scale' => 'Export to Scale',
 
     // Product show page keys
     'product_type_weighable' => 'Weighable',

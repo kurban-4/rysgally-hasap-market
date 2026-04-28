@@ -131,6 +131,7 @@ Route::middleware(['license'])->group(function () {
                     Route::put('/{id}', 'update')->name('update');
                     Route::delete('/{id}', 'destroy')->name('destroy');
                     Route::get('/export-data', 'export')->name('export');
+                    Route::get('/{id}/export-to-scale', 'exportToScale')->name('export_to_scale');
                 });
             });
 

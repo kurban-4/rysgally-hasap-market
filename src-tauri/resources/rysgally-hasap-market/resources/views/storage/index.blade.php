@@ -206,6 +206,11 @@
                                     {{-- ACTIONS --}}
                                     <td class="text-end pe-4">
                                         <div class="row-actions" onclick="event.stopPropagation()">
+                                            @if($item->product && $item->product->unit_type === 'weight')
+                                            <a href="{{ route('storage.export_to_scale', $item->id) }}" class="act-btn scale" title="{{ __('app.storage_export_to_scale') }}">
+                                                <i class="bi bi-speedometer2"></i>
+                                            </a>
+                                            @endif
                                             <a href="{{ route('storage.edit', $item->id) }}" class="act-btn edit" title="{{ __('app.storage_edit_title') }}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
@@ -553,6 +558,7 @@ body { margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; background: va
 }
 .act-btn.edit   { background: var(--primary-soft); color: var(--primary); }
 .act-btn.delete { background: rgba(239,68,68,0.1); color: #ef4444; }
+.act-btn.scale  { background: rgba(59,130,246,0.1); color: #3b82f6; }
 .act-btn:hover  { transform: scale(1.1); }
 
 /* ── SEARCH DROPDOWN ── */
