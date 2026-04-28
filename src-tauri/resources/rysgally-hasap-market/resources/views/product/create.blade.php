@@ -12,8 +12,8 @@
                 <i class="bi bi-arrow-left"></i>
             </a>
             <div>
-                <div class="header-eyebrow">Storage</div>
-                <h4 class="header-title">Add New Product</h4>
+                <div class="header-eyebrow">{{ __('app.storage_title') }}</div>
+                <h4 class="header-title">{{ __('app.product_add_new') }}</h4>
             </div>
         </header>
 
@@ -40,44 +40,44 @@
                             {{-- IDENTITY CARD --}}
                             <div class="form-card">
                                 <div class="card-eyebrow">
-                                    <span class="card-dot orange"></span> Product Identity
+                                    <span class="card-dot orange"></span> {{ __('app.product_identity') }}
                                 </div>
 
                                 <div class="field-row">
                                     <div class="field-full">
-                                        <label class="lbl">Product Name *</label>
+                                        <label class="lbl">{{ __('app.product_name') }} *</label>
                                         <input type="text" name="name" class="inp" value="{{ old('name') }}"
-                                               placeholder="e.g. Organic Apples" required>
+                                               placeholder="{{ __('app.product_name_placeholder') }}" required>
                                     </div>
                                 </div>
 
                                 <div class="field-row two-col">
                                     <div>
-                                        <label class="lbl">Category</label>
+                                        <label class="lbl">{{ __('app.product_category') }}</label>
                                         <input list="cat-list" name="category" class="inp"
-                                               value="{{ old('category') }}" placeholder="e.g. Produce">
+                                               placeholder="{{ __('app.product_category_placeholder') }}">
                                         <datalist id="cat-list">
                                             @foreach($categories as $c)<option value="{{ $c }}">@endforeach
                                         </datalist>
                                     </div>
                                     <div>
-                                        <label class="lbl">Manufacturer / Origin</label>
+                                        <label class="lbl">{{ __('app.product_manufacturer') }}</label>
                                         <input type="text" name="manufacturer" class="inp"
-                                               value="{{ old('manufacturer') }}" placeholder="e.g. Local Farm">
+                                               placeholder="{{ __('app.product_manufacturer_placeholder') }}">
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label class="lbl">Description</label>
+                                    <label class="lbl">{{ __('app.product_description') }}</label>
                                     <textarea name="description" class="inp" rows="3"
-                                              placeholder="Optional product notes...">{{ old('description') }}</textarea>
+                                              placeholder="{{ __('app.product_description_placeholder') }}">{{ old('description') }}</textarea>
                                 </div>
                             </div>
 
                             {{-- ITEM TYPE CARD --}}
                             <div class="form-card">
                                 <div class="card-eyebrow">
-                                    <span class="card-dot green"></span> Item Type
+                                    <span class="card-dot green"></span> {{ __('app.product_item_type') }}
                                 </div>
 
                                 <div class="type-selector">
@@ -87,8 +87,8 @@
                                                onchange="switchType('weight')">
                                         <div class="type-card">
                                             <i class="bi bi-speedometer2"></i>
-                                            <div class="type-name">Weighable</div>
-                                            <div class="type-desc">Sold by kg, g, litre</div>
+                                            <div class="type-name">{{ __('app.product_weighable') }}</div>
+                                            <div class="type-desc">{{ __('app.product_weighable_desc') }}</div>
                                         </div>
                                     </label>
                                     <label class="type-opt" id="opt-unit">
@@ -97,8 +97,8 @@
                                                onchange="switchType('unit')">
                                         <div class="type-card">
                                             <i class="bi bi-123"></i>
-                                            <div class="type-name">Unit / Each</div>
-                                            <div class="type-desc">Single loose items</div>
+                                            <div class="type-name">{{ __('app.product_unit_each') }}</div>
+                                            <div class="type-desc">{{ __('app.product_unit_each_desc') }}</div>
                                         </div>
                                     </label>
                                 </div>
@@ -108,14 +108,14 @@
                                 <div id="fields-weight" class="mt-4 type-fields d-none">
                                     <div class="field-row two-col">
                                         <div>
-                                            <label class="lbl">Quantity to add</label>
+                                            <label class="lbl">{{ __('app.product_quantity_add') }}</label>
                                             <div class="inp-suffix-wrap">
                                                 <input type="number" name="quantity_weight" class="inp" step="0.001" min="0" value="{{ old('quantity_weight',0) }}" placeholder="0.000">
                                                 <span class="inp-suffix" id="weight-suffix">kg</span>
                                             </div>
                                         </div>
                                         <div>
-                                            <label class="lbl">Scale / Unit</label>
+                                            <label class="lbl">{{ __('app.product_scale_unit') }}</label>
                                             <div class="unit-chips" id="chips-weight">
                                                 @foreach(['kg','g','litre','ml'] as $u)
                                                 <label class="chip">
@@ -131,11 +131,11 @@
                                 <div id="fields-unit" class="mt-4 type-fields d-none">
                                     <div class="field-row two-col">
                                         <div>
-                                            <label class="lbl">Quantity (pcs)</label>
+                                            <label class="lbl">{{ __('app.product_quantity_pcs') }}</label>
                                             <input type="number" name="quantity_units" class="inp" min="0" value="{{ old('quantity_units',0) }}" placeholder="0">
                                         </div>
                                         <div>
-                                            <label class="lbl">Unit Label</label>
+                                            <label class="lbl">{{ __('app.product_unit_label') }}</label>
                                             <div class="unit-chips">
                                                 @foreach(['pcs','each','piece'] as $u)
                                                 <label class="chip">
@@ -152,29 +152,51 @@
                             {{-- BARCODE CARD --}}
                             <div class="form-card">
                                 <div class="card-eyebrow">
-                                    <span class="card-dot amber"></span> Identification
+                                    <span class="card-dot amber"></span> {{ __('app.product_identification') }}
                                 </div>
-                                <div class="field-row two-col">
-                                    <div>
-                                        <label class="lbl">Barcode</label>
-                                        <div class="inp-icon-wrap">
-                                            <i class="bi bi-upc-scan"></i>
-                                            <input type="text" name="barcode" class="inp" value="{{ old('barcode') }}" placeholder="Scan or enter">
+                                
+                                {{-- BARCODES FOR PIECE PRODUCTS --}}
+                                <div id="barcodes-section" class="barcodes-section">
+                                    <div class="barcodes-header">
+                                        <label class="lbl">{{ __('app.product_barcodes') }}</label>
+                                        <button type="button" id="add-barcode-btn" class="btn-add-small">
+                                            <i class="bi bi-plus"></i> {{ __('app.product_add_barcode') }}
+                                        </button>
+                                    </div>
+                                    <div id="barcodes-container" class="barcodes-container">
+                                        <div class="barcode-item">
+                                            <div class="inp-icon-wrap">
+                                                <i class="bi bi-upc-scan"></i>
+                                                <input type="text" name="barcodes[]" class="inp barcode-input" placeholder="{{ __('app.product_barcode_placeholder') }}">
+                                                <button type="button" class="btn-remove-barcode">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
+                                    <small class="field-hint">{{ __('app.product_barcodes_hint') }}</small>
+                                </div>
+                                
+                                <div class="field-row two-col mt-3">
                                     <div>
-                                        <label class="lbl">Product Code</label>
-                                        <input type="text" name="product_code" class="inp" value="{{ old('product_code') }}" placeholder="For weight barcodes">
+                                        <label class="lbl">{{ __('app.product_code') }}</label>
+                                        <input type="text" name="product_code" class="inp" value="{{ old('product_code') }}" placeholder="{{ __('app.product_code_placeholder') }}">
                                     </div>
                                 </div>
                                 <div class="field-row two-col mt-3">
                                     <div>
-                                        <label class="lbl">Produced Date</label>
-                                        <input type="date" name="produced_date" class="inp" value="{{ old('produced_date') }}">
+                                        <label class="lbl">{{ __('app.product_produced_date') }}</label>
+                                        <div class="date-input-wrapper">
+                                            <input type="date" name="produced_date" class="inp date-input" value="{{ old('produced_date') }}" id="producedDate">
+                                            <i class="bi bi-calendar3 date-icon"></i>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label class="lbl">Expiry Date</label>
-                                        <input type="date" name="expiry_date" class="inp" value="{{ old('expiry_date') }}">
+                                        <label class="lbl">{{ __('app.product_expiry_date') }}</label>
+                                        <div class="date-input-wrapper">
+                                            <input type="date" name="expiry_date" class="inp date-input" value="{{ old('expiry_date') }}" id="expiryDate">
+                                            <i class="bi bi-calendar3 date-icon"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -187,18 +209,18 @@
                             {{-- PRICE CARD --}}
                             <div class="form-card pricing-card">
                                 <div class="card-eyebrow">
-                                    <span class="card-dot orange"></span> Pricing
+                                    <span class="card-dot blue"></span> {{ __('app.product_pricing') }}
                                 </div>
 
                                 <div class="price-preview" id="pricePreview">
-                                    <div class="price-display" id="priceDisplay">$0.00</div>
+                                    <div class="price-display" id="priceDisplay">{{ __('app.currency_tmt') }}0.00</div>
                                     <div id="discountBadge" class="discount-badge d-none"></div>
                                 </div>
 
                                 <div class="field-row mt-3">
-                                    <label class="lbl">Selling Price *</label>
+                                    <label class="lbl">{{ __('app.product_selling_price') }} *</label>
                                     <div class="inp-icon-wrap">
-                                        <span class="inp-prefix">$</span>
+                                        <span class="inp-prefix">{{ __('app.currency_tmt') }}</span>
                                         <input type="number" name="price" id="priceInput"
                                                class="inp" step="0.01" min="0"
                                                value="{{ old('price') }}" placeholder="0.00" required>
@@ -206,9 +228,9 @@
                                 </div>
 
                                 <div class="field-row mt-3">
-                                    <label class="lbl">Received / Purchase Price</label>
+                                    <label class="lbl">{{ __('app.product_received_price') }}</label>
                                     <div class="inp-icon-wrap">
-                                        <span class="inp-prefix">$</span>
+                                        <span class="inp-prefix">{{ __('app.currency_tmt') }}</span>
                                         <input type="number" name="received_price"
                                                class="inp" step="0.01" min="0"
                                                value="{{ old('received_price') }}" placeholder="0.00">
@@ -216,7 +238,18 @@
                                 </div>
 
                                 <div class="field-row mt-3">
-                                    <label class="lbl">Discount (%)</label>
+                                    <label class="lbl">{{ __('app.product_profit_margin') }}</label>
+                                    <div class="inp-icon-wrap">
+                                        <span class="inp-prefix">%</span>
+                                        <input type="number" name="profit_margin"
+                                               class="inp" step="0.01" min="0"
+                                               value="{{ old('profit_margin') }}" placeholder="0.00" readonly>
+                                    </div>
+                                    <small class="field-hint">{{ __('app.product_profit_margin_hint') }}</small>
+                                </div>
+
+                                <div class="field-row mt-3">
+                                    <label class="lbl">{{ __('app.product_discount') }}</label>
                                     <div class="discount-slider-wrap">
                                         <input type="range" name="discount" id="discountRange"
                                                min="0" max="100" step="1"
@@ -236,14 +269,16 @@
                             {{-- BATCH CARD --}}
                             <div class="form-card">
                                 <div class="card-eyebrow">
-                                    <span class="card-dot green"></span> Batch Info
+                                    <span class="card-dot green"></span> {{ __('app.product_batch_info') }}
                                 </div>
                                 <div class="field-row">
-                                    <label class="lbl">Batch Number</label>
+                                    <label class="lbl">{{ __('app.product_batch_number') }}</label>
                                     <input type="text" name="batch_number" class="inp"
-                                           value="{{ old('batch_number') }}" placeholder="e.g. BT-2024-001">
+                                           placeholder="{{ __('app.product_batch_number_placeholder') }}">
                                 </div>
                             </div>
+
+
 
                             {{-- SAVE BUTTON --}}
                             <button type="submit" class="btn-save">
@@ -251,7 +286,7 @@
                                 <span>{{ __('app.btn_save_product') }}</span>
                             </button>
 
-                            <p class="save-note">* Required fields. Stock will be updated immediately.</p>
+                            <p class="save-note">{{ __('app.product_required_fields_note') }}</p>
 
                         </div>
                     </div>
@@ -289,6 +324,10 @@ const discountInput = document.getElementById('discountInput');
 const priceDisplay  = document.getElementById('priceDisplay');
 const badge         = document.getElementById('discountBadge');
 
+// ── Profit margin calculator ─────────────────────────────────────
+const receivedPriceInput = document.querySelector('input[name="received_price"]');
+const profitMarginInput = document.querySelector('input[name="profit_margin"]');
+
 function updatePrice() {
     const p = parseFloat(priceInput?.value || 0);
     const d = parseInt(discountRange?.value || 0);
@@ -299,6 +338,21 @@ function updatePrice() {
         badge.classList.remove('d-none');
     } else {
         badge.classList.add('d-none');
+    }
+    
+    // Update profit margin
+    updateProfitMargin();
+}
+
+function updateProfitMargin() {
+    const sellingPrice = parseFloat(priceInput?.value || 0);
+    const receivedPrice = parseFloat(receivedPriceInput?.value || 0);
+    
+    if (sellingPrice > 0 && receivedPrice > 0) {
+        const profitMargin = ((sellingPrice - receivedPrice) / receivedPrice * 100);
+        profitMarginInput.value = profitMargin.toFixed(2);
+    } else {
+        profitMarginInput.value = '';
     }
 }
 
@@ -315,6 +369,68 @@ function syncDiscountFromInput(v) {
 
 if (priceInput)    priceInput.addEventListener('input', updatePrice);
 if (discountRange) discountRange.addEventListener('input', updatePrice);
+if (receivedPriceInput) receivedPriceInput.addEventListener('input', updateProfitMargin);
+
+// ── BARCODES MANAGEMENT ─────────────────────────────────────
+const barcodesSection = document.getElementById('barcodes-section');
+const barcodesContainer = document.getElementById('barcodes-container');
+const addBarcodeBtn = document.getElementById('add-barcode-btn');
+
+function updateBarcodesVisibility() {
+    const unitType = document.querySelector('input[name="unit_type"]:checked')?.value || 'piece';
+    if (unitType === 'weight') {
+        barcodesSection.style.display = 'none';
+    } else {
+        barcodesSection.style.display = 'block';
+    }
+}
+
+function addBarcodeField() {
+    const barcodeItem = document.createElement('div');
+    barcodeItem.className = 'barcode-item';
+    barcodeItem.innerHTML = `
+        <div class="inp-icon-wrap">
+            <i class="bi bi-upc-scan"></i>
+            <input type="text" name="barcodes[]" class="inp barcode-input" placeholder="Scan or enter barcode">
+            <button type="button" class="btn-remove-barcode">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    `;
+    
+    barcodesContainer.appendChild(barcodeItem);
+    attachBarcodeEvents(barcodeItem);
+}
+
+function removeBarcodeField(button) {
+    const barcodeItem = button.closest('.barcode-item');
+    if (barcodesContainer.children.length > 1) {
+        barcodeItem.remove();
+    }
+}
+
+function attachBarcodeEvents(barcodeItem) {
+    const removeBtn = barcodeItem.querySelector('.btn-remove-barcode');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => removeBarcodeField(removeBtn));
+    }
+}
+
+// Initialize
+if (addBarcodeBtn) {
+    addBarcodeBtn.addEventListener('click', addBarcodeField);
+}
+
+// Attach events to existing barcode fields
+document.querySelectorAll('.barcode-item').forEach(attachBarcodeEvents);
+
+// Update visibility when unit type changes
+document.querySelectorAll('input[name="unit_type"]').forEach(radio => {
+    radio.addEventListener('change', updateBarcodesVisibility);
+});
+
+// Initial visibility check
+updateBarcodesVisibility();
 </script>
 
 <style>
@@ -507,6 +623,51 @@ textarea.inp { resize: vertical; }
 }
 .discount-num:focus { border-color: var(--ora); }
 
+/* ── FORM ACTIONS ── */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background: var(--ora);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: var(--ora-dark);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
 /* ── SAVE BUTTON ── */
 .btn-save {
     width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -533,6 +694,134 @@ textarea.inp { resize: vertical; }
 
 .d-none { display: none !important; }
 
+/* ── DATE INPUT STYLES ── */
+.date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.date-input {
+    width: 100%;
+    padding-right: 40px !important;
+    cursor: pointer;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    cursor: pointer;
+}
+
+.date-input::-webkit-inner-spin-button,
+.date-input::-webkit-clear-button {
+    display: none;
+}
+
+.date-icon {
+    position: absolute;
+    right: 12px;
+    color: #6b7280;
+    font-size: 1.1rem;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+
+.date-input:focus + .date-icon {
+    color: var(--ora);
+}
+
+.date-input:hover + .date-icon {
+    color: var(--ora-dark);
+}
+
+/* Enhanced calendar styling */
+.date-input::-webkit-calendar-picker-indicator:hover {
+    background: rgba(234, 88, 12, 0.05);
+    border-radius: 0 8px 8px 0;
+}
+
+/* ── MULTIPLE BARCODES ── */
+.barcodes-section {
+    margin-bottom: 20px;
+}
+
+.barcodes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.barcodes-header .lbl {
+    margin-bottom: 0;
+}
+
+.btn-add-small {
+    background: var(--ora);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-add-small:hover {
+    background: var(--ora-dark);
+    transform: translateY(-1px);
+}
+
+.barcodes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.barcode-item {
+    position: relative;
+}
+
+.barcode-item .inp-icon-wrap {
+    position: relative;
+}
+
+.btn-remove-barcode {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+}
+
+.btn-remove-barcode:hover {
+    background: #dc2626;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.barcode-input {
+    padding-right: 40px;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 1060px) { .form-grid { grid-template-columns: 1fr; } }
 @media (max-width: 767px) {
@@ -544,5 +833,128 @@ textarea.inp { resize: vertical; }
     .two-col { grid-template-columns: 1fr; }
     .type-selector { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── ENHANCED DATE CALENDAR ── */
+.date-input-wrapper:hover .date-icon {
+    transform: scale(1.1);
+}
+
+.date-input:focus {
+    border-color: var(--ora);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+}
+
+/* Custom calendar styling for WebKit browsers */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+    color: #374151;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field {
+    color: #374151;
+}
+
+input[type="date"]::-webkit-datetime-edit-day-field {
+    color: #374151;
+}
+
+input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #374151;
+}
+
+/* Firefox date input styling */
+input[type="date"]::-moz-calendar-picker-indicator {
+    background: transparent;
+    cursor: pointer;
+    width: 40px;
+    height: 100%;
+}
 </style>
+
+<script>
+// Enhanced date input functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInputs = document.querySelectorAll('.date-input');
+    
+    dateInputs.forEach(input => {
+        // Add focus enhancement
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('date-focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('date-focused');
+        });
+        
+        // Add date validation
+        input.addEventListener('change', function() {
+            validateDateRange(this);
+        });
+        
+        // Add keyboard navigation
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+            }
+        });
+    });
+    
+    // Date range validation function
+    function validateDateRange(input) {
+        const producedDate = document.getElementById('producedDate');
+        const expiryDate = document.getElementById('expiryDate');
+        
+        if (producedDate && expiryDate && producedDate.value && expiryDate.value) {
+            const produced = new Date(producedDate.value);
+            const expiry = new Date(expiryDate.value);
+            
+            if (produced > expiry) {
+                // Show error message
+                showDateError('{{ __('app.product_date_error') }}');
+                expiryDate.value = ''; // Clear expiry date
+            } else {
+                hideDateError();
+            }
+        }
+    }
+    
+    // Date error handling
+    function showDateError(message) {
+        let errorDiv = document.querySelector('.date-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'date-error alert-error';
+            errorDiv.style.marginTop = '10px';
+            errorDiv.style.marginBottom = '10px';
+            
+            // Insert after expiry date field
+            const expiryField = document.getElementById('expiryDate').closest('.field-row');
+            expiryField.parentNode.insertBefore(errorDiv, expiryField.nextSibling);
+        }
+        errorDiv.innerHTML = `<i class="bi bi-exclamation-triangle"></i> ${message}`;
+        errorDiv.style.display = 'flex';
+    }
+    
+    function hideDateError() {
+        const errorDiv = document.querySelector('.date-error');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+    }
+    
+    // Add date picker enhancement for mobile
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        dateInputs.forEach(input => {
+            input.setAttribute('inputmode', 'none');
+            input.setAttribute('autocomplete', 'off');
+        });
+    }
+});
+</script>
 @endsection

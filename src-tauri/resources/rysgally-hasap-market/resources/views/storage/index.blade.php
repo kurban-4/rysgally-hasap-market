@@ -111,7 +111,8 @@
                                     <th>{{ __('app.storage_table_product') }}</th>
                                     <th>{{ __('app.storage_table_category') }}</th>
                                     <th class="text-center">{{ __('app.storage_table_quantity') }}</th>
-                                    <th class="text-center">{{ __('app.storage_table_status') }}</th>
+                                    <th class="text-center">{{ __('app.storage_table_received_price') }}</th>
+                                    <th class="text-center">{{ __('app.storage_table_selling_price') }}</th>
                                     <th class="text-center">{{ __('app.storage_table_expiry') }}</th>
                                     <th class="text-end pe-4">{{ __('app.storage_table_actions') }}</th>
                                 </tr>
@@ -143,11 +144,39 @@
                                         </div>
                                     </td>
 
-                                    {{-- STATUS --}}
+                                    {{-- RECEIVED PRICE --}}
                                     <td class="text-center">
-                                        <span class="status-pill {{ $item->quantity < 10 ? 'low' : 'ok' }}">
-                                            {{ $item->quantity < 10 ? __('app.storage_status_low_text') : __('app.storage_status_ok_text') }}
+                                        <span class="price-badge received">
+                                            ${{ number_format($item->received_price, 2) }}
                                         </span>
+                                    </td>
+
+                                    {{-- SELLING PRICE --}}
+                                    <td class="text-center">
+                                        <div class="price-with-margin">
+                                            @php
+                                                $discount = $item->discount ?? 0;
+                                                $originalPrice = $item->selling_price;
+                                                $finalPrice = $discount > 0 ? ($originalPrice * (1 - $discount / 100)) : $originalPrice;
+                                            @endphp
+                                            <span class="price-badge selling">
+                                                @if($discount > 0)
+                                                    <small class="original-price">{{ __('app.currency_tmt') }}{{ number_format($originalPrice, 2) }}</small>
+                                                @endif
+                                                {{ __('app.currency_tmt') }}{{ number_format($finalPrice, 2) }}
+                                            </span>
+                                            @php
+                                                $profitMargin = 0;
+                                                if ($finalPrice > 0 && $item->received_price > 0) {
+                                                    $profitMargin = (($finalPrice - $item->received_price) / $item->received_price) * 100;
+                                                }
+                                            @endphp
+                                            @if($profitMargin > 0)
+                                                <span class="profit-margin positive">{{ number_format($profitMargin, 1) }}%</span>
+                                            @elseif($profitMargin < 0)
+                                                <span class="profit-margin negative">{{ number_format($profitMargin, 1) }}%</span>
+                                            @endif
+                                        </div>
                                     </td>
 
                                     {{-- EXPIRY --}}
@@ -205,9 +234,6 @@
                             <span class="ref-id">#{{ str_pad($item->product_id, 4, '0', STR_PAD_LEFT) }}</span>
                             <div class="mt-1 d-flex flex-wrap gap-1">
                                 <span class="category-badge">{{ $item->category ?? '—' }}</span>
-                                <span class="status-pill {{ $item->quantity < 10 ? 'low' : 'ok' }}">
-                                    {{ $item->quantity < 10 ? 'Мало' : 'Достаточно' }}
-                                </span>
                             </div>
                         </div>
                         <div class="mobile-card-right">
@@ -216,6 +242,37 @@
                                 <span class="qty-unit {{ $item->display_unit === 'kg' ? 'unit-weight' : 'unit-item' }}">
                                     {{ $item->display_unit }}
                                 </span>
+                            </div>
+                            <div class="price-row mb-2">
+                                <div class="price-item">
+                                    <small class="price-label">R:</small>
+                                    <span class="price-value">{{ __('app.currency_tmt') }}{{ number_format($item->received_price, 2) }}</span>
+                                </div>
+                                <div class="price-item">
+                                    <small class="price-label">S:</small>
+                                    @php
+                                        $mobileDiscount = $item->discount ?? 0;
+                                        $mobileOriginalPrice = $item->selling_price;
+                                        $mobileFinalPrice = $mobileDiscount > 0 ? ($mobileOriginalPrice * (1 - $mobileDiscount / 100)) : $mobileOriginalPrice;
+                                    @endphp
+                                    <span class="price-value">
+                                        @if($mobileDiscount > 0)
+                                            <small class="mobile-original">{{ __('app.currency_tmt') }}{{ number_format($mobileOriginalPrice, 2) }}</small>
+                                        @endif
+                                        {{ __('app.currency_tmt') }}{{ number_format($mobileFinalPrice, 2) }}
+                                    </span>
+                                    @php
+                                        $mobileProfitMargin = 0;
+                                        if ($mobileFinalPrice > 0 && $item->received_price > 0) {
+                                            $mobileProfitMargin = (($mobileFinalPrice - $item->received_price) / $item->received_price) * 100;
+                                        }
+                                    @endphp
+                                    @if($mobileProfitMargin > 0)
+                                        <span class="mobile-profit positive">{{ number_format($mobileProfitMargin, 1) }}%</span>
+                                    @elseif($mobileProfitMargin < 0)
+                                        <span class="mobile-profit negative">{{ number_format($mobileProfitMargin, 1) }}%</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="row-actions" onclick="event.stopPropagation()">
                                 <a href="{{ route('storage.edit', $item->id) }}" class="act-btn edit">
@@ -391,6 +448,85 @@ body { margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; background: va
 }
 .unit-item   { background: var(--primary-soft); color: var(--primary); }
 .unit-weight { background: rgba(59,130,246,0.1); color: #3b82f6; }
+
+/* ── PRICE BADGES ── */
+.price-badge {
+    display: inline-block; padding: 4px 10px; border-radius: 8px;
+    font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+}
+.price-badge.received {
+    background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.2);
+}
+.price-badge.selling {
+    background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2);
+}
+
+/* ── PRICE WITH MARGIN ── */
+.price-with-margin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.profit-margin {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.profit-margin.positive {
+    background: rgba(16,185,129,0.1);
+    color: #10b981;
+}
+.profit-margin.negative {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+}
+
+/* ── MOBILE PRICE ROW ── */
+.price-row { display: flex; gap: 12px; justify-content: flex-end; }
+.price-item { 
+    display: flex; 
+    align-items: baseline; 
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.price-label { font-size: 0.65rem; color: var(--muted); font-weight: 600; }
+.price-value { font-size: 0.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.mobile-profit {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-left: 4px;
+}
+.mobile-profit.positive {
+    background: rgba(16,185,129,0.1);
+    color: #10b981;
+}
+.mobile-profit.negative {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+}
+
+/* ORIGINAL PRICE STYLES */
+.original-price {
+    text-decoration: line-through;
+    color: #9ca3af;
+    font-size: 0.65rem;
+    margin-right: 4px;
+    font-weight: 400;
+}
+
+.mobile-original {
+    text-decoration: line-through;
+    color: #9ca3af;
+    font-size: 0.6rem;
+    margin-right: 2px;
+    font-weight: 400;
+}
 
 /* ── STATUS / EXPIRY ── */
 .status-pill { display: inline-block; padding: 4px 11px; border-radius: 50px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }

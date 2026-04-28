@@ -16,6 +16,7 @@ class Product extends Model
         'total_quantity_units', // Total units in storage
         'price',
         'received_price',
+        'profit_margin',
         'discount',
         'description',
         'manufacturer',
@@ -27,6 +28,7 @@ class Product extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'received_price' => 'decimal:2',
+        'profit_margin' => 'decimal:2',
         'discount' => 'integer',
         'units_per_box' => 'integer',
         'total_quantity_units' => 'decimal:3',
@@ -35,6 +37,11 @@ class Product extends Model
     ];
 
     // Relations
+    public function barcodes(): HasMany
+    {
+        return $this->hasMany(ProductBarcode::class);
+    }
+
     public function storage(): HasMany
     {
         return $this->hasMany(Storage::class, 'product_id', 'id');

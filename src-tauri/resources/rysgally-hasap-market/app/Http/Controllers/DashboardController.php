@@ -39,23 +39,38 @@ class DashboardController extends Controller
         $totalEarned = $tills->sum('all_time_rev');
         $netProfit   = $monthEarned - $totalExpenses;
 
+        // Calculate total financial statistics for all tills
+        $allSales = \App\Models\Sale::with('product')->get();
+        
+        $totalReceivedPrice = 0;
+        $totalSellingPrice = $allSales->sum('total_price');
+        
+        foreach ($allSales as $sale) {
+            if ($sale->product && $sale->product->received_price) {
+                $totalReceivedPrice += $sale->product->received_price * $sale->quantity;
+            }
+        }
+        
+        $totalNetProfit = $totalSellingPrice - $totalReceivedPrice;
+        $totalProfitMargin = $totalReceivedPrice > 0 ? ($totalNetProfit / $totalReceivedPrice) * 100 : 0;
+
         return view('admin.dashboard', compact(
             'tills', 'expenses', 'dayEarned', 'weekEarned',
-            'monthEarned', 'totalEarned', 'totalExpenses', 'netProfit'
+            'monthEarned', 'totalEarned', 'totalExpenses', 'netProfit',
+            'totalReceivedPrice', 'totalSellingPrice', 'totalNetProfit', 'totalProfitMargin'
         ));
     }
+public function shiftLogs()
+{
+    $shifts = Shift::with(['user', 'till'])
+                   ->orderBy('opened_at', 'desc')
+                   ->paginate(20);
 
-    public function shiftLogs()
-    {
-        $shifts = Shift::with('user')
-                       ->orderBy('opened_at', 'desc')
-                       ->paginate(20);
+    $totalRevenue = Shift::where('status', 'closed')->sum('total_revenue');
+    $activeCount  = Shift::where('status', 'active')->count();
 
-        $totalRevenue = Shift::where('status', 'closed')->sum('total_revenue');
-        $activeCount  = Shift::where('status', 'active')->count();
-
-        return view('admin.shift', compact('shifts', 'totalRevenue', 'activeCount'));
-    }
+    return view('admin.shift', compact('shifts', 'totalRevenue', 'activeCount'));
+}
 
     public function expensesIndex()
     {
@@ -101,19 +116,37 @@ class DashboardController extends Controller
 
         $soldproducts = $filteredSales->groupBy('product_id')->map(function ($sales) use ($till) {
             $allSales = $till->sales->where('product_id', $sales->first()->product_id);
+            
+            // Calculate total received price for sold products
+            $totalReceivedPrice = 0;
+            foreach ($sales as $sale) {
+                $product = $sale->product;
+                if ($product && $product->received_price) {
+                    $totalReceivedPrice += $product->received_price * $sale->quantity;
+                }
+            }
+            
             return [
                 'name'      => $sales->first()->product->name,
                 'quantity'  => $sales->sum('quantity'),
                 'total'     => $sales->sum('total_price'),
+                'received_price' => $totalReceivedPrice,
                 'day_qty'   => $allSales->filter(fn($s) => $s->created_at >= Carbon::today())->sum('quantity'),
                 'week_qty'  => $allSales->filter(fn($s) => $s->created_at >= Carbon::now()->startOfWeek())->sum('quantity'),
                 'month_qty' => $allSales->filter(fn($s) => $s->created_at >= Carbon::now()->startOfMonth())->sum('quantity'),
             ];
         })->values();
 
+        // Calculate financial summary
+        $totalReceivedPrice = $soldproducts->sum('received_price');
+        $totalSellingPrice = $soldproducts->sum('total');
+        $netProfit = $totalSellingPrice - $totalReceivedPrice;
+        $profitMargin = $totalReceivedPrice > 0 ? ($netProfit / $totalReceivedPrice) * 100 : 0;
+
         return view('admin.till_detail', compact(
             'till', 'dayEarned', 'weekEarned', 'monthEarned',
-            'totalEarned', 'filteredTotal', 'soldproducts'
+            'totalEarned', 'filteredTotal', 'soldproducts',
+            'totalReceivedPrice', 'totalSellingPrice', 'netProfit', 'profitMargin'
         ));
     }
 
@@ -153,9 +186,28 @@ class DashboardController extends Controller
             ];
         });
 
+        // Calculate financial statistics for all sales
+        $salesQuery = \App\Models\Sale::with('product');
+        if ($from) $salesQuery->where('created_at', '>=', $from);
+        if ($to)   $salesQuery->where('created_at', '<=', $to);
+        $filteredSales = $salesQuery->get();
+        
+        $totalReceivedPrice = 0;
+        $totalSellingPrice = $filteredSales->sum('total_price');
+        
+        foreach ($filteredSales as $sale) {
+            if ($sale->product && $sale->product->received_price) {
+                $totalReceivedPrice += $sale->product->received_price * $sale->quantity;
+            }
+        }
+        
+        $netProfit = $totalSellingPrice - $totalReceivedPrice;
+        $profitMargin = $totalReceivedPrice > 0 ? ($netProfit / $totalReceivedPrice) * 100 : 0;
+
         return view('admin.revenue', compact(
             'dayEarned', 'weekEarned', 'monthEarned', 'totalEarned',
-            'filteredTotal', 'tills'
+            'filteredTotal', 'tills', 'totalReceivedPrice', 'totalSellingPrice', 
+            'netProfit', 'profitMargin'
         ));
     }
 
@@ -229,49 +281,52 @@ class DashboardController extends Controller
     // EXPORT: Shift Logs  →  shifts_YYYY-MM-DD.xlsx
     // ─────────────────────────────────────────────────────────────────────────
     public function exportShifts()
-    {
-        $shifts = Shift::with('user')->orderBy('opened_at', 'desc')->get();
+{
+    $shifts = Shift::with(['user', 'till'])->orderBy('opened_at', 'desc')->get();
 
-        $headers = ['Employee', 'Email', 'Shift Start', 'Shift End', 'Duration', 'Revenue (TMT)', 'Status'];
-        $rows    = [];
+    $headers = ['Employee', 'Email', 'Till', 'Shift Start', 'Shift End', 'Duration', 'Revenue (TMT)', 'Status'];
+    $rows    = [];
 
-        foreach ($shifts as $shift) {
-            if ($shift->closed_at) {
-                $h        = $shift->opened_at->diffInHours($shift->closed_at);
-                $m        = $shift->opened_at->diffInMinutes($shift->closed_at) % 60;
-                $duration = "{$h}h {$m}m";
-                $end      = $shift->closed_at->format('d.m.Y H:i');
-            } else {
-                $h        = $shift->opened_at->diffInHours(now());
-                $m        = $shift->opened_at->diffInMinutes(now()) % 60;
-                $duration = "{$h}h {$m}m (active)";
-                $end      = '—';
-            }
-
-            $rows[] = [
-                $shift->user->name  ?? '—',
-                $shift->user->email ?? '—',
-                $shift->opened_at->format('d.m.Y H:i'),
-                $end,
-                $duration,
-                number_format($shift->total_revenue, 2, '.', ''),
-                ucfirst($shift->status),
-            ];
+    foreach ($shifts as $shift) {
+        if ($shift->closed_at) {
+            $totalMinutes = (int) $shift->opened_at->diffInMinutes($shift->closed_at);
+            $h        = floor($totalMinutes / 60);
+            $m        = $totalMinutes % 60;
+            $duration = "{$h}h {$m}m";
+            $end      = $shift->closed_at->format('d.m.Y H:i');
+        } else {
+            $totalMinutes = (int) $shift->opened_at->diffInMinutes(now());
+            $h        = floor($totalMinutes / 60);
+            $m        = $totalMinutes % 60;
+            $duration = "{$h}h {$m}m (active)";
+            $end      = '—';
         }
 
-        $rows[] = [];
-        $rows[] = ['', '', '', '', 'TOTAL', number_format($shifts->where('status', 'closed')->sum('total_revenue'), 2, '.', ''), ''];
-
-        $fileName = 'shifts_' . date('Y-m-d') . '.xlsx';
-        $binary   = WholesaleController::buildXlsx($headers, $rows);
-
-        return response($binary, 200, [
-            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            'Content-Length'      => strlen($binary),
-            'Cache-Control'       => 'max-age=0',
-        ]);
+        $rows[] = [
+            $shift->user->name   ?? '—',
+            $shift->user->email  ?? '—',
+            $shift->till->name   ?? '—',
+            $shift->opened_at->format('d.m.Y H:i'),
+            $end,
+            $duration,
+            number_format($shift->total_revenue, 2, '.', ''),
+            ucfirst($shift->status),
+        ];
     }
+
+    $rows[] = [];
+    $rows[] = ['', '', '', '', '', 'TOTAL', number_format($shifts->where('status', 'closed')->sum('total_revenue'), 2, '.', ''), ''];
+
+    $fileName = 'shifts_' . date('Y-m-d') . '.xlsx';
+    $binary   = WholesaleController::buildXlsx($headers, $rows);
+
+    return response($binary, 200, [
+        'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        'Content-Length'      => strlen($binary),
+        'Cache-Control'       => 'max-age=0',
+    ]);
+}
 
     // ─────────────────────────────────────────────────────────────────────────
     // EXPORT: Single Till Detail  →  till_{name}_YYYY-MM-DD.xlsx

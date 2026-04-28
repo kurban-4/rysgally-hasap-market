@@ -179,11 +179,12 @@
                         </div>
 
                         <form action="{{ route('sales.start_shift') }}" method="POST" class="m-0">
-                            @csrf
-                            <button type="submit" class="action-btn btn-start-shift">
-                                <i class="bi bi-play-circle"></i> {{ __('app.btn_start_shift') }}
-                            </button>
-                        </form>
+    @csrf
+    <input type="hidden" name="till_id" id="start_shift_till_id" value="">
+    <button type="submit" class="action-btn btn-start-shift">
+        <i class="bi bi-play-circle"></i> {{ __('app.btn_start_shift') }}
+    </button>
+</form>
                     @endif
                 </div>
 
@@ -314,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const oldSummary = document.querySelector('.cart-summary-panel');
                             const newSummary = doc.querySelector('.cart-summary-panel');
                             if (oldSummary && newSummary) oldSummary.innerHTML = newSummary.innerHTML;
+                            restoreTillId();
                             updateMobileTotal();
                         });
                 }
@@ -380,6 +382,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             const oldSummary = document.querySelector('.cart-summary-panel');
                             const newSummary = doc.querySelector('.cart-summary-panel');
                             if (oldSummary && newSummary) oldSummary.innerHTML = newSummary.innerHTML;
+                            restoreTillId();
+                            
                             updateMobileTotal();
                         });
                 }
@@ -405,8 +409,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkoutTillField = document.getElementById('checkout_till_id');
     
     if (deviceType === 'till' && tillId && checkoutTillField) {
-        checkoutTillField.value = tillId;
-    }
+    checkoutTillField.value = tillId;
+}
+
+// Подставляем till_id в форму старта смены
+const startShiftTillField = document.getElementById('start_shift_till_id');
+if (startShiftTillField && tillId) {
+    startShiftTillField.value = tillId;
+}
 
     if (input) {
         input.focus();
@@ -456,6 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const oldSummary = document.querySelector('.cart-summary-panel');
                             const newSummary = doc.querySelector('.cart-summary-panel');
                             if (oldSummary && newSummary) oldSummary.innerHTML = newSummary.innerHTML;
+                            restoreTillId();
                             updateMobileTotal();
                             
                             if (input && window.innerWidth > 767) input.focus();
@@ -611,6 +622,15 @@ function updateMobileTotal() {
     const mobileValueEl = document.querySelector('.mobile-checkout-total .value');
     if (totalEl && mobileValueEl) {
         mobileValueEl.textContent = totalEl.textContent.trim();
+    }
+}
+
+function restoreTillId() {
+    const deviceType = localStorage.getItem('device_type');
+    const tillId = localStorage.getItem('till_id');
+    const field = document.getElementById('checkout_till_id');
+    if (field && deviceType === 'till' && tillId) {
+        field.value = tillId;
     }
 }
 

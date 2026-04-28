@@ -10,9 +10,12 @@
             $effDiscount = $storage ? (int) ($storage->discount ?? 0) : (int) ($product->discount ?? 0);
             $listPrice = (float) ($storage?->selling_price ?? $product->price ?? 0);
             $finalPrice = $effDiscount > 0 ? round($listPrice * (1 - $effDiscount / 100), 2) : $listPrice;
+            
+            // Get all barcodes for piece products
+            $productBarcodes = $isWeightProduct ? [] : $product->barcodes->pluck('barcode')->filter()->toArray();
             $marketCodeDisplay = $isWeightProduct
                 ? trim((string) ($product->product_code ?? ($storage?->barcode ?? '')))
-                : trim((string) ($storage?->barcode ?? ($product->barcode ?? '')));
+                : (count($productBarcodes) > 0 ? $productBarcodes[0] : trim((string) ($storage?->barcode ?? '')));
         @endphp
 
         <header class="page-header">
@@ -23,11 +26,11 @@
                 <div class="header-eyebrow">
                     <span class="type-tag type-{{ $product->unit_type ?? 'box' }}">
     @if(($product->unit_type ?? 'box') === 'weight') 
-        <i class="bi bi-speedometer2 me-1"></i>Weighable
+        <i class="bi bi-speedometer2 me-1"></i>{{ __('app.product_type_weighable') }}
     @elseif(($product->unit_type ?? 'box') === 'piece') {{-- Исправлено с unit на piece --}}
-        <i class="bi bi-123 me-1"></i>Unit
+        <i class="bi bi-123 me-1"></i>{{ __('app.product_type_unit') }}
     @else 
-        <i class="bi bi-box-seam me-1"></i>Boxed
+        <i class="bi bi-box-seam me-1"></i>{{ __('app.product_type_boxed') }}
     @endif
 </span>
                     <span class="header-cat">{{ $product->category }}</span>
@@ -63,22 +66,26 @@
                             <div class="hero-name">{{ $product->name }}</div>
                             <div class="hero-meta">
                                 ID #{{ str_pad($product->id, 5, '0', STR_PAD_LEFT) }}
-                                @if($marketCodeDisplay !== '')
-                                    · <span class="text-muted">{{ $isWeightProduct ? 'Code' : 'Barcode' }}</span> {{ $marketCodeDisplay }}
+                                @if($isWeightProduct && $marketCodeDisplay !== '')
+                                    · <span class="text-muted">{{ __('app.product_code') }}</span> {{ $marketCodeDisplay }}
+                                @elseif(!$isWeightProduct && count($productBarcodes) > 0)
+                                    · <span class="text-muted">{{ __('app.product_barcodes') }}</span> {{ count($productBarcodes) }} {{ __('app.product_items') }}
+                                @elseif(!$isWeightProduct && $marketCodeDisplay !== '')
+                                    · <span class="text-muted">{{ __('app.product_barcode') }}</span> {{ $marketCodeDisplay }}
                                 @endif
                             </div>
                         </div>
                     </div>
                     <div class="hero-price-block">
                         @if($effDiscount > 0)
-                            <div class="price-was">${{ number_format($listPrice, 2) }}</div>
+                            <div class="price-was">{{ __('app.currency_tmt') }}{{ number_format($listPrice, 2) }}</div>
                         @endif
                         <div class="price-now">
-                            ${{ number_format($finalPrice, 2) }}
+                            {{ __('app.currency_tmt') }}{{ number_format($finalPrice, 2) }}
                         </div>
-                        <div class="price-per">per {{ $product->unit_label ?? 'piece' }}</div>
+                        <div class="price-per">{{ __('app.product_per') }} {{ $product->unit_label ?? 'piece' }}</div>
                         @if($effDiscount > 0)
-                            <div class="discount-pill">{{ $effDiscount }}% OFF</div>
+                            <div class="discount-pill">{{ $effDiscount }}% {{ __('app.product_discount_off') }}</div>
                         @endif
                     </div>
 
@@ -109,11 +116,11 @@
                                     <div class="ring-unit">{{ $product->unit_label ?? 'pcs' }}</div>
                                 </div>
                                 <div class="stock-info">
-                                    <div class="stock-label">In Stock</div>
+                                    <div class="stock-label">{{ __('app.product_in_stock') }}</div>
                                     <div class="stock-display">{{ $displayQty }}</div>
                                     <div class="stock-status {{ $isLow ? 'low' : 'ok' }}">
                                         <i class="bi bi-{{ $isLow ? 'exclamation-triangle-fill' : 'check-circle-fill' }}"></i>
-                                        {{ $isLow ? 'Low Stock' : 'Sufficient' }}
+                                        {{ $isLow ? __('app.product_low_stock') : __('app.product_sufficient') }}
                                     </div>
                                 </div>
                             </div>
@@ -124,7 +131,7 @@
                         <div class="detail-card">
                             <div class="card-head">
                                 <div class="card-head-icon"><i class="bi bi-file-text"></i></div>
-                                Description
+                                {{ __('app.product_description') }}
                             </div>
                             <p class="desc-text">{{ $product->description }}</p>
                         </div>
@@ -134,26 +141,41 @@
 <div class="detail-card">
     <div class="card-head">
         <div class="card-head-icon"><i class="bi bi-info-circle"></i></div>
-        Details
+        {{ __('app.product_details') }}
     </div>
     <div class="meta-grid">
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-building"></i></div>
-            <div><div class="meta-label">Manufacturer</div><div class="meta-val">{{ $product->manufacturer ?: '—' }}</div></div>
+            <div><div class="meta-label">{{ __('app.product_manufacturer') }}</div><div class="meta-val">{{ $product->manufacturer ?: '—' }}</div></div>
         </div>
         
         @if($isWeightProduct)
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-tag"></i></div>
             <div>
-                <div class="meta-label">Product code</div>
+                <div class="meta-label">{{ __('app.product_code') }}</div>
                 <div class="meta-val mono"><strong>{{ $marketCodeDisplay !== '' ? $marketCodeDisplay : '—' }}</strong></div>
             </div>
         </div>
         @else
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-upc-scan"></i></div>
-            <div><div class="meta-label">Barcode</div><div class="meta-val mono">{{ $marketCodeDisplay !== '' ? $marketCodeDisplay : '—' }}</div></div>
+            <div>
+                <div class="meta-label">{{ $isWeightProduct ? __('app.product_code') : __('app.product_barcodes') }}</div>
+                @if($isWeightProduct)
+                    <div class="meta-val mono">{{ $marketCodeDisplay !== '' ? $marketCodeDisplay : '—' }}</div>
+                @else
+                    @if(count($productBarcodes) > 0)
+<div class="meta-val mono">
+    @foreach($productBarcodes as $index => $barcode)
+        {{ $barcode }}{!! !$loop->last ? "<br>" : '' !!}
+    @endforeach
+</div>
+                    @else
+                        <div class="meta-val mono">{{ $marketCodeDisplay !== '' ? $marketCodeDisplay : '—' }}</div>
+                    @endif
+                @endif
+            </div>
         </div>
         @endif
 
@@ -164,6 +186,27 @@
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-cash-coin"></i></div>
             <div><div class="meta-label">Purchase Price</div><div class="meta-val">${{ number_format($storage?->received_price ?? $product->received_price ?? 0, 2) }}</div></div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-icon"><i class="bi bi-percent"></i></div>
+            <div>
+                <div class="meta-label">Profit Margin</div>
+                <div class="meta-val">
+                    @php
+                        $displayProfitMargin = $product->profit_margin ?? 0;
+                        if ($displayProfitMargin == 0 && $storage?->selling_price && $storage?->received_price) {
+                            $displayProfitMargin = (($storage->selling_price - $storage->received_price) / $storage->received_price) * 100;
+                        }
+                    @endphp
+                    @if($displayProfitMargin > 0)
+                        <span class="profit-positive">{{ number_format($displayProfitMargin, 2) }}%</span>
+                    @elseif($displayProfitMargin < 0)
+                        <span class="profit-negative">{{ number_format($displayProfitMargin, 2) }}%</span>
+                    @else
+                        <span class="profit-neutral">0.00%</span>
+                    @endif
+                </div>
+            </div>
         </div>
         @if($storage && $storage->batch_number)
         <div class="meta-item">
@@ -215,23 +258,23 @@
                         <div class="detail-card stats-card">
                             <div class="card-head">
                                 <div class="card-head-icon"><i class="bi bi-graph-up"></i></div>
-                                Quick Stats
+                                {{ __('app.product_quick_stats') }}
                             </div>
                             <div class="stat-rows">
                                 <div class="stat-row">
-                                    <span class="stat-label">Category</span>
+                                    <span class="stat-label">{{ __('app.product_category') }}</span>
                                     <span class="stat-val">{{ $product->category ?? '—' }}</span>
                                 </div>
                                 <div class="stat-row">
-                                    <span class="stat-label">Item type</span>
+                                    <span class="stat-label">{{ __('app.product_item_type') }}</span>
                                     <span class="stat-val capitalize">{{ $product->unit_type ?? 'box' }}</span>
                                 </div>
                                 <div class="stat-row">
-                                    <span class="stat-label">Unit</span>
+                                    <span class="stat-label">{{ __('app.product_unit') }}</span>
                                     <span class="stat-val">{{ $product->unit_label ?? 'pcs' }}</span>
                                 </div>
                                 <div class="stat-row">
-                                    <span class="stat-label">Discount</span>
+                                    <span class="stat-label">{{ __('app.product_discount') }}</span>
                                     <span class="stat-val {{ $effDiscount > 0 ? 'orange' : '' }}">
                                         {{ $effDiscount > 0 ? $effDiscount.'%' : '—' }}
                                     </span>
@@ -431,6 +474,12 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .meta-label { font-size: 0.58rem; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 2px; }
 .meta-val { font-size: 0.85rem; font-weight: 700; color: var(--text); }
 .meta-val.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+
+/* PROFIT MARGIN STYLES */
+.profit-positive { color: var(--green); font-weight: 800; }
+.profit-negative { color: var(--red); font-weight: 800; }
+.profit-neutral { color: var(--muted); font-weight: 600; }
+
 .desc-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
 
 /* DATES */
