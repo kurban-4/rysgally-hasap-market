@@ -205,6 +205,24 @@ Key tables:
 
 ### Environment Variables
 
+**For Development (SQLite):**
+```env
+APP_NAME=MarketSystem
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8001
+
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+
+# Scale Configuration
+SCALE_IP=192.168.1.100
+SCALE_PORT=8080
+SCALE_TIMEOUT=10
+SCALE_AUTO_EXPORT_ON_CREATE=true
+```
+
+**For Production (MySQL):**
 ```env
 APP_NAME=MarketSystem
 APP_ENV=production
