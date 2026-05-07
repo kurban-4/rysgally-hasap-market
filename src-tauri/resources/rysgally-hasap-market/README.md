@@ -1,61 +1,255 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏪 Rysgally Hasap Market System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive market management system built with Laravel and Tauri for retail and wholesale operations with multi-till support, inventory management, and electronic scale integration.
 
-## About Laravel
+## ✨ Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 🎯 Core Functionality
+- **Multi-Role System**: Admin, Salesman, Storage, and Wholesale roles
+- **Multi-Till Support**: Multiple POS terminals connected via Ethernet
+- **Multi-Language**: English, Russian, and Turkmen localization
+- **License Management**: Secure licensing system for device authorization
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📦 Inventory Management
+- Product management with categories and barcodes
+- Storage tracking with quantity management
+- Weighable vs. unit-based products
+- Expiry date tracking
+- Batch number management
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 💰 Sales & POS
+- Point of Sale system with cart functionality
+- Discount management
+- Shift management with opening/closing
+- Receipt generation (thermal printing)
+- Customer management
 
-## Learning Laravel
+### 📊 Wholesale Operations
+- Wholesale invoice management
+- Wholesale storage tracking
+- Transfer between wholesale and retail
+- Excel export functionality
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🏢 Admin Dashboard
+- Financial overview cards
+- Till management and monitoring
+- Expense tracking
+- Revenue reports
+- Shift logs and statistics
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### ⚖️ Scale Integration
+- Electronic scale integration via Ethernet
+- Automatic export of weighable products
+- Manual export button in storage interface
+- Support for various scale protocols (RS232, TCP/IP)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🚀 Tech Stack
 
-## Laravel Sponsors
+- **Backend**: Laravel 11 (PHP 8.2+)
+- **Frontend**: Blade templates with Vite
+- **Desktop App**: Tauri (Rust + WebView)
+- **Database**: SQLite (development) / MySQL (production)
+- **Build Tool**: GitHub Actions for CI/CD
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 📋 Requirements
 
-### Premium Partners
+- PHP 8.2 or higher
+- Composer
+- Node.js 18+
+- MySQL 8.0+ (production)
+- Rust toolchain (for Tauri builds)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🔧 Installation
 
-## Contributing
+### Development Setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd rysgally-hasap-market
+```
 
-## Code of Conduct
+2. **Install PHP dependencies**
+```bash
+composer install
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. **Install Node.js dependencies**
+```bash
+npm install
+```
 
-## Security Vulnerabilities
+4. **Copy environment file**
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+5. **Run migrations**
+```bash
+php artisan migrate
+php artisan db:seed
+```
 
-## License
+6. **Build frontend assets**
+```bash
+npm run build
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+7. **Start development server**
+```bash
+php artisan serve
+```
+
+### Tauri Desktop App
+
+1. **Navigate to Tauri directory**
+```bash
+cd src-tauri
+```
+
+2. **Install dependencies**
+```bash
+npm install
+```
+
+3. **Run development**
+```bash
+npm run tauri dev
+```
+
+4. **Build for production**
+```bash
+npm run tauri build
+```
+
+## 🌐 Production Deployment
+
+### Server Setup (Windows)
+
+1. **Install MySQL**
+   - Download MySQL Installer from https://dev.mysql.com/downloads/installer/
+   - Install MySQL Server
+   - Create database and user
+
+2. **Configure MySQL**
+```sql
+CREATE DATABASE market_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'market_user'@'%' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON market_system.* TO 'market_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+3. **Install Tauri Application**
+   - Download `.exe` from GitHub Actions artifacts
+   - Install on server
+   - Configure `config.json` in `%APPDATA%\rysgally-hasap-market\`
+
+4. **Network Setup**
+   - Configure static IP addresses
+   - Connect all tills via Ethernet switch
+   - Ensure MySQL port 3306 is accessible
+
+### Till Configuration
+
+1. **Install Tauri Application** on each till
+2. **Configure config.json** to connect to server MySQL
+3. **Register till** in admin panel
+4. **Activate license** for each till
+
+## 📁 Project Structure
+
+```
+├── app/
+│   ├── Http/Controllers/    # Controllers
+│   ├── Models/              # Eloquent models
+│   ├── Services/            # Business logic (ScaleService)
+│   └── Middleware/          # Custom middleware
+├── config/                  # Configuration files
+├── database/
+│   ├── migrations/          # Database migrations
+│   └── seeders/             # Database seeders
+├── resources/
+│   ├── views/               # Blade templates
+│   └── lang/                # Language files (en, ru, tm)
+├── routes/                  # Route definitions
+├── src-tauri/               # Tauri desktop app
+│   ├── src/                 # Rust source code
+│   └── resources/           # Embedded Laravel app
+└── public/                  # Public assets
+```
+
+## 🔑 Default Credentials
+
+- **Admin**: admin / admin123
+- **Salesman**: salesman / password
+- **Storage**: storage / password
+- **Wholesale**: wholesale / password
+
+## 🌍 Localization
+
+The system supports three languages:
+- English (en)
+- Russian (ru)
+- Turkmen (tm)
+
+Language can be switched via the language selector in the UI.
+
+## 📊 Database Schema
+
+Key tables:
+- `users` - User accounts with roles
+- `products` - Product catalog
+- `storage` - Inventory management
+- `sales` - Sales transactions
+- `tills` - POS terminal management
+- `licenses` - License management
+- `shifts` - Shift tracking
+- `expenses` - Expense tracking
+
+## 🔧 Configuration
+
+### Environment Variables
+
+```env
+APP_NAME=MarketSystem
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=http://your-domain.com
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=market_system
+DB_USERNAME=market_user
+DB_PASSWORD=your_password
+
+# Scale Configuration
+SCALE_IP=192.168.1.100
+SCALE_PORT=8080
+SCALE_TIMEOUT=10
+SCALE_AUTO_EXPORT_ON_CREATE=true
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is proprietary software. All rights reserved.
+
+## 👥 Authors
+
+- **Anna Gurban** - Initial development
+
+## 🙏 Acknowledgments
+
+- Laravel Framework
+- Tauri Team
+- Bootstrap for UI components
+- All contributors
