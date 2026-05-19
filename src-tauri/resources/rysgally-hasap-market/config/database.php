@@ -11,7 +11,7 @@ return [
         
 'sqlite' => [
     'driver' => 'sqlite',
-    'database' => dirname(__DIR__) . '/database/database.sqlite',
+    'database' => env('DB_DATABASE', dirname(__DIR__) . '/database/database.sqlite'),
     'prefix' => '',
     'foreign_key_constraints' => true,
 ],
@@ -47,6 +47,17 @@ return [
         ],
 
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Migration Repository Table
+    |--------------------------------------------------------------------------
+    |
+    | This table keeps track of all the migrations that have already run for
+    | your application. Using this information, we can determine which of
+    | the migrations on disk haven't actually been run on the database.
+    |
+    */
 
     'migrations' => [
         'table' => 'migrations',

@@ -82,6 +82,11 @@ jobs:
           if [ ! -f .env ]; then
             cp .env.example .env || touch .env
           fi
+          # File sessions/cache avoid extra SQLite tables when the DB is still initializing.
+          grep -q '^SESSION_DRIVER=' .env && sed -i.bak 's/^SESSION_DRIVER=.*/SESSION_DRIVER=file/' .env || echo 'SESSION_DRIVER=file' >> .env
+          grep -q '^CACHE_STORE=' .env && sed -i.bak 's/^CACHE_STORE=.*/CACHE_STORE=file/' .env || echo 'CACHE_STORE=file' >> .env
+          grep -q '^QUEUE_CONNECTION=' .env && sed -i.bak 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/' .env || echo 'QUEUE_CONNECTION=sync' >> .env
+          rm -f .env.bak
 
       - name: Fix Pdo\Mysql issue
         shell: bash
@@ -90,9 +95,20 @@ jobs:
           CONNECTOR="src-tauri/resources/rysgally-hasap-market/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php"
           for FILE in "$CONFIG" "$CONNECTOR"; do
             if [ -f "$FILE" ]; then
-              sed -i 's/PDO::MYSQL_ATTR_SSL_CA/1009/g' "$FILE" || sed -i '' 's/PDO::MYSQL_ATTR_SSL_CA/1009/g' "$FILE"
+              sed -i 's/PDO::MYSQL_ATTR_SSL_CA/1009/g' "$FILE" 2>/dev/null || sed -i '' 's/PDO::MYSQL_ATTR_SSL_CA/1009/g' "$FILE"
             fi
           done
+
+      - name: Verify PHP sidecar binary
+        shell: bash
+        run: |
+          PHP_BIN="src-tauri/binaries/${{ matrix.php-binary }}"
+          if [ ! -f "$PHP_BIN" ]; then
+            echo "Missing PHP sidecar: $PHP_BIN"
+            ls -la src-tauri/binaries || true
+            exit 1
+          fi
+          echo "Found PHP sidecar: $PHP_BIN"
 
       - name: Clean Install
         shell: bash
@@ -103,7 +119,6 @@ jobs:
           cargo fetch
 
       - name: Build App
-        shell: bash
         run: |
           npm run build
           npx tauri build --target ${{ matrix.target }}
@@ -123,7 +138,6 @@ jobs:
           name: rysgally-hasap-market-${{ matrix.os }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
 
       - name: Create GitHub Release
@@ -133,5 +147,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe

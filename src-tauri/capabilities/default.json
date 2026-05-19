@@ -6,6 +6,16 @@
   "permissions": [
     "core:default",
     "shell:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/php",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    },
     "core:window:allow-set-title",
     "core:webview:allow-internal-toggle-devtools"
   ]

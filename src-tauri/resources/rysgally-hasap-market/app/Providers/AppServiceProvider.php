@@ -3,24 +3,24 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Pagination\Paginator; // СТРОКА ДОЛЖНА БЫТЬ ЗДЕСЬ
+use Illuminate\Pagination\Paginator; 
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        if ($storagePath = env('TAURI_STORAGE_PATH')) {
+            $this->app->useStoragePath($storagePath);
+        }
+
+        if ($bootstrapPath = env('TAURI_BOOTSTRAP_PATH')) {
+            $this->app->useBootstrapPath($bootstrapPath);
+        }
     }
 
-    /**
-     * Bootstrap any application services.
-     */
-    // public function boot(): void
-    // {
-    //     Paginator::useBootstrapFive(); 
-    //     view()->share('lowStockCount', \App\Models\Storage::where('quantity', '<', 10)->count());
-    // }
+    
+    
+    
+    
+    
 }
