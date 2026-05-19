@@ -82,9 +82,18 @@
                                 <td class="text-bold text-dark">{{ $line['name'] }}</td>
                                 <td class="text-muted text-sm mono">{{ $line['barcode'] }}</td>
                                 <td class="text-center fw-medium">{{ $line['qty_display'] }} {{ $line['unit'] }}</td>
-                                <td class="text-end">{{ number_format($line['unit_price_original'], 2) }}</td>
+                                <td class="text-end">
+                                    @if(!empty($line['price_overridden']))
+                                        <span class="text-muted text-decoration-line-through small">{{ number_format($line['unit_price_original'], 2) }}</span>
+                                        <span class="fw-semibold">{{ number_format($line['unit_price'], 2) }}</span>
+                                    @else
+                                        {{ number_format($line['unit_price_original'], 2) }}
+                                    @endif
+                                </td>
                                 <td class="text-center">
-                                    @if($line['discount_percent'] > 0)
+                                    @if(!empty($line['price_overridden']))
+                                        <span class="badge bg-warning text-dark">{{ __('app.receipt_price_changed') }}</span>
+                                    @elseif($line['discount_percent'] > 0)
                                         <span class="disc-pill-receipt">-{{ $line['discount_percent'] }}%</span>
                                     @else
                                         <span class="text-muted">—</span>
@@ -101,9 +110,22 @@
                         @foreach($lineItems as $line)
                         <div class="receipt-item-row">
                             <div class="item-name">{{ $line['name'] }}</div>
-                            <div class="item-meta">{{ $line['barcode'] }}@if($line['discount_percent'] > 0) · <span class="text-danger fw-semibold">-{{ $line['discount_percent'] }}%</span>@endif</div>
+                            <div class="item-meta">{{ $line['barcode'] }}
+                                @if(!empty($line['price_overridden']))
+                                    · <span class="text-warning fw-semibold">{{ __('app.receipt_price_changed') }}</span>
+                                @elseif($line['discount_percent'] > 0)
+                                    · <span class="text-danger fw-semibold">-{{ $line['discount_percent'] }}%</span>
+                                @endif
+                            </div>
                             <div class="item-total">{{ number_format($line['line_total'], 2) }}</div>
-                            <div class="item-qty">{{ $line['qty_display'] }} {{ $line['unit'] }} × {{ number_format($line['unit_price_original'], 2) }}</div>
+                            <div class="item-qty">{{ $line['qty_display'] }} {{ $line['unit'] }} ×
+                                @if(!empty($line['price_overridden']))
+                                    <span class="text-decoration-line-through text-muted">{{ number_format($line['unit_price_original'], 2) }}</span>
+                                    {{ number_format($line['unit_price'], 2) }}
+                                @else
+                                    {{ number_format($line['unit_price_original'], 2) }}
+                                @endif
+                            </div>
                         </div>
                         @endforeach
                     </div>

@@ -104,24 +104,7 @@ public function addToCart(Request $request)
 
     $cart = session()->get('pos_cart', []);
     $cartId = uniqid();
-    
-    
-    $unitPrice = $storage->selling_price ?? $product->getFinalPriceAttribute();
-    $discount = (int) ($storage->discount ?? $product->discount ?? 0);
-    $finalPrice = $discount > 0 ? $unitPrice * (1 - $discount / 100) : $unitPrice;
-    
-    $cart[$cartId] = [
-        'id'              => $cartId,
-        'product_id'      => $product->id,
-        'storage_id'      => $storage->id,
-        'name'            => $product->name,
-        'sale_type'       => $product->unit_type,
-        'quantity'        => $qtySold,
-        'price'           => $finalPrice,
-        'total_price'     => round($finalPrice * $qtySold, 2),
-        'units_to_deduct' => $qtySold,
-        'discount'        => $discount,
-    ];
+    $cart[$cartId] = $this->makeCartLine($product, $storage, $qtySold, $cartId);
 
     session()->put('pos_cart', $cart);
 
@@ -173,12 +156,44 @@ public function addToCart(Request $request)
 
         
         $item['quantity'] = $quantity;
-        $item['total_price'] = $quantity * $item['price'];
+        $item['total_price'] = round($quantity * (float) $item['price'], 2);
         $item['units_to_deduct'] = $quantity;
 
         session()->put('pos_cart', $cart);
 
-        return response()->json(['success' => true, 'message' => 'Quantity updated']);
+        return $this->cartJsonResponse($cart, 'Quantity updated');
+    }
+
+    public function updateCartPrice(Request $request, $id)
+    {
+        $price = (float) $request->input('price');
+
+        if ($price < 0) {
+            return response()->json(['success' => false, 'message' => 'Price cannot be negative']);
+        }
+
+        $cart = session()->get('pos_cart', []);
+
+        if (! isset($cart[$id])) {
+            return response()->json(['success' => false, 'message' => 'Item not found in cart']);
+        }
+
+        $item = &$cart[$id];
+        $listPrice = (float) ($item['list_price'] ?? $item['price']);
+        $defaultUnit = (float) ($item['default_price'] ?? $item['price']);
+        $roundedPrice = round($price, 2);
+
+        $item['price'] = $roundedPrice;
+        $item['price_overridden'] = abs($roundedPrice - $defaultUnit) >= 0.01;
+        $item['total_price'] = round((float) $item['quantity'] * $roundedPrice, 2);
+
+        if (! isset($item['list_price'])) {
+            $item['list_price'] = $listPrice;
+        }
+
+        session()->put('pos_cart', $cart);
+
+        return $this->cartJsonResponse($cart, 'Price updated');
     }
 
     public function scanBarcode(Request $request)
@@ -343,13 +358,16 @@ public function addToCart(Request $request)
         $saleItems = [];
         foreach ($cart as $item) {
             $saleItems[] = [
-                'product_id'     => $item['product_id'],
-                'name'           => $item['name'] ?? 'Unknown Product',
-                'quantity'       => $item['quantity'],
-                'price'          => $item['price'],
-                'total_price'    => $item['total_price'],
-                'sale_type'      => $item['sale_type'],
-                'discount'       => (int) ($item['discount'] ?? 0),
+                'product_id'        => $item['product_id'],
+                'name'              => $item['name'] ?? 'Unknown Product',
+                'quantity'          => $item['quantity'],
+                'list_price'        => (float) ($item['list_price'] ?? $item['price']),
+                'default_price'     => (float) ($item['default_price'] ?? $item['price']),
+                'price'             => $item['price'],
+                'total_price'       => $item['total_price'],
+                'sale_type'         => $item['sale_type'],
+                'discount'          => (int) ($item['discount'] ?? 0),
+                'price_overridden'  => (bool) ($item['price_overridden'] ?? false),
             ];
 
             $storage = Storage::find($item['storage_id'] ?? null)
@@ -497,5 +515,53 @@ public function addToCart(Request $request)
         ]);
         
         return view('receipts.thermal_sales', ['sale' => $testSale]);
+    }
+
+    private function resolveUnitPricing(Storage $storage, Product $product): array
+    {
+        $listPrice = (float) ($storage->selling_price ?? $product->price ?? 0);
+        $discount = (int) ($storage->discount ?? $product->discount ?? 0);
+        $defaultPrice = $discount > 0
+            ? round($listPrice * (1 - $discount / 100), 2)
+            : round($listPrice, 2);
+
+        return [
+            'list_price' => round($listPrice, 2),
+            'default_price' => $defaultPrice,
+            'price' => $defaultPrice,
+            'discount' => $discount,
+        ];
+    }
+
+    private function makeCartLine(Product $product, Storage $storage, float $quantity, string $cartId): array
+    {
+        $pricing = $this->resolveUnitPricing($storage, $product);
+        $unitPrice = $pricing['price'];
+
+        return [
+            'id'               => $cartId,
+            'product_id'       => $product->id,
+            'storage_id'       => $storage->id,
+            'name'             => $product->name,
+            'sale_type'        => $product->unit_type,
+            'quantity'         => $quantity,
+            'list_price'       => $pricing['list_price'],
+            'default_price'    => $pricing['default_price'],
+            'price'            => $unitPrice,
+            'total_price'      => round($unitPrice * $quantity, 2),
+            'units_to_deduct'  => $quantity,
+            'discount'         => $pricing['discount'],
+            'price_overridden' => false,
+        ];
+    }
+
+    private function cartJsonResponse(array $cart, string $message = 'OK'): \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'success'    => true,
+            'message'    => $message,
+            'cart_total' => round(array_sum(array_column($cart, 'total_price')), 2),
+            'cart_count' => count($cart),
+        ]);
     }
 }

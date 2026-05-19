@@ -21,7 +21,7 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('barcodes')->findOrFail($id);
         $storage = Storage::where('product_id', $id)->latest()->first();
 
         if (!$product->price && $storage) {

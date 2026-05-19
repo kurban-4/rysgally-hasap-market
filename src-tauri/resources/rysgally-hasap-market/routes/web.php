@@ -164,6 +164,7 @@ Route::middleware(['license'])->group(function () {
                         Route::delete('/delete/{id}', 'destroy')->name('destroy');
                         Route::post('/cart/add', 'addToCart')->name('cart.add');
                         Route::patch('/cart/{id}', 'updateCart')->name('cart.update');
+                        Route::patch('/cart/{id}/price', 'updateCartPrice')->name('cart.update_price');
                         Route::delete('/cart/{id}', 'removeFromCart')->name('cart.remove');
                         Route::post('/checkout', 'checkout')->name('cart.checkout');
                         Route::post('/start-shift', 'startShift')->name('start_shift');

@@ -320,19 +320,26 @@ class CustomerController extends Controller
         $quantity = (float) ($item['quantity'] ?? 0);
         $unitPrice = (float) ($item['price'] ?? 0);
         $discountPercent = max(0, (int) ($item['discount'] ?? 0));
+        $priceOverridden = (bool) ($item['price_overridden'] ?? false);
+        $listPrice = isset($item['list_price']) ? (float) $item['list_price'] : null;
+        $defaultPrice = isset($item['default_price']) ? (float) $item['default_price'] : null;
 
         $lineTotal = round((float) ($item['total_price'] ?? ($quantity * $unitPrice)), 2);
 
-        if ($discountPercent > 0 && $unitPrice > 0) {
+        if ($priceOverridden) {
+            $originalUnitPrice = $listPrice ?? $defaultPrice ?? $unitPrice;
+            $lineSubtotal = round($quantity * $originalUnitPrice, 2);
+        } elseif ($discountPercent > 0 && $unitPrice > 0) {
             $denominator = 1 - ($discountPercent / 100);
             $originalUnitPrice = $denominator > 0
                 ? round($unitPrice / $denominator, 2)
                 : $unitPrice;
+            $lineSubtotal = round($quantity * $originalUnitPrice, 2);
         } else {
-            $originalUnitPrice = $unitPrice;
+            $originalUnitPrice = $listPrice ?? $unitPrice;
+            $lineSubtotal = round($quantity * $originalUnitPrice, 2);
         }
 
-        $lineSubtotal = round($quantity * $originalUnitPrice, 2);
         $lineDiscount = round(max(0, $lineSubtotal - $lineTotal), 2);
 
         $qtyDisplay = $unit === 'kg'
@@ -348,6 +355,8 @@ class CustomerController extends Controller
             'unit_price' => $unitPrice,
             'unit_price_original' => $originalUnitPrice,
             'discount_percent' => $discountPercent,
+            'price_overridden' => $priceOverridden,
+            'default_price' => $defaultPrice,
             'line_discount' => $lineDiscount,
             'line_subtotal' => $lineSubtotal,
             'line_total' => $lineTotal,

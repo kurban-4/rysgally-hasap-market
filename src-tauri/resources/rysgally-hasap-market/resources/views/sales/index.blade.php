@@ -79,7 +79,8 @@
                             <thead>
                                 <tr>
                                     <th>{{__("app.table_preparation")}}</th>
-                                    <th class="text-center">{{__("app.table_quantity_short")}} / ТИП</th>
+                                    <th class="text-center">{{__("app.table_quantity_short")}}</th>
+                                    <th class="text-center">{{ __('app.pos_unit_price') }}</th>
                                     <th class="text-end">{{__("app.table_price")}}</th>
                                     <th class="text-center"><i class="bi bi-x-circle"></i></th>
                                 </tr>
@@ -94,19 +95,32 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <input type="number" 
+                                        <input type="number"
                                                data-cart-id="{{ $id }}"
                                                data-sale-type="{{ $item['sale_type'] }}"
-                                               value="{{ $item['sale_type'] === 'weight' ? $item['quantity'] : (int)$item['quantity'] }}" 
+                                               value="{{ $item['sale_type'] === 'weight' ? $item['quantity'] : (int)$item['quantity'] }}"
                                                step="{{ $item['sale_type'] === 'weight' ? '0.001' : '1' }}"
-                                               class="qty-input-ajax"
-                                               {{ $item['sale_type'] === 'weight' ? 'min="0.001"' : 'min="1"' }}
-                                               style="width: 70px; text-align: center; padding: 4px 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 16px; line-height: 1.5;">
-                                        <span class="qty-unit ms-1 small" style="font-size: 0.85rem; color: #666;">
+                                               class="qty-input-ajax cart-field-input"
+                                               {{ $item['sale_type'] === 'weight' ? 'min="0.001"' : 'min="1"' }}>
+                                        <span class="qty-unit ms-1 small text-muted">
                                             {{ $item['sale_type'] === 'weight' ? 'kg' : 'pcs.' }}
                                         </span>
                                     </td>
-                                    <td class="text-end fw-bold text-teal fs-5">{{ number_format($item['total_price'], 2) }}</td>
+                                    <td class="text-center">
+                                        <input type="number"
+                                               data-cart-id="{{ $id }}"
+                                               value="{{ number_format((float)($item['price'] ?? 0), 2, '.', '') }}"
+                                               step="0.01"
+                                               min="0"
+                                               class="price-input-ajax cart-field-input"
+                                               title="{{ __('app.pos_unit_price_hint') }}">
+                                        @if(!empty($item['price_overridden']))
+                                            <div class="small text-warning fw-semibold mt-1">{{ __('app.pos_price_changed') }}</div>
+                                        @elseif(($item['discount'] ?? 0) > 0)
+                                            <div class="small text-muted mt-1">-{{ (int)$item['discount'] }}%</div>
+                                        @endif
+                                    </td>
+                                    <td class="text-end fw-bold text-teal fs-5 line-total-cell">{{ number_format($item['total_price'], 2) }}</td>
                                     <td class="text-center">
                                         <form action="{{ route('sales.cart.remove', $id) }}" method="POST" class="m-0">
                                             @csrf @method('DELETE')
@@ -118,7 +132,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="4" class="text-center py-5 text-muted">
+                                    <td colspan="5" class="text-center py-5 text-muted">
                                         <i class="bi bi-cart-x fs-1 d-block mb-2 opacity-25"></i>
                                         {{ __('app.receipt_empty') }}
                                     </td>
@@ -218,24 +232,24 @@
 </div>
 
 <style>
-/* Make number input spinners (arrows) bigger */
+.cart-field-input {
+    width: 78px;
+    text-align: center;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.price-input-ajax { width: 88px; }
 .qty-input-ajax::-webkit-outer-spin-button,
-.qty-input-ajax::-webkit-inner-spin-button {
+.qty-input-ajax::-webkit-inner-spin-button,
+.price-input-ajax::-webkit-outer-spin-button,
+.price-input-ajax::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
-    height: 28px;
-    opacity: 1;
 }
-
-.qty-input-ajax {
-    appearance: textfield;
-    position: relative;
-}
-
-/* Larger spinner buttons */
-input[type="number"].qty-input-ajax {
-    padding-right: 2px;
-}
+.qty-input-ajax, .price-input-ajax { appearance: textfield; }
 </style>
 
 <script>
@@ -243,161 +257,116 @@ input[type="number"].qty-input-ajax {
 const translations = {
     qty_must_be_positive: "{{ __('app.qty_must_be_positive') }}",
     error_qty_update: "{{ __('app.error_qty_update') }}",
-    error_qty_insufficient: "{{ __('app.error_qty_insufficient') }}"
+    error_price_update: "{{ __('app.error_price_update') }}",
 };
+const cartUpdateUrl = @json(route('sales.cart.update', ['id' => '__ID__']));
+const cartPriceUpdateUrl = @json(route('sales.cart.update_price', ['id' => '__ID__']));
+
+function refreshCartTable() {
+    return fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(res => res.text())
+        .then(html => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const oldTable = document.querySelector('.table-scroll-container');
+            const newTable = doc.querySelector('.table-scroll-container');
+            if (oldTable && newTable) oldTable.innerHTML = newTable.innerHTML;
+
+            const oldSummary = document.querySelector('.cart-summary-panel');
+            const newSummary = doc.querySelector('.cart-summary-panel');
+            if (oldSummary && newSummary) oldSummary.innerHTML = newSummary.innerHTML;
+
+            if (typeof restoreTillId === 'function') restoreTillId();
+            if (typeof updateMobileTotal === 'function') updateMobileTotal();
+            bindCartFieldSnapshots();
+        });
+}
+
+function bindCartFieldSnapshots() {
+    document.querySelectorAll('.qty-input-ajax, .price-input-ajax').forEach(input => {
+        if (!input.dataset.previousValue) {
+            input.dataset.previousValue = input.value;
+        }
+    });
+}
+
+function patchCart(cartId, url, payload, input, onSuccess) {
+    const formData = new FormData();
+    Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+    formData.append('_method', 'PATCH');
+
+    return fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+        },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success === false) {
+            alert(data.message || translations.error_qty_update);
+            if (input) input.value = input.dataset.previousValue || input.value;
+            return;
+        }
+        if (input) input.dataset.previousValue = input.value;
+        if (onSuccess) onSuccess(data);
+        else return refreshCartTable();
+    })
+    .catch(() => {
+        alert(translations.error_qty_update);
+        if (input) input.value = input.dataset.previousValue || input.value;
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
-    
-    document.addEventListener('focus', function(e) {
-        if (e.target.classList.contains('qty-input-ajax')) {
-            e.target.value = '';
-        }
-    }, true);
-    
-    document.addEventListener('keypress', function(e) {
-        if (e.target.classList.contains('qty-input-ajax') && e.key === 'Enter') {
-            e.preventDefault();
-            const event = new Event('change', { bubbles: true });
-            e.target.dispatchEvent(event);
-        }
-    });
-    
-    document.addEventListener('input', function(e) {
-        if (e.target.classList.contains('qty-input-ajax')) {
-            const input = e.target;
-            const cartId = input.getAttribute('data-cart-id');
-            const saleType = input.getAttribute('data-sale-type');
-            let quantity = parseFloat(input.value);
-            
-            
-            if (saleType !== 'weight') {
-                quantity = Math.round(quantity);
-                input.value = quantity;
-            }
-            
-            if (quantity <= 0) {
-                alert(translations.qty_must_be_positive);
-                input.value = input.getAttribute('data-previous-value');
-                return;
-            }
-            
-            input.setAttribute('data-previous-value', quantity);
-            
-            const formData = new FormData();
-            formData.append('quantity', quantity);
-            formData.append('_method', 'PATCH');
-            
-            fetch(`/admin/sales/cart/${cartId}`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success === false) {
-                    alert(data.message || translations.error_qty_update);
-                    location.reload();
-                } else {
-                    
-                    fetch(window.location.href)
-                        .then(res => res.text())
-                        .then(html => {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            
-                            const oldTable = document.querySelector('.table-scroll-container');
-                            const newTable = doc.querySelector('.table-scroll-container');
-                            if (oldTable && newTable) oldTable.innerHTML = newTable.innerHTML;
+    bindCartFieldSnapshots();
 
-                            const oldSummary = document.querySelector('.cart-summary-panel');
-                            const newSummary = doc.querySelector('.cart-summary-panel');
-                            if (oldSummary && newSummary) oldSummary.innerHTML = newSummary.innerHTML;
-                            restoreTillId();
-                            updateMobileTotal();
-                        });
-                }
-            })
-            .catch(error => {
-                console.error('Error updating quantity:', error);
-                alert(translations.error_qty_update);
-            });
+    document.addEventListener('keydown', function(e) {
+        if ((e.target.classList.contains('qty-input-ajax') || e.target.classList.contains('price-input-ajax')) && e.key === 'Enter') {
+            e.preventDefault();
+            e.target.blur();
         }
     });
-    
+
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('qty-input-ajax')) {
             const input = e.target;
             const cartId = input.getAttribute('data-cart-id');
             const saleType = input.getAttribute('data-sale-type');
-            let quantity = parseFloat(input.value);
-            
-            
+            let quantity = parseFloat(String(input.value).replace(',', '.'));
+
+            if (!Number.isFinite(quantity) || quantity <= 0) {
+                alert(translations.qty_must_be_positive);
+                input.value = input.dataset.previousValue || '1';
+                return;
+            }
+
             if (saleType !== 'weight') {
                 quantity = Math.round(quantity);
                 input.value = quantity;
             }
-            
-            if (quantity <= 0) {
-                alert(translations.qty_must_be_positive);
-                input.value = input.getAttribute('data-previous-value');
+
+            patchCart(cartId, cartUpdateUrl.replace('__ID__', cartId), { quantity }, input);
+        }
+
+        if (e.target.classList.contains('price-input-ajax')) {
+            const input = e.target;
+            const cartId = input.getAttribute('data-cart-id');
+            let price = parseFloat(String(input.value).replace(',', '.'));
+
+            if (!Number.isFinite(price) || price < 0) {
+                alert(translations.error_price_update);
+                input.value = input.dataset.previousValue || '0';
                 return;
             }
-            
-            input.setAttribute('data-previous-value', quantity);
-            
-            const formData = new FormData();
-            formData.append('quantity', quantity);
-            formData.append('_method', 'PATCH');
-            
-            fetch(`/admin/sales/cart/${cartId}`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success === false) {
-                    alert(data.message || translations.error_qty_update);
-                    location.reload();
-                } else {
-                    
-                    fetch(window.location.href)
-                        .then(res => res.text())
-                        .then(html => {
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            
-                            const oldTable = document.querySelector('.table-scroll-container');
-                            const newTable = doc.querySelector('.table-scroll-container');
-                            if (oldTable && newTable) {
-                                oldTable.innerHTML = newTable.innerHTML;
-                            }
 
-                            const oldSummary = document.querySelector('.cart-summary-panel');
-                            const newSummary = doc.querySelector('.cart-summary-panel');
-                            if (oldSummary && newSummary) oldSummary.innerHTML = newSummary.innerHTML;
-                            restoreTillId();
-                            
-                            updateMobileTotal();
-                        });
-                }
-            })
-            .catch(error => {
-                console.error('Error updating quantity:', error);
-                alert(translations.error_qty_update);
-            });
+            price = Math.round(price * 100) / 100;
+            input.value = price.toFixed(2);
+
+            patchCart(cartId, cartPriceUpdateUrl.replace('__ID__', cartId), { price }, input);
         }
-    });
-    
-    
-    document.querySelectorAll('.qty-input-ajax').forEach(input => {
-        input.setAttribute('data-previous-value', input.value);
     });
     
     const input = document.getElementById('barcode-focus');

@@ -155,9 +155,9 @@
                                     <td class="text-center">
                                         <div class="price-with-margin">
                                             @php
-                                                $discount = $item->discount ?? 0;
-                                                $originalPrice = $item->selling_price;
-                                                $finalPrice = $discount > 0 ? ($originalPrice * (1 - $discount / 100)) : $originalPrice;
+                                                $discount = (int) ($item->discount ?? $item->product->discount ?? 0);
+                                                $originalPrice = (float) ($item->selling_price ?? $item->product->price ?? 0);
+                                                $finalPrice = $discount > 0 ? round($originalPrice * (1 - $discount / 100), 2) : $originalPrice;
                                             @endphp
                                             <span class="price-badge selling">
                                                 @if($discount > 0)
@@ -256,9 +256,9 @@
                                 <div class="price-item">
                                     <small class="price-label">S:</small>
                                     @php
-                                        $mobileDiscount = $item->discount ?? 0;
-                                        $mobileOriginalPrice = $item->selling_price;
-                                        $mobileFinalPrice = $mobileDiscount > 0 ? ($mobileOriginalPrice * (1 - $mobileDiscount / 100)) : $mobileOriginalPrice;
+                                        $mobileDiscount = (int) ($item->discount ?? $item->product->discount ?? 0);
+                                        $mobileOriginalPrice = (float) ($item->selling_price ?? $item->product->price ?? 0);
+                                        $mobileFinalPrice = $mobileDiscount > 0 ? round($mobileOriginalPrice * (1 - $mobileDiscount / 100), 2) : $mobileOriginalPrice;
                                     @endphp
                                     <span class="price-value">
                                         @if($mobileDiscount > 0)

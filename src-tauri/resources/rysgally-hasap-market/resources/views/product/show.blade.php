@@ -7,7 +7,7 @@
     <main class="app-main">
         @php
             $isWeightProduct = ($product->unit_type ?? 'piece') === 'weight';
-            $effDiscount = $storage ? (int) ($storage->discount ?? 0) : (int) ($product->discount ?? 0);
+            $effDiscount = (int) ($storage?->discount ?? $product->discount ?? 0);
             $listPrice = (float) ($storage?->selling_price ?? $product->price ?? 0);
             $finalPrice = $effDiscount > 0 ? round($listPrice * (1 - $effDiscount / 100), 2) : $listPrice;
             
@@ -181,21 +181,33 @@
 
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-tag"></i></div>
-            <div><div class="meta-label">Selling Price</div><div class="meta-val">${{ number_format($storage?->selling_price ?? $product->price ?? 0, 2) }}</div></div>
+            <div>
+                <div class="meta-label">{{ __('app.product_selling_price') }}</div>
+                <div class="meta-val">
+                    @if($effDiscount > 0)
+                        <span class="text-muted text-decoration-line-through me-1">{{ __('app.currency_tmt') }}{{ number_format($listPrice, 2) }}</span>
+                    @endif
+                    <strong>{{ __('app.currency_tmt') }}{{ number_format($finalPrice, 2) }}</strong>
+                </div>
+            </div>
         </div>
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-cash-coin"></i></div>
-            <div><div class="meta-label">Purchase Price</div><div class="meta-val">${{ number_format($storage?->received_price ?? $product->received_price ?? 0, 2) }}</div></div>
+            <div>
+                <div class="meta-label">{{ __('app.product_received_price') }}</div>
+                <div class="meta-val">{{ __('app.currency_tmt') }}{{ number_format($storage?->received_price ?? $product->received_price ?? 0, 2) }}</div>
+            </div>
         </div>
         <div class="meta-item">
             <div class="meta-icon"><i class="bi bi-percent"></i></div>
             <div>
-                <div class="meta-label">Profit Margin</div>
+                <div class="meta-label">{{ __('app.product_profit_margin') }}</div>
                 <div class="meta-val">
                     @php
                         $displayProfitMargin = $product->profit_margin ?? 0;
-                        if ($displayProfitMargin == 0 && $storage?->selling_price && $storage?->received_price) {
-                            $displayProfitMargin = (($storage->selling_price - $storage->received_price) / $storage->received_price) * 100;
+                        $costPrice = (float) ($storage?->received_price ?? $product->received_price ?? 0);
+                        if ($displayProfitMargin == 0 && $finalPrice > 0 && $costPrice > 0) {
+                            $displayProfitMargin = (($finalPrice - $costPrice) / $costPrice) * 100;
                         }
                     @endphp
                     @if($displayProfitMargin > 0)
@@ -219,7 +231,6 @@
 
     </div> 
 
-                    
                     <div class="detail-right">
 
                         
