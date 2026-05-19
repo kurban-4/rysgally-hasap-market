@@ -5,7 +5,7 @@
     <div class="row justify-content-center">
         <div class="col-xl-11">
 
-            {{-- Перенеси алерты сюда --}}
+            
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-radius: 12px;">
                     <i class="bi bi-check-circle me-2"></i> {{ session('success') }}
@@ -20,7 +20,7 @@
                 </div>
             @endif
 
-            {{-- ДОБАВЬ ВОТ ЭТОТ БЛОК ДЛЯ ВАЛИДАЦИИ --}}
+            
             @if($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-radius: 12px;">
                     <i class="bi bi-exclamation-octagon me-2"></i> <strong>{{ __('app.wholesale_create_error_validation') }}</strong>
@@ -32,10 +32,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-            {{-- КОНЕЦ ДОБАВЛЕННОГО БЛОКА --}}
+            
 
             <div class="row mb-4 align-items-center">
-                {{-- Дальше твой код заголовка --}}
+                
                 <div class="col-md-6">
                     <h2 class="fw-bold mb-1" style="color: #2c3e50; letter-spacing: -0.5px;">{{ __('app.wholesale_summary_title') }}</h2>
                     <nav aria-label="breadcrumb">
@@ -61,7 +61,7 @@
                 </div>
             </div>
 
-            {{-- Статистика (карточки) --}}
+            
             <div class="row mb-4">
                 <div class="col-md-4">
                     <div class="card border-0 shadow-sm p-3" style="border-radius: 18px; border-left: 5px solid #E8722A !important;">
@@ -104,7 +104,7 @@
                 </div>
             </div>
 
-            {{-- Таблица транзакций --}}
+            
             <div class="card border-0 shadow-sm mb-5" style="border-radius: 20px; overflow: hidden;">
                 <div class="card-header bg-white py-3 border-0">
                     <div class="row align-items-center">

@@ -4,7 +4,7 @@
 @include('app.navbar')
 <div class="container-fluid px-4 py-4" style="background: #f4f7f6; min-height: 100vh;">
 
-    {{-- ШАПКА --}}
+    
     <div class="d-flex align-items-center gap-3 mb-4">
         <a href="{{ route('boss.dashboard') }}" class="btn bg-white border-0 rounded-3 p-3 shadow-sm transition-hover">
             <i class="bi bi-arrow-left fs-5" style="color: #E8722A;"></i>
@@ -20,10 +20,10 @@
         </div>
     </div>
 
-    {{-- STAT CARDS --}}
+    
     <div class="row g-3 mb-4">
 
-        {{-- TODAY --}}
+        
         <div class="col-6 col-xl-3">
 
             <a href="{{ route('boss.revenue') }}?from={{ now()->format('Y-m-d') }}&to={{ now()->format('Y-m-d') }}"
@@ -43,7 +43,7 @@
             </a>
         </div>
 
-        {{-- WEEK --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}?from={{ now()->startOfWeek()->format('Y-m-d') }}&to={{ now()->endOfWeek()->format('Y-m-d') }}"
                 class=" text-decoration-none "
@@ -62,7 +62,7 @@
             </a>
         </div>
 
-        {{-- MONTH --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}?from={{ now()->startOfMonth()->format('Y-m-d') }}&to={{ now()->endOfMonth()->format('Y-m-d') }}"
                 class="text-decoration-none "
@@ -81,7 +81,7 @@
             </a>
         </div>
 
-        {{-- ALL TIME --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}"
                 class=" text-decoration-none "
@@ -102,7 +102,7 @@
 
     </div>
 
-    {{-- ФИЛЬТР ПО ДАТЕ --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mb-4">
         <form method="GET" action="{{ route('boss.revenue') }}">
             <div class="row g-3 align-items-end">
@@ -136,7 +136,7 @@
                     @endif
                 </div>
 
-                {{-- БЫСТРЫЕ ФИЛЬТРЫ --}}
+                
                 <div class="col-12 d-flex gap-2 flex-wrap pt-1">
                     <a href="{{ route('boss.revenue') }}?from={{ now()->format('Y-m-d') }}&to={{ now()->format('Y-m-d') }}"
                         class="badge rounded-pill px-3 py-2 text-decoration-none fw-bold transition-hover"
@@ -163,7 +163,7 @@
         </form>
     </div>
 
-    {{-- {{ __('app.revenue_period') }} --}}
+    
     @if(request('from') || request('to'))
     <div class="alert border-0 rounded-4 mb-4 d-flex align-items-center gap-3 shadow-sm" style="background: #e0f2f4;">
         <i class="bi bi-calendar-check fs-5" style="color: #E8722A;"></i>
@@ -179,7 +179,7 @@
     </div>
     @endif
 
-    {{-- TILLS TABLE --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-black mb-0" style="color: #1a3a3a;">{{ __('app.revenue_tills') }}</h5>
@@ -259,7 +259,7 @@
         </div>
     </div>
 
-    {{-- FINANCIAL SUMMARY --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-black mb-0" style="color: #1a3a3a;">

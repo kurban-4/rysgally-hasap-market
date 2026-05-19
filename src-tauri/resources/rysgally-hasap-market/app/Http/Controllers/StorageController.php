@@ -6,7 +6,7 @@ use App\Models\Storage;
 use App\Models\Product;
 use App\Services\ScaleService;
 
-    use App\Http\Controllers\WholesaleController; // Make sure this is imported
+    use App\Http\Controllers\WholesaleController; 
 class StorageController extends Controller
 {
     public function index(Request $request)
@@ -48,7 +48,7 @@ class StorageController extends Controller
         $storage->getCollection()->transform(function ($item) {
             $unitType = $item->product->unit_type ?? 'piece';
            if ($unitType === 'weight') {
-    $item->display_amount = (float) $item->quantity; // Automatically drops trailing zeros
+    $item->display_amount = (float) $item->quantity; 
     $item->display_unit = 'kg';
 }else {
                 $item->display_amount = (int)$item->quantity;
@@ -119,13 +119,13 @@ class StorageController extends Controller
             'expiry_date'    => $request->expiry_date,
         ]);
 
-        // Auto-export weighable products to scale on update
+        
         if (config('scale.auto_export_on_update') && $product->isWeight()) {
             try {
                 $scaleService = new ScaleService();
                 $scaleService->exportStorage($storageEntry);
             } catch (\Exception $e) {
-                // Log error but don't fail the update
+                
                 \Log::error("Failed to export storage to scale: " . $e->getMessage());
             }
         }
@@ -141,7 +141,7 @@ class StorageController extends Controller
 
 public function export(Request $request)
 {
-    // 1. Re-apply the filters from your index method
+    
     $f_category = $request->category;
     $f_status   = $request->status;
 
@@ -161,7 +161,7 @@ public function export(Request $request)
 
     $storageItems = $query->latest()->get();
 
-    // 2. Define headers (following your wholesale style)
+    
     $headers = [
         'ID',
         'Товар',
@@ -174,7 +174,7 @@ public function export(Request $request)
 
     $rows = [];
     foreach ($storageItems as $item) {
-        // Handle units logic
+        
         $unitType = $item->product->unit_type ?? 'piece';
        if ($unitType === 'weight') {
     $amount = (float) $item->quantity;
@@ -184,7 +184,7 @@ public function export(Request $request)
             $unit = 'pcs';
         }
 
-        // Handle Expiry
+        
         $rawDate = $item->expiry_date ?? $item->product->expiry_date ?? null;
         $expiryStr = $rawDate ? \Carbon\Carbon::parse($rawDate)->format('d.m.Y') : '—';
 
@@ -201,7 +201,7 @@ public function export(Request $request)
 
     $fileName = 'retail_storage_' . date('Y-m-d') . '.xlsx';
 
-    // 3. Use your existing buildXlsx helper
+    
     return response()->streamDownload(
         fn() => print WholesaleController::buildXlsx($headers, $rows),
         $fileName,
@@ -217,7 +217,7 @@ public function exportToScale($id)
 {
     $storage = Storage::with('product')->findOrFail($id);
 
-    // Only export weighable products
+    
     if (!$storage->product || !$storage->product->isWeight()) {
         return redirect()->back()->with('error', 'Only weighable products can be exported to scale');
     }

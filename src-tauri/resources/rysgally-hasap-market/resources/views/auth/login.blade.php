@@ -4,7 +4,7 @@
 
 <div class="login-root">
 
-    {{-- Left panel: branding --}}
+    
     <div class="login-left">
         <div class="brand-mark">
             <div class="brand-cart">
@@ -31,13 +31,13 @@
             <div class="pill"><span class="pill-dot blue"></span> Sales reports</div>
         </div>
 
-        {{-- Decorative circles --}}
+        
         <div class="deco-circle c1"></div>
         <div class="deco-circle c2"></div>
         <div class="deco-circle c3"></div>
     </div>
 
-    {{-- Right panel: form --}}
+    
     <div class="login-right">
         <div class="form-card">
 
@@ -123,7 +123,7 @@ setAppHeight();
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap');
+@import url('https:
 
 :root {
     --ora: #E8722A;

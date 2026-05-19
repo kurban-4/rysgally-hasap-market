@@ -4,7 +4,7 @@
 @include('app.navbar')
 <div class="container-fluid px-4 py-4" style="background: #f4f7f6; min-height: 100vh;">
 
-    {{-- ШАПКА --}}
+    
     <div class="d-flex justify-content-between align-items-center mb-4 p-4 bg-white rounded-4 shadow-sm" style="border-left: 6px solid #ef4444;">
         <div>
             <h2 class="fw-black mb-0" style="color: #1a3a3a;">{!! __('app.expense_management_title') !!}</h2>
@@ -25,7 +25,7 @@
         </div>
     </div>
 
-    {{-- КАРТОЧКА ИТОГО --}}
+    
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card border-0 rounded-4 p-4 shadow-sm" style="border-left: 5px solid #ef4444 !important;">
@@ -51,7 +51,7 @@
         </div>
     </div>
 
-    {{-- ТАБЛИЦА --}}
+    
     <div class="card border-0 rounded-4 shadow-sm p-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -82,7 +82,7 @@
     </div>
 </div>
 
-{{-- МОДАЛЬНОЕ ОКНО --}}
+
 <div class="modal fade" id="addExpenseModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 p-2">

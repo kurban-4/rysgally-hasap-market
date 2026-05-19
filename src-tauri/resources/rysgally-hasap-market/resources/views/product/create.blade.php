@@ -6,7 +6,7 @@
 
     <main class="app-main">
 
-        {{-- Page header --}}
+        
         <header class="page-header">
             <a href="{{ route('storage.index') }}" class="btn-back">
                 <i class="bi bi-arrow-left"></i>
@@ -34,10 +34,10 @@
 
                     <div class="form-grid">
 
-                        {{-- ══ LEFT COLUMN ══ --}}
+                        
                         <div class="form-col">
 
-                            {{-- IDENTITY CARD --}}
+                            
                             <div class="form-card">
                                 <div class="card-eyebrow">
                                     <span class="card-dot orange"></span> {{ __('app.product_identity') }}
@@ -74,7 +74,7 @@
                                 </div>
                             </div>
 
-                            {{-- ITEM TYPE CARD --}}
+                            
                             <div class="form-card">
                                 <div class="card-eyebrow">
                                     <span class="card-dot green"></span> {{ __('app.product_item_type') }}
@@ -103,7 +103,7 @@
                                     </label>
                                 </div>
 
-                                {{-- Dynamic fields --}}
+                                
                                 
                                 <div id="fields-weight" class="mt-4 type-fields d-none">
                                     <div class="field-row two-col">
@@ -149,13 +149,13 @@
                                 </div>
                             </div>
 
-                            {{-- BARCODE CARD --}}
+                            
                             <div class="form-card">
                                 <div class="card-eyebrow">
                                     <span class="card-dot amber"></span> {{ __('app.product_identification') }}
                                 </div>
                                 
-                                {{-- BARCODES FOR PIECE PRODUCTS --}}
+                                
                                 <div id="barcodes-section" class="barcodes-section">
                                     <div class="barcodes-header">
                                         <label class="lbl">{{ __('app.product_barcodes') }}</label>
@@ -203,10 +203,10 @@
 
                         </div>
 
-                        {{-- ══ RIGHT COLUMN ══ --}}
+                        
                         <div class="form-col right-col">
 
-                            {{-- PRICE CARD --}}
+                            
                             <div class="form-card pricing-card">
                                 <div class="card-eyebrow">
                                     <span class="card-dot blue"></span> {{ __('app.product_pricing') }}
@@ -266,7 +266,7 @@
                                 </div>
                             </div>
 
-                            {{-- BATCH CARD --}}
+                            
                             <div class="form-card">
                                 <div class="card-eyebrow">
                                     <span class="card-dot green"></span> {{ __('app.product_batch_info') }}
@@ -280,7 +280,7 @@
 
 
 
-                            {{-- SAVE BUTTON --}}
+                            
                             <button type="submit" class="btn-save">
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span>{{ __('app.btn_save_product') }}</span>
@@ -311,20 +311,20 @@ function switchType(type) {
         unitFields.classList.remove('d-none');
     }
 }document.addEventListener('DOMContentLoaded', function() {
-    // Ищем unit_type, а не item_type
+    
     const checked = document.querySelector('input[name="unit_type"]:checked');
-    // Если ничего не выбрано, по умолчанию открываем 'piece' (или 'unit' по вашему ID)
+    
     switchType(checked ? checked.value : 'piece');
     updatePrice();
 });
-// ── Price calculator ─────────────────────────────────────────────
+
 const priceInput    = document.getElementById('priceInput');
 const discountRange = document.getElementById('discountRange');
 const discountInput = document.getElementById('discountInput');
 const priceDisplay  = document.getElementById('priceDisplay');
 const badge         = document.getElementById('discountBadge');
 
-// ── Profit margin calculator ─────────────────────────────────────
+
 const receivedPriceInput = document.querySelector('input[name="received_price"]');
 const profitMarginInput = document.querySelector('input[name="profit_margin"]');
 
@@ -340,7 +340,7 @@ function updatePrice() {
         badge.classList.add('d-none');
     }
     
-    // Update profit margin
+    
     updateProfitMargin();
 }
 
@@ -371,7 +371,7 @@ if (priceInput)    priceInput.addEventListener('input', updatePrice);
 if (discountRange) discountRange.addEventListener('input', updatePrice);
 if (receivedPriceInput) receivedPriceInput.addEventListener('input', updateProfitMargin);
 
-// ── BARCODES MANAGEMENT ─────────────────────────────────────
+
 const barcodesSection = document.getElementById('barcodes-section');
 const barcodesContainer = document.getElementById('barcodes-container');
 const addBarcodeBtn = document.getElementById('add-barcode-btn');
@@ -416,25 +416,25 @@ function attachBarcodeEvents(barcodeItem) {
     }
 }
 
-// Initialize
+
 if (addBarcodeBtn) {
     addBarcodeBtn.addEventListener('click', addBarcodeField);
 }
 
-// Attach events to existing barcode fields
+
 document.querySelectorAll('.barcode-item').forEach(attachBarcodeEvents);
 
-// Update visibility when unit type changes
+
 document.querySelectorAll('input[name="unit_type"]').forEach(radio => {
     radio.addEventListener('change', updateBarcodesVisibility);
 });
 
-// Initial visibility check
+
 updateBarcodesVisibility();
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https:
 
 :root {
     --ora: #E8722A;
@@ -877,12 +877,12 @@ input[type="date"]::-moz-calendar-picker-indicator {
 </style>
 
 <script>
-// Enhanced date input functionality
+
 document.addEventListener('DOMContentLoaded', function() {
     const dateInputs = document.querySelectorAll('.date-input');
     
     dateInputs.forEach(input => {
-        // Add focus enhancement
+        
         input.addEventListener('focus', function() {
             this.parentElement.classList.add('date-focused');
         });
@@ -891,12 +891,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.parentElement.classList.remove('date-focused');
         });
         
-        // Add date validation
+        
         input.addEventListener('change', function() {
             validateDateRange(this);
         });
         
-        // Add keyboard navigation
+        
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -905,7 +905,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Date range validation function
+    
     function validateDateRange(input) {
         const producedDate = document.getElementById('producedDate');
         const expiryDate = document.getElementById('expiryDate');
@@ -915,16 +915,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const expiry = new Date(expiryDate.value);
             
             if (produced > expiry) {
-                // Show error message
+                
                 showDateError('{{ __('app.product_date_error') }}');
-                expiryDate.value = ''; // Clear expiry date
+                expiryDate.value = ''; 
             } else {
                 hideDateError();
             }
         }
     }
     
-    // Date error handling
+    
     function showDateError(message) {
         let errorDiv = document.querySelector('.date-error');
         if (!errorDiv) {
@@ -933,7 +933,7 @@ document.addEventListener('DOMContentLoaded', function() {
             errorDiv.style.marginTop = '10px';
             errorDiv.style.marginBottom = '10px';
             
-            // Insert after expiry date field
+            
             const expiryField = document.getElementById('expiryDate').closest('.field-row');
             expiryField.parentNode.insertBefore(errorDiv, expiryField.nextSibling);
         }
@@ -948,7 +948,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add date picker enhancement for mobile
+    
     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         dateInputs.forEach(input => {
             input.setAttribute('inputmode', 'none');

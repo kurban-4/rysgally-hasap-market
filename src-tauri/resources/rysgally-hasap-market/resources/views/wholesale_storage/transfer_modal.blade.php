@@ -1,4 +1,4 @@
-{{-- Transfer from a specific wholesale batch → market storage (same product + scan code rules as POS) --}}
+
 @php
     $p = $item->product;
     $defaultScan = ($p->unit_type ?? 'piece') === 'weight'

@@ -1,4 +1,4 @@
-{{-- resources/views/license.blade.php --}}
+
 <!DOCTYPE html>
 <html>
 <head>

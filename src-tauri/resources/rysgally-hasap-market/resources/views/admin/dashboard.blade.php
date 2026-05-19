@@ -5,8 +5,8 @@
 
 <div class="container-fluid px-4 py-4" style="background: #f4f7f6; min-height: 100vh;">
 
-    {{-- HEADER --}}
-{{-- HEADER --}}
+    
+
 <div class="p-4 bg-white rounded-4 shadow-sm mb-4 d-flex justify-content-between align-items-center"
     style="border-left: 6px solid #E8722A;">
     <div>
@@ -17,7 +17,7 @@
     </div>
     <div class="d-flex align-items-center gap-3">
 
-        {{-- КНОПКА СМЕНЫ --}}
+        
         <a href="{{ route('admin.shifts') }}"
            class="btn fw-bold px-4 py-2 rounded-3 d-flex align-items-center gap-2"
            style="background: #e0f2f4; color: #E8722A; border: none; transition: 0.2s;"
@@ -34,10 +34,10 @@
     </div>
 </div>
 
-    {{-- STAT CARDS --}}
+    
     <div class="row g-3 mb-4">
 
-        {{-- TODAY --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}" class="text-decoration-none">
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
@@ -54,7 +54,7 @@
             </a>
         </div>
 
-        {{-- WEEK --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}" class="text-decoration-none">
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
@@ -71,7 +71,7 @@
             </a>
         </div>
 
-        {{-- MONTH --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}" class="text-decoration-none">
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
@@ -88,7 +88,7 @@
             </a>
         </div>
 
-        {{-- ALL TIME --}}
+        
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.revenue') }}" class="text-decoration-none">
                 <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100 transition-hover"
@@ -107,7 +107,7 @@
 
     </div>
 
-    {{-- EXPENSES + NET PROFIT --}}
+    
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
             <div class="card bg-white border-0 rounded-4 p-4 shadow-sm h-100"
@@ -131,7 +131,7 @@
         </div>
     </div>
 
-    {{-- TILLS TABLE --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-black mb-0" style="color: #1a3a3a;">{{ __('app.admin_tills') }}</h5>
@@ -211,7 +211,7 @@
         </div>
     </div>
 
-    {{-- TODAY EXPENSES --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-black mb-0" style="color: #1a3a3a;">{{ __('app.admin_expenses_header') }}</h5>
@@ -243,7 +243,7 @@
         @endif
     </div>
 
-    {{-- TOTAL FINANCIAL SUMMARY --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-black mb-0" style="color: #1a3a3a;">

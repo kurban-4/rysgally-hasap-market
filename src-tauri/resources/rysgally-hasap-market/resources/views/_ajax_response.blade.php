@@ -1,4 +1,4 @@
-<!-- {{-- _ajax_response.blade.php --}}
+<!-- 
 <div id="productsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 40px;">
     @include('client.shop._product_list')
 </div>

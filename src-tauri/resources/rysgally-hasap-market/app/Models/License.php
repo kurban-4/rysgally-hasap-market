@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 
 class License extends Model
 {
-    // Laravel сам найдет таблицу 'licenses' (с S), 
-    // так как модель называется License. Это стандарт.
+    
+    
     protected $fillable = ['key', 'is_activated', 'activated_at'];
 
     public static function isActivated(): bool
     {
-        // Проверяем 'licenses' (с S), как в твоей последней миграции
+        
         if (!Schema::hasTable('licenses')) {
             return false;
         }
@@ -25,7 +25,7 @@ class License extends Model
     {
         $secret = 'rysgally-hasap';
         
-        // Минимум 17 символов: RYSGALLY- (9) + Код (8)
+        
         if (strlen($key) < 17) {
             return false;
         }

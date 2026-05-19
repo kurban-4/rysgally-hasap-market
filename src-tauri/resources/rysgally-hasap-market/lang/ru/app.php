@@ -494,7 +494,7 @@ return [
     'wholesale_create_btn_finalize' => 'Finalize & Record Sale',
     'wholesale_create_error_validation' => 'Ошибка заполнения:',
     
-    // Wholesale Show Invoice
+    
     'wholesale_show_invoice_title' => 'Счёт',
     'wholesale_show_brand' => 'ФАРМА',
     'wholesale_show_brand_emphasis' => 'СИС',
@@ -519,7 +519,7 @@ return [
     'wholesale_show_grand_total' => 'Общая сумма',
     'wholesale_show_thank_you' => 'Спасибо за Ваше дело!',
     
-    // Wholesale Edit Invoice
+    
     'wholesale_edit_heading' => 'Редактировать счёт',
     'wholesale_edit_back' => 'Назад',
     'wholesale_edit_customer_label' => 'Покупатель (Müşderi)',
@@ -577,7 +577,7 @@ return [
     'wholesale_inventory_no_date' => 'Нет даты',
     'wholesale_inventory_confirm_delete' => 'Удалить эту партию?',
     
-    // Wholesale Storage Create
+    
     'wholesale_storage_create_title' => 'Добавить новую партию товара',
     'wholesale_storage_create_back' => 'Назад',
     'wholesale_storage_create_product_name' => 'Название товара (вручную)',
@@ -603,7 +603,7 @@ return [
     'wholesale_storage_create_btn_save' => 'Сохранить партию товара',
     'wholesale_storage_create_btn_cancel' => 'Отмена',
     
-    // Wholesale Storage Transfer Modal
+    
     'wholesale_storage_transfer_title' => 'Перевести в рынок',
     'wholesale_storage_transfer_batch' => 'Партия',
     'wholesale_storage_transfer_available' => 'Доступно',
@@ -619,7 +619,7 @@ return [
     'wholesale_storage_transfer_error_stock' => 'Невозможно превысить доступный запас для этой партии.',
     'wholesale_storage_transfer_note' => 'Запас берется <strong>только из этой партии</strong> и добавляется в розничный склад.',
     
-    // Wholesale Transfer Modal (Index Page)
+    
     'wholesale_transfer_modal_title' => 'Перевести в рынок',
     'wholesale_transfer_modal_product' => 'Продукт',
     'wholesale_transfer_modal_select_product' => 'Выберите продукт',
@@ -640,7 +640,7 @@ return [
     'wholesale_transfer_modal_cancel' => 'Отмена',
     'wholesale_transfer_modal_confirm' => 'Подтвердить перевод',
     
-    // JavaScript translations for transfer modal
+    
     'wholesale_transfer_js_enter_amount' => 'Введите количество для перевода',
     'wholesale_transfer_js_moves_to_market' => 'Перемещает {0} {1} на склад рынка (та же единица, что и оптовая).',
     'wholesale_transfer_js_weight_label' => 'Вес для перевода (кг)',
@@ -652,7 +652,7 @@ return [
     'wholesale_transfer_js_barcode_placeholder' => 'Отсканируйте или введите штрих-код товара',
     'wholesale_transfer_js_barcode_hint' => 'Для штучных товаров используйте штрих-код. Заполняется из карточки товара при установке.',
 
-    // Product create form
+    
     'product_identity' => 'Идентификация продукта',
     'product_name' => 'Название продукта',
     'product_name_placeholder' => 'напр. Яблоки',
@@ -697,7 +697,7 @@ return [
     'btn_save_product' => 'Сохранить продукт',
     'storage_title' => 'Склад',
 
-    // Admin dashboard calculations
+    
     'admin_today' => 'Сегодня',
     'admin_week' => 'Эта неделя',
     'admin_month' => 'Этот месяц',
@@ -746,7 +746,7 @@ return [
     'expense_label_amount' => 'Сумма',
     'expense_placeholder_amount' => '0.00',
 
-    // Admin dashboard missing keys
+    
     'admin_dashboard_title' => 'Админ панель',
     'admin_dashboard_subtitle' => 'Управление системой и аналитика',
     'admin_shift_logs' => 'Журнал смен',
@@ -764,7 +764,7 @@ return [
     'admin_table_all_time' => 'ВСЕ ВРЕМЯ',
     'admin_table_details' => 'ДЕТАЛИ',
 
-    // Till detail missing keys
+    
     'till_detail_subtitle' => 'Детальный отчет по кассе',
     'till_filter_dates' => 'Фильтр по датам',
     'till_results_shown' => 'Показано результатов:',
@@ -792,7 +792,7 @@ return [
     'till_pieces' => 'штуки',
     'till_no_tills' => 'Кассы не найдены',
 
-    // Financial summary missing keys
+    
     'till_financial_summary_all' => 'Финансовая сводка все',
     'till_all_tills' => 'Все кассы',
     'till_no_sales' => 'Нет продаж',
@@ -826,10 +826,10 @@ return [
     'expenses_table_description' => 'ОПИСАНИЕ',
     'expenses_table_amount' => 'СУММА',
 
-    // Currency
+    
     'currency_tmt' => 'TMT',
 
-    // Shift status keys
+    
     'shift_status_active' => 'Активна',
     'shift_status_closed' => 'Закрыта',
     'shift_no_shifts' => 'Смен пока нет',
@@ -845,12 +845,12 @@ return [
     'shift_table_revenue' => 'Выручка',
     'shift_table_status' => 'Статус',
 
-    // Storage table price headers
+    
     'storage_table_received_price' => 'Цена получения',
     'storage_table_selling_price' => 'Цена продажи',
     'storage_export_to_scale' => 'Экспорт на весы',
 
-    // Product show page keys
+    
     'product_type_weighable' => 'Весовой',
     'product_type_unit' => 'Штучный',
     'product_type_boxed' => 'Коробочный',
@@ -872,6 +872,6 @@ return [
     'product_unit' => 'Единица',
     'product_discount' => 'Скидка',
 
-    // Product create date validation
+    
     'product_date_error' => 'Дата производства не может быть позже даты истечения срока',
 ];

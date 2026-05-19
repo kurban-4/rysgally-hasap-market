@@ -12,16 +12,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
 
-            // barcode для партии (опционально)
+            
             $table->string('barcode')->nullable();
 
-            // quantity: хранит pcs для piece и kg (decimal:3) для weight
+            
             $table->decimal('quantity', 12, 3)->default(0);
 
             $table->string('category')->nullable();
             $table->date('expiry_date')->nullable();
 
-            // цены и метаданные партии
+            
             $table->decimal('received_price', 10, 2)->nullable();
             $table->decimal('selling_price', 10, 2)->nullable();
             $table->integer('discount')->default(0);

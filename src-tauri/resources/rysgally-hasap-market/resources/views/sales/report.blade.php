@@ -24,7 +24,7 @@
         <div class="workspace custom-scrollbar">
             <div class="report-container">
 
-                {{-- Shift timing --}}
+                
                 <div class="shift-times-card panel-card mb-4">
                     <div class="shift-time-item">
                         <small class="time-label">{{__("app.report_shift_open")}}</small>
@@ -37,7 +37,7 @@
                     </div>
                 </div>
 
-                {{-- Summary stats --}}
+                
                 <div class="summary-grid mb-4">
                     <div class="summary-card">
                         <div class="summary-icon bg-teal-soft"><i class="bi bi-box2-heart text-teal"></i></div>
@@ -62,13 +62,13 @@
                     </div>
                 </div>
 
-                {{-- Items table --}}
+                
                 <div class="panel-card">
                     <div class="table-header">
                         <h6 class="fw-bold mb-0">{{__("app.report_sold_products")}}</h6>
                     </div>
 
-                    {{-- Desktop table --}}
+                    
                     <table class="table table-sm report-table m-0 d-none d-sm-table">
                         <thead>
                             <tr>
@@ -95,7 +95,7 @@
                         </tbody>
                     </table>
 
-                    {{-- Mobile list --}}
+                    
                     <div class="d-sm-none report-items-mobile">
                         @foreach($report['products'] as $productId => $items)
                         <div class="report-item-row">
@@ -108,7 +108,7 @@
                         @endforeach
                     </div>
 
-                    {{-- Grand total row --}}
+                    
                     <div class="table-grand-total">
                         <div class="grand-row">
                             <div class="grand-item">
@@ -123,7 +123,7 @@
                     </div>
                 </div>
 
-                {{-- Footer --}}
+                
                 <div class="report-footer">
                     <p class="text-muted small mb-1">{{__("app.report_cashier")}} {{ auth()->user()->name }}</p>
                     <p class="text-muted" style="font-size: 10px;">{{ config('app.name') }} POS System — {{ date('Y') }}</p>

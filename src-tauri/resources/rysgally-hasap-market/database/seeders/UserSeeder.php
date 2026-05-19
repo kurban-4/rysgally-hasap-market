@@ -12,7 +12,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // First, activate the license to bypass permission checks
+        
         if (Schema::hasTable('licenses')) {
             License::updateOrCreate(
                 ['key' => 'RYSGALLY-HASAP-BUILD'],
@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
             );
         }
 
-        // Create admin user
+        
         $admin = User::firstOrCreate([
             'username' => 'admin',
         ], [
@@ -32,7 +32,7 @@ class UserSeeder extends Seeder
             'role' => 'admin',
         ]);
 
-        // Create sample users for other roles
+        
         $salesman = User::firstOrCreate([
             'username' => 'salesman',
         ], [

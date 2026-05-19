@@ -108,10 +108,10 @@ class WholesaleController extends Controller
         return response()->json(array_unique(array_merge($customers, $products)));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXPORT  →  wholesale_invoices_YYYY-MM-DD.xlsx
-    // Same filters as index(). No extra packages — pure PHP ZipArchive + XML.
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
+    
 public function exportExcel(Request $request)
 {
     $query = WholesaleInvoice::with(['items.product']);
@@ -169,9 +169,9 @@ public function exportExcel(Request $request)
     ]);
 }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Shared xlsx builder — called by both controllers
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
     public static function buildXlsx(array $headers, array $rows): string
     {
         $strings = [];
@@ -181,7 +181,7 @@ public function exportExcel(Request $request)
             return $strings[$val];
         };
 
-        // Header row
+        
         $sheetRows = '<row r="1">';
         foreach ($headers as $col => $h) {
             $addr = self::colLetter($col) . '1';
@@ -189,7 +189,7 @@ public function exportExcel(Request $request)
         }
         $sheetRows .= '</row>';
 
-        // Data rows
+        
         foreach ($rows as $ri => $row) {
             $rowNum     = $ri + 2;
             $sheetRows .= '<row r="' . $rowNum . '">';
@@ -205,24 +205,24 @@ public function exportExcel(Request $request)
             $sheetRows .= '</row>';
         }
 
-        // Shared strings
+        
         $ssCount = count($strings);
         $ssXml   = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                 . '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+                 . '<sst xmlns="http:
                  . ' count="' . $ssCount . '" uniqueCount="' . $ssCount . '">';
         foreach (array_keys($strings) as $str) {
             $ssXml .= '<si><t xml:space="preserve">' . htmlspecialchars($str, ENT_XML1, 'UTF-8') . '</t></si>';
         }
         $ssXml .= '</sst>';
 
-        // Sheet
+        
         $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<worksheet xmlns="http:
             . '<sheetData>' . $sheetRows . '</sheetData></worksheet>';
 
-        // Styles (index 0 = normal, index 1 = bold for header)
+        
         $stylesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<styleSheet xmlns="http:
             . '<fonts count="2">'
             . '<font><sz val="11"/><name val="Calibri"/></font>'
             . '<font><b/><sz val="11"/><name val="Calibri"/></font>'
@@ -231,32 +231,32 @@ public function exportExcel(Request $request)
             . '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
             . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
             . '<cellXfs count="2">'
-            . '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'   // s="0" normal
-            . '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>'   // s="1" bold
+            . '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'   
+            . '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>'   
             . '</cellXfs>'
             . '</styleSheet>';
 
-        // Workbook
+        
         $workbookXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
-            . ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            . '<workbook xmlns="http:
+            . ' xmlns:r="http:
             . '<sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets>'
             . '</workbook>';
 
         $wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
-            . '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>'
-            . '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+            . '<Relationships xmlns="http:
+            . '<Relationship Id="rId1" Type="http:
+            . '<Relationship Id="rId2" Type="http:
+            . '<Relationship Id="rId3" Type="http:
             . '</Relationships>';
 
         $pkgRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+            . '<Relationships xmlns="http:
+            . '<Relationship Id="rId1" Type="http:
             . '</Relationships>';
 
         $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            . '<Types xmlns="http:
             . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
             . '<Default Extension="xml" ContentType="application/xml"/>'
             . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
@@ -282,7 +282,7 @@ public function exportExcel(Request $request)
         return $binary;
     }
 
-    // 0-based column index → Excel letter (0=A, 25=Z, 26=AA …)
+    
     public static function colLetter(int $index): string
     {
         $letter = '';
@@ -295,9 +295,9 @@ public function exportExcel(Request $request)
         return $letter;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Everything below is YOUR ORIGINAL CODE — untouched
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
 
     public function create()
     {
@@ -361,7 +361,7 @@ public function exportExcel(Request $request)
                     $rowTotal = ($unitPrice * $qtyToSell) * (1 - ($discount / 100));
                     $grandTotal += $rowTotal;
 
-                    // Get first batch info for expiry date and batch number
+                    
                     $firstBatch = WholesaleStorage::where('product_id', $product->id)
                         ->where('quantity', '>', 0)
                         ->orderBy('expiry_date', 'asc')
@@ -410,8 +410,8 @@ public function exportExcel(Request $request)
             return redirect()->back()->with('error', 'Not enough stock in wholesale warehouse.');
         }
 
-        // For now, just decrement the stock, assuming transfer to retail or something
-        // In reality, this might need to update retail storage or create a transfer record
+        
+        
         $batches = WholesaleStorage::where('product_id', $product->id)
             ->where('quantity', '>', 0)
             ->orderBy('expiry_date', 'asc')

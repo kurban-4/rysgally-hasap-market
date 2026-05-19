@@ -13,11 +13,11 @@ return new class extends Migration
 {
     Schema::create('shifts', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Продавец
-        $table->timestamp('opened_at'); // Время открытия смены
-        $table->timestamp('closed_at')->nullable(); // Время закрытия (изначально пусто)
-        $table->decimal('total_revenue', 10, 2)->default(0); // Выручка за эту смену
-        $table->enum('status', ['active', 'closed'])->default('active'); // Статус
+        $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
+        $table->timestamp('opened_at'); 
+        $table->timestamp('closed_at')->nullable(); 
+        $table->decimal('total_revenue', 10, 2)->default(0); 
+        $table->enum('status', ['active', 'closed'])->default('active'); 
         $table->timestamps();
     });
 }

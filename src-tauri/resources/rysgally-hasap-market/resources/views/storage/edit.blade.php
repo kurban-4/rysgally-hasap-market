@@ -45,10 +45,10 @@
 
                     <div class="edit-grid">
 
-                        {{-- LEFT COLUMN ── quantity · barcode · expiry --}}
+                        
                         <div class="left-col">
 
-                            {{-- QUANTITY: item or weight --}}
+                            
                             <div class="section-card">
                                 <h6 class="section-title">
                                     <i class="bi {{ $unit === 'kg' ? 'bi-speedometer2' : 'bi-boxes' }} me-2"></i>
@@ -80,7 +80,7 @@
                                 </small>
                             </div>
 
-                            {{-- Market scan: product code (weight) or barcode (piece) --}}
+                            
                             <div class="section-card">
                                 <h6 class="section-title">
                                     @if($unit === 'kg')
@@ -100,7 +100,7 @@
                                 @endif
                             </div>
 
-                            {{-- EXPIRY DATE --}}
+                            
                             <div class="section-card">
                                 <h6 class="section-title"><i class="bi bi-calendar-event me-2"></i>{{ __('app.storage_edit_expiry_label') }}</h6>
 
@@ -138,10 +138,10 @@
 
                         </div>
 
-                        {{-- RIGHT COLUMN ── pricing · category · save --}}
+                        
                         <div class="right-col">
 
-                            {{-- PRICING --}}
+                            
                             <div class="section-card">
                                 <h6 class="section-title"><i class="bi bi-tag-fill me-2"></i>{{ __('app.storage_edit_prices_section') }}</h6>
 
@@ -185,7 +185,7 @@
                                 </div>
                             </div>
 
-                            {{-- CATEGORY --}}
+                            
                             <div class="section-card">
                                 <h6 class="section-title"><i class="bi bi-grid me-2"></i>{{ __('app.storage_edit_category') }}</h6>
                                 <div class="input-row">
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https:
 
 :root {
     --primary:      #E8722A;

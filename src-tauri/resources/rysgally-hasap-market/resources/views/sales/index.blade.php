@@ -14,7 +14,7 @@
     </div>
 @endif
         <header class="main-header">
-            {{-- Mobile: hamburger spacer --}}
+            
             <div class="mobile-header-spacer d-none"></div>
             
             <div class="stat-card">
@@ -152,9 +152,9 @@
                 <div class="action-panel panel-card mb-3">
                     <h6 class="panel-title">{{__("app.shift_management_title")}}</h6>
 
-                    {{-- УПРАВЛЕНИЕ СМЕНОЙ --}}
+                    
                     @if(isset($activeShift) && $activeShift)
-                        {{-- Смена открыта --}}
+                        
                         <div class="shift-info-badge mb-3">
                             <i class="bi bi-clock-history me-2"></i>
                             {{ __('app.shift_from', ['time' => $activeShift->opened_at->format('H:i')]) }}
@@ -172,7 +172,7 @@
                             </button>
                         </form>
                     @else
-                        {{-- Смена закрыта --}}
+                        
                         <div class="shift-warning-badge mb-3">
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             {{ __('app.shift_not_started') }}
@@ -203,7 +203,7 @@
 
         </div>
 
-        {{-- Mobile: floating checkout button (visible only on small screens) --}}
+        
         <div class="mobile-checkout-bar d-none" id="mobileCheckoutBar">
             <div class="mobile-checkout-total">
                 <span class="label">Итого</span>
@@ -239,7 +239,7 @@ input[type="number"].qty-input-ajax {
 </style>
 
 <script>
-// Translation strings for JavaScript
+
 const translations = {
     qty_must_be_positive: "{{ __('app.qty_must_be_positive') }}",
     error_qty_update: "{{ __('app.error_qty_update') }}",
@@ -247,7 +247,7 @@ const translations = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Use event delegation for quantity inputs
+    
     document.addEventListener('focus', function(e) {
         if (e.target.classList.contains('qty-input-ajax')) {
             e.target.value = '';
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const saleType = input.getAttribute('data-sale-type');
             let quantity = parseFloat(input.value);
             
-            // For non-weight items, ensure it's an integer
+            
             if (saleType !== 'weight') {
                 quantity = Math.round(quantity);
                 input.value = quantity;
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert(data.message || translations.error_qty_update);
                     location.reload();
                 } else {
-                    // Update total price and cart summary without reload
+                    
                     fetch(window.location.href)
                         .then(res => res.text())
                         .then(html => {
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const saleType = input.getAttribute('data-sale-type');
             let quantity = parseFloat(input.value);
             
-            // For non-weight items, ensure it's an integer
+            
             if (saleType !== 'weight') {
                 quantity = Math.round(quantity);
                 input.value = quantity;
@@ -366,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert(data.message || translations.error_qty_update);
                     location.reload();
                 } else {
-                    // Update total price and cart summary without reload
+                    
                     fetch(window.location.href)
                         .then(res => res.text())
                         .then(html => {
@@ -395,7 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Store initial values for all inputs
+    
     document.querySelectorAll('.qty-input-ajax').forEach(input => {
         input.setAttribute('data-previous-value', input.value);
     });
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('barcode-focus');
     const form = document.getElementById('main-sales-form');
     
-    // Set till_id from localStorage if device is a till
+    
     const deviceType = localStorage.getItem('device_type');
     const tillId = localStorage.getItem('till_id');
     const checkoutTillField = document.getElementById('checkout_till_id');
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
     checkoutTillField.value = tillId;
 }
 
-// Подставляем till_id в форму старта смены
+
 const startShiftTillField = document.getElementById('start_shift_till_id');
 if (startShiftTillField && tillId) {
     startShiftTillField.value = tillId;
@@ -438,8 +438,8 @@ if (startShiftTillField && tillId) {
     e.preventDefault(); 
     const formData = new FormData(form);
 
-    // Теперь в formData будет только barcode и csrf, 
-    // что идеально подходит для нашего нового контроллера.
+    
+    
     fetch("{{ route('sales.cart.add') }}", {
         method: 'POST',
         body: formData,
@@ -502,7 +502,7 @@ if (startShiftTillField && tillId) {
     setupResponsive();
     window.addEventListener('resize', setupResponsive);
     
-    // Auto-print receipt after checkout
+    
     const checkoutForm = document.querySelector('form[action="{{ route("sales.cart.checkout") }}"]');
     const checkoutButton = document.getElementById('btn-pay');
     
@@ -513,7 +513,7 @@ if (startShiftTillField && tillId) {
             const formData = new FormData(checkoutForm);
             const tillIdField = document.getElementById('checkout_till_id');
             
-            // Set till_id if not set
+            
             if (!tillIdField.value) {
                 const deviceType = localStorage.getItem('device_type');
                 const tillId = localStorage.getItem('till_id');
@@ -522,11 +522,11 @@ if (startShiftTillField && tillId) {
                 }
             }
             
-            // Disable button
+            
             checkoutButton.disabled = true;
             checkoutButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
             
-            // Submit checkout via AJAX
+            
             fetch(checkoutForm.action, {
                 method: 'POST',
                 body: formData,
@@ -543,13 +543,13 @@ if (startShiftTillField && tillId) {
             })
             .then(data => {
                 if (data.success && data.receipt_url) {
-                    // Show success message
+                    
                     const alertDiv = document.createElement('div');
                     alertDiv.className = 'alert alert-success mx-4 mt-3';
                     alertDiv.innerHTML = data.message + ' <small>(Printing receipt...)</small>';
                     document.querySelector('.app-main').insertBefore(alertDiv, document.querySelector('.app-main').firstChild);
                     
-                    // Auto-print receipt
+                    
                     setTimeout(() => {
                         const printWindow = window.open(data.receipt_url, '_blank', 'width=400,height=600');
                         
@@ -563,28 +563,28 @@ if (startShiftTillField && tillId) {
                                 }, 500);
                             };
                         } else {
-                            // Fallback: open in same window
+                            
                             window.location.href = data.receipt_url;
                         }
                     }, 1000);
                     
-                    // Clear cart after delay
+                    
                     setTimeout(() => {
                         location.reload();
                     }, 2000);
                     
                 } else {
-                    // Handle error
+                    
                     location.reload();
                 }
             })
             .catch(error => {
                 console.error('Checkout error:', error);
-                // Fallback to normal form submission
+                
                 checkoutForm.submit();
             })
             .finally(() => {
-                // Re-enable button after delay
+                
                 setTimeout(() => {
                     checkoutButton.disabled = false;
                     checkoutButton.innerHTML = '<i class="bi bi-wallet2 fs-4"></i> CHECKOUT <span class="hotkey dark ms-2">F12</span>';
@@ -638,7 +638,7 @@ function restoreTillId() {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https:
 
 :root {
     --primary: #E8722A;

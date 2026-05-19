@@ -1,4 +1,4 @@
-{{-- Thermal Receipt for XPrinter-P201A (80mm) --}}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -150,7 +150,7 @@
             @php
                 $items = json_decode($sale->items_json, true) ?? [];
                 $subtotal = 0;
-                // Debug: log items data
+                
                 \Log::info('Thermal receipt items: ', $items);
             @endphp
             

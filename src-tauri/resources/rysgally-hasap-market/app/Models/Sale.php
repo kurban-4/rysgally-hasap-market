@@ -9,15 +9,15 @@ class Sale extends Model
 {
     protected $fillable = [
         'product_id',
-        'quantity',       // pcs or kg
-        'price',          // price per unit at time of sale
+        'quantity',       
+        'price',          
         'total_price',
-        'sale_type',      // 'piece' or 'weight'
+        'sale_type',      
         'transaction_id',
         'customer_name',
         'till_id',
         'discount',
-        'items_json',     // JSON with all sale items
+        'items_json',     
     ];
 
     protected $casts = [
@@ -37,7 +37,7 @@ class Sale extends Model
         return $this->belongsTo(Till::class);
     }
 
-    // Display quantity with unit for views/exports
+    
     public function getDisplayQuantityAttribute()
     {
         $unit = ($this->sale_type ?? $this->product->unit_type ?? 'piece') === 'weight' ? 'kg' : 'pcs';

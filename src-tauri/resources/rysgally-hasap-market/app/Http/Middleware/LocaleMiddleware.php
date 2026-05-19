@@ -9,14 +9,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LocaleMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if locale is in the session and is allowed
+        
         $allowedLocales = ['tm', 'ru', 'en'];
         
         $locale = $request->session()->get('locale');
@@ -32,7 +27,7 @@ class LocaleMiddleware
             app()->setLocale($locale);
             Log::debug('LocaleMiddleware: Setting locale to ' . $locale);
         } else {
-            // Set default locale from env or use 'en'
+            
             $defaultLocale = env('APP_LOCALE', 'en');
             if (in_array($defaultLocale, $allowedLocales)) {
                 app()->setLocale($defaultLocale);

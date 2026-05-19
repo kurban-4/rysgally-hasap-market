@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Till;
 use Illuminate\Http\Request;
 
-// 1. Лицензия и Язык (Публичные)
+
 Route::get('/license', [LicenseController::class, 'show'])->name('license.show');
 Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
 Route::get('lang/{locale}', function ($locale) {
@@ -25,7 +25,7 @@ Route::get('lang/{locale}', function ($locale) {
     return redirect()->back();
 })->name('lang.switch');
 
-// 2. Группа под проверкой лицензии
+
 Route::middleware(['license'])->group(function () {
 
     Route::post('/api/setup-device', function (Request $request) {
@@ -47,7 +47,7 @@ Route::middleware(['license'])->group(function () {
         }
     });
 
-    // Главная — редирект по роли
+    
     Route::get('/', function () {
         if (!auth()->check()) return redirect()->route('login');
         $role = auth()->user()->role ?? 'guest';
@@ -60,13 +60,13 @@ Route::middleware(['license'])->group(function () {
         };
     });
 
-    // Гости (Логин)
+    
     Route::middleware(['guest'])->group(function () {
         Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
         Route::post('/login', [LoginController::class, 'login']);
     });
 
-    // Авторизованные пользователи
+    
     Route::middleware(['auth'])->group(function () {
 
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -75,10 +75,10 @@ Route::middleware(['license'])->group(function () {
         Route::redirect('/storage', '/admin/inventory')->name('storage.redirect');
         Route::redirect('/wholesale', '/admin/wholesale')->name('wholesale.redirect');
 
-        // ── ВСЕ РОЛИ ПОД prefix('admin') ──────────────────────
+        
         Route::prefix('admin')->group(function () {
 
-            // ── ТОЛЬКО ADMIN ───────────────────────────────────
+            
             Route::middleware('role:admin')->group(function () {
 
                 Route::get('/welcome', fn() => view('welcome'))->name('welcome');
@@ -112,7 +112,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            // ── СКЛАД (admin + storage + wholesale) ───────────
+            
             Route::middleware('role:admin,storage,wholesale')->group(function () {
 
                 Route::controller(WholesaleStorageController::class)->prefix('wholesale-storage')->name('wholesale_storage.')->group(function () {
@@ -135,7 +135,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            // ── ОПТОВИК (admin + wholesale) ───────────────────
+            
             Route::middleware('role:admin,wholesale')->group(function () {
 
                 Route::controller(WholesaleController::class)->prefix('wholesale')->name('wholesale.')->group(function () {
@@ -152,7 +152,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            // ── ПРОДАЖИ (admin + salesman) ────────────────────
+            
             Route::middleware('role:admin,salesman')->group(function () {
 
                 Route::prefix('sales')->name('sales.')->group(function () {
@@ -178,7 +178,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            // Thermal Receipt Routes (admin + salesman access)
+            
             Route::middleware('role:admin,salesman')->group(function () {
                 Route::controller(SaleController::class)->prefix('receipt')->name('receipt.')->group(function () {
                     Route::get('/thermal/print/{saleId}', 'printThermalReceipt')->name('thermal.print');
@@ -186,8 +186,8 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-        }); // end prefix admin
+        }); 
 
-    }); // end auth
+    }); 
 
-}); // end license
+}); 

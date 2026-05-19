@@ -20,12 +20,9 @@ class ScaleService
         $this->timeout = config('scale.timeout', 10);
     }
 
-    /**
-     * Export single product to scale
-     */
     public function exportProduct(Product $product): bool
     {
-        // Only export weighable products
+        
         if (!$product->isWeight()) {
             return false;
         }
@@ -50,9 +47,6 @@ class ScaleService
         }
     }
 
-    /**
-     * Export storage item to scale
-     */
     public function exportStorage(Storage $storage): bool
     {
         if (!$storage->product || !$storage->product->isWeight()) {
@@ -79,9 +73,6 @@ class ScaleService
         }
     }
 
-    /**
-     * Export all weighable products to scale
-     */
     public function exportAllWeighableProducts(): array
     {
         $results = [
@@ -104,9 +95,6 @@ class ScaleService
         return $results;
     }
 
-    /**
-     * Export all weighable storage items to scale
-     */
     public function exportAllWeighableStorage(): array
     {
         $results = [
@@ -133,9 +121,6 @@ class ScaleService
         return $results;
     }
 
-    /**
-     * Delete product from scale
-     */
     public function deleteProductFromScale(Product $product): bool
     {
         if (!$product->isWeight()) {
@@ -160,9 +145,6 @@ class ScaleService
         }
     }
 
-    /**
-     * Format product data for scale API
-     */
     protected function formatProductForScale(Product $product): array
     {
         return [
@@ -175,9 +157,6 @@ class ScaleService
         ];
     }
 
-    /**
-     * Format storage data for scale API
-     */
     protected function formatStorageForScale(Storage $storage): array
     {
         $product = $storage->product;
@@ -194,17 +173,11 @@ class ScaleService
         ];
     }
 
-    /**
-     * Get full scale API URL
-     */
     protected function getScaleUrl(string $endpoint): string
     {
-        return "http://{$this->scaleIp}:{$this->scalePort}{$endpoint}";
+        return "http:
     }
 
-    /**
-     * Test connection to scale
-     */
     public function testConnection(): bool
     {
         try {

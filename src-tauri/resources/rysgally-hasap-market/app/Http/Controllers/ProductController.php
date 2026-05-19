@@ -33,7 +33,7 @@ class ProductController extends Controller
 
         $totalUnits = $storage ? $storage->quantity : 0;
         if (($product->unit_type ?? 'piece') === 'weight') {
-    $displayAmount = (float) $totalUnits; // Automatically drops trailing zeros
+    $displayAmount = (float) $totalUnits; 
     $displayUnit = 'kg';
 }else {
             $displayAmount = (int)$totalUnits;
@@ -68,12 +68,12 @@ class ProductController extends Controller
         'batch_number'   => 'nullable|string|max:255',
     ]);
 
-    // Выбираем количество в зависимости от типа
+    
     $quantity = ($request->unit_type === 'weight') 
                 ? $request->quantity_weight 
                 : $request->quantity_units;
 
-    // Calculate profit margin
+    
     $profitMargin = 0;
     if ($request->price > 0 && $request->received_price > 0) {
         $profitMargin = (($request->price - $request->received_price) / $request->received_price) * 100;
@@ -95,13 +95,13 @@ class ProductController extends Controller
         'unit_label'    => $request->unit_label ?? ($request->unit_type === 'weight' ? 'kg' : 'pcs'),
     ]);
 
-    // Save multiple barcodes for piece products only
+    
     if ($request->unit_type === 'piece' && $request->has('barcodes')) {
         $barcodes = array_filter($request->barcodes, function($barcode) {
             return !empty(trim($barcode));
         });
         
-        // Check for duplicate barcodes
+        
         $duplicateBarcodes = [];
         foreach ($barcodes as $barcode) {
             $trimmedBarcode = trim($barcode);
@@ -113,7 +113,7 @@ class ProductController extends Controller
         }
         
         if (!empty($duplicateBarcodes)) {
-            // Delete the created product since barcodes are duplicates
+            
             $product->delete();
             return redirect()->back()
                 ->withInput()
@@ -139,13 +139,13 @@ class ProductController extends Controller
         'batch_number'   => $request->batch_number,
     ]);
 
-    // Auto-export weighable products to scale
+    
     if (config('scale.auto_export_on_create') && $product->isWeight()) {
         try {
             $scaleService = new ScaleService();
             $scaleService->exportProduct($product);
         } catch (\Exception $e) {
-            // Log error but don't fail the product creation
+            
             \Log::error("Failed to export product to scale: " . $e->getMessage());
         }
     }

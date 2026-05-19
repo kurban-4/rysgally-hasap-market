@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Add product_name column if missing
+        
         if (!Schema::hasColumn('wholesale_storages', 'product_name')) {
             Schema::table('wholesale_storages', function (Blueprint $table) {
                 $table->string('product_name')->nullable()->after('product_id');

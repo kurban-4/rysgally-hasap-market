@@ -35,12 +35,12 @@
                 @foreach($employees as $employee)
                 <div class="employee-glass-card shadow-sm">
                     <div class="card-inner">
-                        {{-- Avatar --}}
+                        
                         <div class="avatar-square">
                             {{ substr($employee->name, 0, 1) }}
                         </div>
                         
-                        {{-- Name + ID --}}
+                        
                         <div class="emp-identity">
                             <h5 class="fw-bold mb-0 text-dark">{{ $employee->name }}</h5>
                             <span class="text-teal smaller fw-bold ls-1">ID: #{{ str_pad($employee->id, 5, '0', STR_PAD_LEFT) }}</span>
@@ -56,7 +56,7 @@
                             </div>
                         </div>
 
-                        {{-- Action --}}
+                        
                         <div class="emp-action">
                             <a href="{{ route('employees.show', $employee->id) }}" class="btn btn-outline-teal-sm">
                                 <span class="d-none d-md-inline">{{__("app.btn_details")}}</span>

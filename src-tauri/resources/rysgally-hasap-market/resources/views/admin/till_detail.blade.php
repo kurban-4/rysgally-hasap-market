@@ -4,7 +4,7 @@
 @include('app.navbar')
 <div class="container-fluid px-4 py-4" style="background: #f4f7f6; min-height: 100vh;">
 
-    {{-- ШАПКА --}}
+    
     <div class="d-flex align-items-center gap-3 mb-4">
         <a href="{{ route('boss.dashboard') }}" class="btn bg-white border-0 rounded-3 p-3 shadow-sm">
             <i class="bi bi-arrow-left fs-5" style="color: #E8722A;"></i>
@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    {{-- КАРТОЧКИ СТАТИСТИКИ --}}
+    
     <div class="row g-3 mb-4">
         <div class="col-6 col-xl-3">
             <a href="{{ route('boss.till.show', $till->id) }}?from={{ now()->format('Y-m-d') }}&to={{ now()->format('Y-m-d') }}"
@@ -80,7 +80,7 @@
         </div>
     </div>
 
-    {{-- ФИЛЬТР ПО ДАТЕ --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4 mb-4">
         <form method="GET" action="{{ route('boss.till.show', $till->id) }}">
             <div class="row g-3 align-items-end">
@@ -119,7 +119,7 @@
                 </div>
                 
 
-                {{-- БЫСТРЫЕ ФИЛЬТРЫ --}}
+                
                 <div class="col-12 d-flex gap-2 flex-wrap pt-1">
                     <a href="{{ route('boss.till.show', $till->id) }}?from={{ now()->format('Y-m-d') }}&to={{ now()->format('Y-m-d') }}"
                         class="badge rounded-pill px-3 py-2 text-decoration-none fw-bold transition-hover"
@@ -145,7 +145,7 @@
             </div>
         </form>
     </div>
-    {{-- ПЕРИОД --}}
+    
     @if(request('from') || request('to'))
     <div class="alert border-0 rounded-4 mb-4 d-flex align-items-center gap-3 shadow-sm" style="background: #e0f2f4;">
         <i class="bi bi-calendar-check fs-5" style="color: #E8722A;"></i>
@@ -161,7 +161,7 @@
     </div>
     @endif
 
-    {{-- ТАБЛИЦА ПРОДАЖ --}}
+    
     <div class="card bg-white border-0 rounded-4 shadow-sm p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-black mb-0" style="color: #1a3a3a;">
@@ -267,7 +267,7 @@
         </div>
     </div>
 
-    {{-- FINANCIAL SUMMARY --}}
+    
     @if(count($soldproducts) > 0)
     <div class="row g-3 mt-4">
         <div class="col-12">

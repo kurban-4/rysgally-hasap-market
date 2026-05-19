@@ -38,7 +38,7 @@
                             </div>
                         </div>
 
-                        {{-- Customer / status --}}
+                        
                         <div class="customer-box">
                             <div>
                                 <div class="box-label">{{ __('app.wholesale_show_customer') }}</div>

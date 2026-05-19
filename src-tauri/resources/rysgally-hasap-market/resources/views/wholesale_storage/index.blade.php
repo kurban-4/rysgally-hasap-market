@@ -20,7 +20,7 @@
         <div class="workspace custom-scrollbar">
             <div class="ws-inner">
 
-                {{-- KPI cards --}}
+                
                 <div class="kpi-row">
                     <div class="kpi-card">
                         <div class="kpi-icon" style="background:rgba(232,114,42,0.1);color:#E8722A;"><i class="bi bi-tags"></i></div>
@@ -45,7 +45,7 @@
                     </div>
                 </div>
 
-                {{-- Table (desktop) --}}
+                
                 <div class="table-card d-none d-md-block">
                     <div class="table-responsive">
                         <table class="table inv-table align-middle mb-0">
@@ -121,7 +121,7 @@
                     @endif
                 </div>
 
-                {{-- Mobile cards --}}
+                
                 <div class="d-md-none mobile-list">
                     @foreach($inventory as $item)
                     @php

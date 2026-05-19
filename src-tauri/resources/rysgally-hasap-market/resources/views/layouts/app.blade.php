@@ -19,18 +19,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const deviceType = localStorage.getItem('device_type'); // 'till' или 'manager'
+            const deviceType = localStorage.getItem('device_type'); 
             const tillId = localStorage.getItem('till_id');
 
-            // 1. Если компьютер новый - показываем окно регистрации
+            
             if (!deviceType) {
                 renderSetupOverlay();
             }
 
-            // 2. Умное добавление till_id перед отправкой любой формы
+            
             if (deviceType === 'till' && tillId) {
                 document.addEventListener('submit', function(e) {
-                    // Проверяем, есть ли уже такое поле, чтобы не дублировать
+                    
                     if (!e.target.querySelector('input[name="till_id"]')) {
                         const input = document.createElement('input');
                         input.type = 'hidden';
@@ -75,10 +75,10 @@
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
-                            // Берем токен из meta-тега
+                            
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         },
-                        // Отправляем просто число, слово "Касса №" подставит сам бэкенд
+                        
                         body: JSON.stringify({ name: val }) 
                     });
                     
@@ -94,7 +94,7 @@
                 }
             }
         }
-        // Show page only after all CSS is loaded
+        
         document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.add('loaded');
         });

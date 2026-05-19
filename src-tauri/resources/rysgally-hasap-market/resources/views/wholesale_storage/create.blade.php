@@ -48,7 +48,7 @@
                 @csrf
                 <div class="row g-4">
 
-                    {{-- MANUAL product NAME --}}
+                    
                     <div class="col-12">
                         <label class="form-label fw-bold small text-muted">
                             <i class="bi bi-capsule me-1"></i> {{ __('app.wholesale_storage_create_product_name') }}
@@ -60,7 +60,7 @@
                             required style="border-radius: 12px;">
                     </div>
 
-                    {{-- REAL product ID (OPTIONAL NOW!) --}}
+                    
                     <div class="col-12">
                         <label class="form-label fw-bold small text-muted">
                             <i class="bi bi-list-check me-1"></i> {{ __('app.wholesale_storage_create_select_product') }}

@@ -7,23 +7,17 @@ use Illuminate\Http\Request;
 
 class ThermalReceiptController extends Controller
 {
-    /**
-     * Print thermal receipt for sale
-     */
     public function printSalesReceipt($saleId)
     {
         $sale = Sale::with(['product'])->findOrFail($saleId);
         
-        // Return thermal receipt view
+        
         return view('receipts.thermal_sales', compact('sale'));
     }
     
-    /**
-     * Test thermal receipt printing
-     */
     public function testPrint()
     {
-        // Create test sale data
+        
         $testSale = new \stdClass();
         $testSale->id = 123456;
         $testSale->created_at = now();
@@ -48,9 +42,6 @@ class ThermalReceiptController extends Controller
         return view('receipts.thermal_sales', ['sale' => $testSale]);
     }
     
-    /**
-     * Print receipt via JavaScript (for XPrinter-P201A)
-     */
     public function printReceiptJS($saleId)
     {
         $sale = Sale::with(['product'])->findOrFail($saleId);

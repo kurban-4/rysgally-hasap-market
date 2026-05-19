@@ -10,7 +10,7 @@ class LicenseController extends Controller
 {
     public function show()
     {
-        // Если база есть и всё уже активировано - пускаем на логин
+        
         if (Schema::hasTable('licenses') && License::isActivated()) {
             return redirect('/login');
         }

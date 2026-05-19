@@ -12,10 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // УБРАЛИ PREPEND! Он ломал всю логику.
-        // $middleware->append(\App\Http\Middleware\Cors::class); // Раскомментируй, если нужен CORS
+        
+        
 
-        // Add locale middleware early to ensure it runs for all requests
+        
         $middleware->web(\App\Http\Middleware\LocaleMiddleware::class);
 
         $middleware->validateCsrfTokens([
@@ -29,5 +29,5 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        
     })->create();

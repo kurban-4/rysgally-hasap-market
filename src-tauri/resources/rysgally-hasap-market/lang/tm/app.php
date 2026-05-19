@@ -484,7 +484,7 @@ return [
     'wholesale_create_btn_finalize' => 'Tamamla we satylşy ýazgy',
     'wholesale_create_error_validation' => 'Doldurmak säwleri:',
     
-    // Wholesale Show Invoice
+    
     'wholesale_show_invoice_title' => 'Resept',
     'wholesale_show_brand' => 'FARMA',
     'wholesale_show_brand_emphasis' => 'SIS',
@@ -509,7 +509,7 @@ return [
     'wholesale_show_grand_total' => 'Umumy Jemi',
     'wholesale_show_thank_you' => 'Işiňiz üçin sag bolun!',
     
-    // Wholesale Edit Invoice
+    
     'wholesale_edit_heading' => 'Resepti zaxirala',
     'wholesale_edit_back' => 'Yza',
     'wholesale_edit_customer_label' => 'Alyjy (Müşderi)',
@@ -567,7 +567,7 @@ return [
     'wholesale_inventory_no_date' => 'Sene ýok',
     'wholesale_inventory_confirm_delete' => 'Bu toplumy pozmak?',
     
-    // Wholesale Storage Create
+    
     'wholesale_storage_create_title' => 'Täze Ýatyk Partiyasyny Goş',
     'wholesale_storage_create_back' => 'Dolanyň',
     'wholesale_storage_create_product_name' => 'Harydyň Ady (El bilen)',
@@ -593,7 +593,7 @@ return [
     'wholesale_storage_create_btn_save' => 'Ýatyk Partiyasyny Ýatda Sakla',
     'wholesale_storage_create_btn_cancel' => 'Bes Et',
     
-    // Wholesale Storage Transfer Modal
+    
     'wholesale_storage_transfer_title' => 'Bazara geçirmek',
     'wholesale_storage_transfer_batch' => 'Partiýa',
     'wholesale_storage_transfer_available' => 'Elýeter',
@@ -609,7 +609,7 @@ return [
     'wholesale_storage_transfer_error_stock' => 'Bu partiýa üçin elýeter ýadygyňdan geçip bolmaýar.',
     'wholesale_storage_transfer_note' => 'Ýadyk <strong>diňe bu partiýadan</strong> alynýar we bazar ýadyna goşulýar.',
     
-    // Wholesale Transfer Modal (Index Page)
+    
     'wholesale_transfer_modal_title' => 'Bazara geçirmek',
     'wholesale_transfer_modal_product' => 'Haryt',
     'wholesale_transfer_modal_select_product' => 'Haryt saýlaň',
@@ -630,7 +630,7 @@ return [
     'wholesale_transfer_modal_cancel' => 'Bes Et',
     'wholesale_transfer_modal_confirm' => 'Geçirişi Tassykla',
     
-    // JavaScript translations for transfer modal
+    
     'wholesale_transfer_js_enter_amount' => 'Geçiriljek möçberi giriziň',
     'wholesale_transfer_js_moves_to_market' => '{0} {1} bazar ýadyna geçýär (köpçülikleýin bilen bir birlik).',
     'wholesale_transfer_js_weight_label' => 'Geçiriljek agram (kg)',
@@ -642,10 +642,10 @@ return [
     'wholesale_transfer_js_barcode_placeholder' => 'Harytyň ştrih-kodyny skanir ediň ýa-da giriziň',
     'wholesale_transfer_js_barcode_hint' => 'Sanly harytlar üçin ştrih-kody ulanyň. Gurulanda haryt kartasynyňdan doldurylýar.',
 
-    // Currency
+    
     'currency_tmt' => 'TMT',
 
-    // Shift status keys
+    
     'shift_status_active' => 'Aktiw',
     'shift_status_closed' => 'Ýapylan',
     'shift_no_shifts' => 'Çalşyklar ýok',
@@ -661,12 +661,12 @@ return [
     'shift_table_revenue' => 'Girdeji',
     'shift_table_status' => 'Ýagdaý',
 
-    // Storage table price headers
+    
     'storage_table_received_price' => 'Alnan bahasy',
     'storage_table_selling_price' => 'Satylýan bahasy',
     'storage_export_to_scale' => 'Agramlara eksport',
 
-    // Product show page keys
+    
     'product_type_weighable' => 'Agramly',
     'product_type_unit' => 'Sanly',
     'product_type_boxed' => 'Gutly',
@@ -693,10 +693,10 @@ return [
     'product_unit' => 'Birlik',
     'product_discount' => 'Arzanlyk',
 
-    // Product create date validation
+    
     'product_date_error' => 'Öndürilen senesi möhlet senesinden soň bolmaly däl',
 
-    // Till detail missing keys
+    
     'till_detail_received_price' => 'ALNAN BAHASY',
     'till_detail_purchase_price' => 'Satyn alynan baha',
     'till_detail_selling_price' => 'SATILÝAN BAHASY',

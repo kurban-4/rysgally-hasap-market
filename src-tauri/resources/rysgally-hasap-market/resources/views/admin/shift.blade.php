@@ -4,7 +4,7 @@
 
 <div class="shifts-page">
 
-    {{-- HERO HEADER --}}
+    
     <div class="page-hero">
         <div class="hero-content">
             <div class="hero-icon-wrap">
@@ -49,10 +49,10 @@
         </div>
     </div>
 
-    {{-- TABLE CARD --}}
+    
     <div class="table-wrap">
 
-        {{-- Desktop table --}}
+        
         <div class="shift-table-card d-none d-md-block">
             <table class="shift-table">
                 <thead>
@@ -162,7 +162,7 @@
             </table>
         </div>
 
-        {{-- Mobile cards --}}
+        
         <div class="mobile-shifts d-md-none">
             @forelse($shifts as $shift)
             <div class="mobile-shift-card">
@@ -247,7 +247,7 @@
             @endforelse
         </div>
 
-        {{-- Pagination --}}
+        
         <div class="pagination-wrap">
             {{ $shifts->links('pagination::bootstrap-5') }}
         </div>
@@ -256,7 +256,7 @@
 </div>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+@import url('https:
 
 :root {
     --teal: #E8722A;

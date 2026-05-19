@@ -9,7 +9,7 @@
             <div class="workspace overflow-auto">
                 <div class="receipt-container">
 
-                    {{-- ══ RECEIPT HEADER ══ --}}
+                    
                     <div class="receipt-header d-flex justify-content-between align-items-start">
                         <div>
                             <h4 class="mb-1">
@@ -37,7 +37,7 @@
                         </div>
                     </div>
 
-                    {{-- ══ BRAND STRIP ══ --}}
+                    
                     <div class="receipt-brand">
                         <div class="brand-cart-icon">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -51,7 +51,7 @@
                         </div>
                     </div>
 
-                    {{-- ══ META GRID ══ --}}
+                    
                     <div class="receipt-meta-grid">
                         <div>
                             <div class="receipt-label">{{ __('app.receipt_label_transaction') }}</div>
@@ -64,7 +64,7 @@
                         </div>
                     </div>
 
-                    {{-- ══ ITEMS TABLE (desktop) ══ --}}
+                    
                     <table class="receipt-table w-100 mt-4 d-none d-md-table">
                         <thead>
                             <tr>
@@ -103,7 +103,7 @@
                         </tbody>
                     </table>
 
-                    {{-- ══ ITEMS MOBILE ══ --}}
+                    
                     <div class="receipt-items-mobile d-md-none">
                         @foreach($items as $item)
                         @php
@@ -122,7 +122,7 @@
                         @endforeach
                     </div>
 
-                    {{-- ══ TOTALS ══ --}}
+                    
                     <div class="receipt-footer mt-4">
                         <div class="totals-block">
                             <div class="total-row">
@@ -150,7 +150,7 @@
                         </div>
                     </div>
 
-                    {{-- ══ WATERMARK / BARCODE ══ --}}
+                    
                     <div class="receipt-watermark mt-4">
                         <div class="receipt-barcode">
                             {{ str_pad(ltrim($transaction_id, '#'), 20, '0', STR_PAD_LEFT) }}
@@ -173,7 +173,7 @@
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https:
 
 :root {
     --ora: #E8722A;

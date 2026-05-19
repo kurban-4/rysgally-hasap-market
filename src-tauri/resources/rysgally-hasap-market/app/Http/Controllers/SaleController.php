@@ -56,7 +56,7 @@ public function addToCart(Request $request)
     }
 
     $barcode = $request->barcode;
-    // Берем количество из запроса, если оно есть (для продажи 100кг вручную)
+    
     $manualQty = $request->has('quantity') ? (float)$request->quantity : null;
     
     $parsed = parseWeightBarcode($barcode);
@@ -68,19 +68,19 @@ public function addToCart(Request $request)
         $qtySold = $manualQty ?? ($parsed['weight_grams'] / 1000);
         $storage = $product ? Storage::where('product_id', $product->id)->first() : null;
     } else {
-        // Обычный товар (Snickers и т.д.)
-        // Ищем в новой таблице product_barcodes
+        
+        
         $productBarcode = \App\Models\ProductBarcode::where('barcode', $barcode)->first();
         if ($productBarcode) {
             $product = $productBarcode->product;
             $storage = $product ? Storage::where('product_id', $product->id)->first() : null;
         } else {
-            // Fallback: ищем в storage.barcode (старая система)
+            
             $storage = Storage::where('barcode', $barcode)->first();
             if ($storage) {
                 $product = $storage->product;
             } else {
-                // Fallback: ищем в product.barcode (старая система)
+                
                 $product = Product::where('barcode', $barcode)->first();
                 $storage = $product ? Storage::where('product_id', $product->id)->first() : null;
             }
@@ -92,12 +92,12 @@ public function addToCart(Request $request)
         return response()->json(['success' => false, 'message' => 'Product not found in storage!'], 404);
     }
 
-    // Check if product is out of stock
+    
     if ($storage->quantity <= 0) {
         return response()->json(['success' => false, 'message' => 'Product is out of stock!'], 400);
     }
 
-    // Check if there's enough quantity for the sale
+    
     if ($storage->quantity < $qtySold) {
         return response()->json(['success' => false, 'message' => 'Insufficient stock! Available: ' . $storage->quantity], 400);
     }
@@ -105,7 +105,7 @@ public function addToCart(Request $request)
     $cart = session()->get('pos_cart', []);
     $cartId = uniqid();
     
-    // Use storage selling_price for transferred products, fallback to product price
+    
     $unitPrice = $storage->selling_price ?? $product->getFinalPriceAttribute();
     $discount = (int) ($storage->discount ?? $product->discount ?? 0);
     $finalPrice = $discount > 0 ? $unitPrice * (1 - $discount / 100) : $unitPrice;
@@ -154,12 +154,12 @@ public function addToCart(Request $request)
         $item = &$cart[$id];
         $saleType = $item['sale_type'];
         
-        // For non-weight items, ensure quantity is integer
+        
         if ($saleType !== 'weight') {
             $quantity = round($quantity);
         }
 
-        // Check storage availability
+        
         $storage = Storage::find($item['storage_id'] ?? null) 
                    ?? Storage::where('product_id', $item['product_id'])->first();
                    
@@ -171,7 +171,7 @@ public function addToCart(Request $request)
             return response()->json(['success' => false, 'message' => 'Insufficient stock. Available: ' . $storage->quantity]);
         }
 
-        // Update item
+        
         $item['quantity'] = $quantity;
         $item['total_price'] = $quantity * $item['price'];
         $item['units_to_deduct'] = $quantity;
@@ -208,20 +208,20 @@ public function addToCart(Request $request)
 
             $quantity = $grams / 1000;
             
-            // Get storage entry to use correct pricing
+            
             $storage = Storage::where('product_id', $product->id)->first();
             
-            // Check if product exists in storage
+            
             if (!$storage) {
                 return response()->json(['error' => 'Product not found in storage'], 404);
             }
             
-            // Check if product is out of stock
+            
             if ($storage->quantity <= 0) {
                 return response()->json(['error' => 'Product is out of stock!'], 400);
             }
             
-            // Check if there's enough quantity for the sale
+            
             if ($storage->quantity < $quantity) {
                 return response()->json(['error' => 'Insufficient stock! Available: ' . $storage->quantity . ' kg'], 400);
             }
@@ -241,17 +241,17 @@ public function addToCart(Request $request)
             ]);
         }
 
-        // Ищем в новой таблице product_barcodes
+        
         $productBarcode = \App\Models\ProductBarcode::where('barcode', $barcode)->first();
         if ($productBarcode) {
             $product = $productBarcode->product;
         } else {
-            // Fallback: ищем в storage.barcode (старая система)
+            
             $storage = Storage::where('barcode', $barcode)->first();
             if ($storage) {
                 $product = $storage->product;
             } else {
-                // Fallback: ищем в product.barcode (старая система)
+                
                 $product = Product::where('barcode', $barcode)->first();
             }
         }
@@ -261,20 +261,20 @@ public function addToCart(Request $request)
             return response()->json(['error' => 'Product not found'], 404);
         }
         
-        // Get storage entry to use correct pricing
+        
         $storage = Storage::where('product_id', $product->id)->first();
         
-        // Check if product exists in storage
+        
         if (!$storage) {
             return response()->json(['error' => 'Product not found in storage'], 404);
         }
         
-        // Check if product is out of stock
+        
         if ($storage->quantity <= 0) {
             return response()->json(['error' => 'Product is out of stock!'], 400);
         }
         
-        // Check if there's enough quantity for the sale
+        
         if ($storage->quantity < 1) {
             return response()->json(['error' => 'Insufficient stock! Available: ' . $storage->quantity], 400);
         }
@@ -300,7 +300,7 @@ public function addToCart(Request $request)
 
     $tillId = $request->input('till_id');
     if (empty($tillId) || $tillId === '0') {
-        // Default to the first available till if none provided
+        
         $defaultTill = \App\Models\Till::first();
         $tillId = $defaultTill ? $defaultTill->id : null;
         if ($tillId) {
@@ -317,7 +317,7 @@ public function addToCart(Request $request)
 
     DB::beginTransaction();
     try {
-        // ВАЛИДАЦИЯ: убедимся, что все продукты и склады существуют
+        
         foreach ($cart as $item) {
             $productExists = \App\Models\Product::where('id', $item['product_id'])->exists();
             $storageExists = isset($item['storage_id']) && \App\Models\Storage::where('id', $item['storage_id'])->exists();
@@ -331,15 +331,15 @@ public function addToCart(Request $request)
 
         $transactionId = '#ORD-' . date('YmdHis');
 
-        // Debug: Log cart data
+        
         \Log::info('Cart data: ', $cart);
         
-        // Check if cart is empty
+        
         if (empty($cart)) {
             return redirect()->back()->with('error', 'Корзина пуста');
         }
 
-        // Create single sale record with all items in JSON
+        
         $saleItems = [];
         foreach ($cart as $item) {
             $saleItems[] = [
@@ -362,15 +362,15 @@ public function addToCart(Request $request)
         
         \Log::info('Sale items to save: ', $saleItems);
 
-        // Create single sale record with all items in JSON
+        
         $firstItem = reset($cart);
         $firstProductId = $firstItem['product_id'] ?? null;
         
         $sale = Sale::create([
             'transaction_id' => $transactionId,
-            'product_id'     => $firstProductId, // first product_id
+            'product_id'     => $firstProductId, 
             'quantity'       => array_sum(array_column($saleItems, 'quantity')),
-            'price'          => $firstItem['price'] ?? 0, // first price
+            'price'          => $firstItem['price'] ?? 0, 
             'total_price'    => array_sum(array_column($saleItems, 'total_price')),
             'items_json'     => json_encode($saleItems),
             'sale_type'      => $firstItem['sale_type'] ?? 'piece',
@@ -381,7 +381,7 @@ public function addToCart(Request $request)
         DB::commit();
         session()->forget('pos_cart');
         
-        // Return JSON for auto printing
+        
         return response()->json([
             'success' => true,
             'message' => 'Checkout completed!',
@@ -450,9 +450,6 @@ public function addToCart(Request $request)
         return redirect()->back()->with('success', 'Sale removed and inventory restored.');
     }
 
-    /**
-     * Print thermal receipt for sale
-     */
     public function printThermalReceipt($saleId)
     {
         try {
@@ -463,7 +460,7 @@ public function addToCart(Request $request)
             \Log::info('Sale found: ' . $sale->id);
             \Log::info('Items JSON: ' . $sale->items_json);
             
-            // Return thermal receipt view
+            
             return view('receipts.thermal_sales', compact('sale'));
             
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -475,12 +472,9 @@ public function addToCart(Request $request)
         }
     }
     
-    /**
-     * Test thermal receipt printing
-     */
     public function testThermalPrint()
     {
-        // Create test sale data
+        
         $testSale = new \stdClass();
         $testSale->id = 123456;
         $testSale->created_at = now();

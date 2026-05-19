@@ -6,7 +6,7 @@
 
     <main class="app-main">
 
-        {{-- ══ PAGE HEADER ══ --}}
+        
         <header class="main-header">
             <div class="header-info">
                 <i class="bi bi-clock-history text-light me-2 fs-5"></i>
@@ -44,7 +44,7 @@
             </a>
         </header>
 
-        {{-- ══ WORKSPACE ══ --}}
+        
         <div class="workspace">
             <div class="orders-container">
                 <div class="panel-card">
@@ -62,7 +62,7 @@
                         </div>
                     </div>
 
-                    {{-- Mobile cards --}}
+                    
                     <div class="orders-card-list d-md-none">
                         @forelse($orders as $order)
                         <div class="order-mobile-card">
@@ -100,7 +100,7 @@
                         @endforelse
                     </div>
 
-                    {{-- Desktop table --}}
+                    
                     <div class="table-scroll-container d-none d-md-block">
                         <table class="table pos-table align-middle mb-0">
                             <thead>
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+@import url('https:
 
 :root {
     --ora: #E8722A;

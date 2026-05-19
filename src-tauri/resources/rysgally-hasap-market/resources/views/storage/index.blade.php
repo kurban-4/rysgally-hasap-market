@@ -32,7 +32,7 @@
         <div class="workspace">
             <div class="workspace-inner">
 
-                {{-- KPI cards --}}
+                
                 <div class="stat-row">
                     <div class="stat-card">
                         <div class="stat-icon bg-primary-soft"><i class="bi bi-archive"></i></div>
@@ -57,11 +57,11 @@
                     </div>
                 </div>
 
-                {{-- Search & Filters --}}
+                
                 <div class="filter-card">
                     <div class="filter-grid">
 
-                        {{-- Live search --}}
+                        
                         <div class="search-wrapper">
                             <label class="field-label">{{ __('app.storage_search') }}</label>
                             <div class="search-input-group">
@@ -72,7 +72,7 @@
                             <div id="search-results" class="search-dropdown d-none"></div>
                         </div>
 
-                        {{-- Filters --}}
+                        
                         <form action="{{ route('storage.index') }}" method="GET" class="filters-form">
                             <div class="filter-field">
                                 <label class="field-label">{{ __('app.storage_category_label') }}</label>
@@ -101,7 +101,7 @@
                     </div>
                 </div>
 
-                {{-- Desktop table --}}
+                
                 <div class="table-card d-none d-md-block">
                     <div class="table-responsive">
                         <table class="inventory-table w-100">
@@ -134,7 +134,7 @@
                                         <span class="category-badge">{{ $item->category ?? '—' }}</span>
                                     </td>
 
-                                    {{-- QUANTITY: item (pcs) or weight (kg) --}}
+                                    
                                     <td class="text-center">
                                         <div class="qty-display">
                                             <span class="qty-value">{{ $item->display_amount }}</span>
@@ -144,14 +144,14 @@
                                         </div>
                                     </td>
 
-                                    {{-- RECEIVED PRICE --}}
+                                    
                                     <td class="text-center">
                                         <span class="price-badge received">
                                             ${{ number_format($item->received_price, 2) }}
                                         </span>
                                     </td>
 
-                                    {{-- SELLING PRICE --}}
+                                    
                                     <td class="text-center">
                                         <div class="price-with-margin">
                                             @php
@@ -179,7 +179,7 @@
                                         </div>
                                     </td>
 
-                                    {{-- EXPIRY --}}
+                                    
                                     <td class="text-center">
                                         @php
                                             $rawDate = $item->expiry_date ?? $item->product->expiry_date ?? null;
@@ -203,7 +203,7 @@
                                         @endif
                                     </td>
 
-                                    {{-- ACTIONS --}}
+                                    
                                     <td class="text-end pe-4">
                                         <div class="row-actions" onclick="event.stopPropagation()">
                                             @if($item->product && $item->product->unit_type === 'weight')
@@ -230,7 +230,7 @@
                     </div>
                 </div>
 
-                {{-- Mobile cards --}}
+                
                 <div class="mobile-list d-md-none">
                     @foreach($storage as $item)
                     <div class="mobile-card clickable-row" onclick="window.location='{{ route('product.show', $item->product_id) }}'">
@@ -296,7 +296,7 @@
                     @endforeach
                 </div>
 
-                {{-- Pagination --}}
+                
                 @if($storage->hasPages())
                 <div class="pagination-wrap">
                     {{ $storage->links('pagination::bootstrap-5') }}
@@ -309,7 +309,7 @@
 </div>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https:
 
 :root {
     --primary:      #E8722A;

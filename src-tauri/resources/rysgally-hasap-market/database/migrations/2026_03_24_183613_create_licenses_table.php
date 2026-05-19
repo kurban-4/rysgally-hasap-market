@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Используем 'licenses' с буквой S, чтобы всё было по стандарту
+        
         Schema::create('licenses', function (Blueprint $table) {
             $table->id();
             $table->string('key');

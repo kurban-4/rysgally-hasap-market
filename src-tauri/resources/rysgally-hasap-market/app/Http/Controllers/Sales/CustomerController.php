@@ -18,13 +18,13 @@ class CustomerController extends Controller
             ->orderBy('order_time', 'desc')
             ->get();
 
-        // FIX: Removed 'admin.' from the path
+        
         return view('sales.customers.index', compact('orders'));
     }
 
     public function show($transaction_id)
     {
-        // 1. Logic to handle the # symbol if it was stripped in the URL
+        
         $db_id = str_starts_with($transaction_id, '#') ? $transaction_id : '#' . $transaction_id;
 
         $items = Sale::where('transaction_id', $db_id)
@@ -55,7 +55,7 @@ class CustomerController extends Controller
 
         $discountAmount = round(max(0, $subtotalBeforeDiscount - $total), 2);
 
-        // FIX: Removed 'admin.' from the path
+        
         return view('sales.customers.show', compact(
             'items',
             'transaction_id',
@@ -76,14 +76,14 @@ public function exportAll()
 
     $filename = "transactions_" . date('d_m_Y') . ".xls";
 
-    // Формируем XML со стилями (цвета, границы, шрифты)
+    
     $xml = '<?xml version="1.0"?>
     <?mso-application progid="Excel.Sheet"?>
     <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
      xmlns:o="urn:schemas-microsoft-com:office:office"
      xmlns:x="urn:schemas-microsoft-com:office:excel"
      xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-     xmlns:html="http://www.w3.org/TR/REC-html40">
+     xmlns:html="http:
      <Styles>
       <Style ss:ID="header">
        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -140,14 +140,14 @@ public function exportSingle($transaction_id)
 
     $filename = "order_" . str_replace('#', '', $db_id) . ".xls";
 
-    // XML со стилями: header (бирюзовый), cell (сетка), total (жирный)
+    
     $xml = '<?xml version="1.0"?>
     <?mso-application progid="Excel.Sheet"?>
     <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
      xmlns:o="urn:schemas-microsoft-com:office:office"
      xmlns:x="urn:schemas-microsoft-com:office:excel"
      xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-     xmlns:html="http://www.w3.org/TR/REC-html40">
+     xmlns:html="http:
      <Styles>
       <Style ss:ID="title">
        <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1"/>

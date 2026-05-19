@@ -1,12 +1,7 @@
 <?php
-// app/Support/helpers.php
+
 
 if (! function_exists('parseWeightBarcode')) {
-    /**
-     * Разбирает EAN-13 весовой штрихкод.
-     * Возвращает ['is_weight'=>bool,'product_code'=>string|null,'weight_grams'=>int|null,'raw'=>string]
-     * Поддерживает префиксы 22,21 по умолчанию.
-     */
     function parseWeightBarcode(string $barcode, array $prefixes = ['22','21']): array
     {
         $code = trim($barcode);
@@ -19,7 +14,7 @@ if (! function_exists('parseWeightBarcode')) {
             return ['is_weight' => false, 'raw' => $code];
         }
 
-        // Формат: 22 AAAAA V WWWW K
+        
         $product_code = substr($code, 2, 5);
         $weight_part  = substr($code, 8, 4);
 

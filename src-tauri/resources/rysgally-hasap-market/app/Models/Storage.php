@@ -10,7 +10,7 @@ class Storage extends Model
     protected $fillable = [
         'product_id',
         'barcode',
-        'quantity',         // pcs or kg (decimal:3)
+        'quantity',         
         'category',
         'expiry_date',
         'received_price',
@@ -32,7 +32,7 @@ class Storage extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
-    // Human-friendly display of quantity with unit
+    
     public function getDisplayQuantityAttribute()
     {
         $unit = ($this->product->unit_type ?? 'piece') === 'weight' ? 'kg' : 'pcs';

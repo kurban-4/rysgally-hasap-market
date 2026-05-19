@@ -35,13 +35,6 @@ class WholesaleItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    /** True if this line item is weight-based */
-    public function getIsWeightAttribute(): bool
-    {
-        return ($this->unit_type ?? $this->product->unit_type ?? 'piece') === 'weight';
-    }
-
-    /** Human-readable quantity: "12.500 kg" or "8" */
     public function getDisplayQuantityAttribute(): string
     {
         if ($this->is_weight) {
@@ -50,26 +43,12 @@ class WholesaleItem extends Model
         return (string) (int) $this->quantity;
     }
 
-    /** Get item quantity (units or items) */
-    public function getItemAttribute(): float
-    {
-        if ($this->is_weight) {
-            // For weight-based, item is number of units
-            $unitsPerKg = $this->product ? ($this->product->units_per_box ?? 1) : 1;
-            return (float) $this->quantity * $unitsPerKg;
-        } else {
-            // For piece-based, item is items
-            return (int) $this->quantity;
-        }
-    }
-
-    /** Get weight quantity (kg) */
     public function getWeightAttribute(): float
     {
         if ($this->is_weight) {
             return (float) $this->quantity;
         } else {
-            // For piece-based, assume 0 weight
+            
             return 0.0;
         }
     }

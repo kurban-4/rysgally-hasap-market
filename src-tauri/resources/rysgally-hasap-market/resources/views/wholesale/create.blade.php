@@ -7,7 +7,7 @@
     <form action="{{ route('wholesale.store') }}" method="POST" id="invoice-form">
         @csrf
         
-        {{-- БЛОК ОШИБОК --}}
+        
         @if ($errors->any())
             <div class="row justify-content-center mb-4">
                 <div class="col-xl-11">
@@ -30,7 +30,7 @@
             <div class="col-xl-11">
                 <div class="card invoice-card border-0 p-4 p-md-5">
                     
-                    {{-- HEADER & CUSTOMER SECTION --}}
+                    
                     <div class="row align-items-center mb-5 pb-4 border-bottom header-section">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <h2 class="fw-bolder mb-0 d-flex align-items-center" style="color: #2C3E50; letter-spacing: -0.5px;">
@@ -52,7 +52,7 @@
                         </div>
                     </div>
 
-                    {{-- PRODUCT SEARCH SECTION --}}
+                    
                     <div class="search-section mb-5 p-4 rounded-4 shadow-sm relative">
                         <label class="form-label fw-bold mb-3 d-flex align-items-center" style="color: #2C3E50;">
                             <span class="search-badge me-2"><i class="bi bi-search"></i></span> 
@@ -77,7 +77,7 @@
                         </select>
                     </div>
 
-                    {{-- TABLE SECTION --}}
+                    
                     <div class="table-container mb-5 shadow-sm">
                         <div class="table-responsive">
                             <table class="table table-borderless align-middle mb-0" id="items-table">
@@ -95,13 +95,13 @@
                                     </tr>
                                 </thead>
                                 <tbody id="invoice-items-list">
-                                    {{-- JS generates rows here --}}
+                                    
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    {{-- FOOTER & TOTALS --}}
+                    
                     <div class="row pt-3 g-4 align-items-end">
                         <div class="col-lg-6 mb-3 mb-lg-0">
                             <div class="info-box p-3 rounded-3 d-flex align-items-start shadow-sm">
@@ -135,7 +135,7 @@
 </div>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https:
 
 body { 
     font-family: 'Plus Jakarta Sans', sans-serif; 

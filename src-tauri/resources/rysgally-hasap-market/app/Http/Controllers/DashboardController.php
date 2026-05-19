@@ -39,7 +39,7 @@ class DashboardController extends Controller
         $totalEarned = $tills->sum('all_time_rev');
         $netProfit   = $monthEarned - $totalExpenses;
 
-        // Calculate total financial statistics for all tills
+        
         $allSales = \App\Models\Sale::with('product')->get();
         
         $totalReceivedPrice = 0;
@@ -117,7 +117,7 @@ public function shiftLogs()
         $soldproducts = $filteredSales->groupBy('product_id')->map(function ($sales) use ($till) {
             $allSales = $till->sales->where('product_id', $sales->first()->product_id);
             
-            // Calculate total received price for sold products
+            
             $totalReceivedPrice = 0;
             foreach ($sales as $sale) {
                 $product = $sale->product;
@@ -137,7 +137,7 @@ public function shiftLogs()
             ];
         })->values();
 
-        // Calculate financial summary
+        
         $totalReceivedPrice = $soldproducts->sum('received_price');
         $totalSellingPrice = $soldproducts->sum('total');
         $netProfit = $totalSellingPrice - $totalReceivedPrice;
@@ -186,7 +186,7 @@ public function shiftLogs()
             ];
         });
 
-        // Calculate financial statistics for all sales
+        
         $salesQuery = \App\Models\Sale::with('product');
         if ($from) $salesQuery->where('created_at', '>=', $from);
         if ($to)   $salesQuery->where('created_at', '<=', $to);
@@ -211,10 +211,10 @@ public function shiftLogs()
         ));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXPORT: Revenue by Till  →  revenue_YYYY-MM-DD.xlsx
-    // Respects the same from/to filters as totalRevenue()
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
+    
     public function exportRevenue(Request $request)
     {
         $from = $request->from ? Carbon::parse($request->from)->startOfDay() : null;
@@ -255,7 +255,7 @@ public function shiftLogs()
             ];
         }
 
-        // Totals row
+        
         $rows[] = [];
         $rows[] = [
             'TOTAL',
@@ -277,9 +277,9 @@ public function shiftLogs()
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXPORT: Shift Logs  →  shifts_YYYY-MM-DD.xlsx
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
     public function exportShifts()
 {
     $shifts = Shift::with(['user', 'till'])->orderBy('opened_at', 'desc')->get();
@@ -328,10 +328,10 @@ public function shiftLogs()
     ]);
 }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXPORT: Single Till Detail  →  till_{name}_YYYY-MM-DD.xlsx
-    // Respects same from/to filters as showTill()
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
+    
     public function exportTill($id)
     {
         $till = Till::with(['sales.product'])->findOrFail($id);
@@ -384,9 +384,9 @@ public function shiftLogs()
         ]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // EXPORT: Expenses  →  expenses_YYYY-MM-DD.xlsx
-    // ─────────────────────────────────────────────────────────────────────────
+    
+    
+    
     public function exportExpenses()
     {
         $expenses = Expense::latest()->get();

@@ -11,7 +11,7 @@
             $listPrice = (float) ($storage?->selling_price ?? $product->price ?? 0);
             $finalPrice = $effDiscount > 0 ? round($listPrice * (1 - $effDiscount / 100), 2) : $listPrice;
             
-            // Get all barcodes for piece products
+            
             $productBarcodes = $isWeightProduct ? [] : $product->barcodes->pluck('barcode')->filter()->toArray();
             $marketCodeDisplay = $isWeightProduct
                 ? trim((string) ($product->product_code ?? ($storage?->barcode ?? '')))
@@ -27,7 +27,7 @@
                     <span class="type-tag type-{{ $product->unit_type ?? 'box' }}">
     @if(($product->unit_type ?? 'box') === 'weight') 
         <i class="bi bi-speedometer2 me-1"></i>{{ __('app.product_type_weighable') }}
-    @elseif(($product->unit_type ?? 'box') === 'piece') {{-- Исправлено с unit на piece --}}
+    @elseif(($product->unit_type ?? 'box') === 'piece') 
         <i class="bi bi-123 me-1"></i>{{ __('app.product_type_unit') }}
     @else 
         <i class="bi bi-box-seam me-1"></i>{{ __('app.product_type_boxed') }}
@@ -50,7 +50,7 @@
         <div class="workspace custom-scrollbar">
             <div class="detail-wrap">
 
-                {{-- ══ HERO BANNER ══ --}}
+                
                 <div class="hero-banner">
                     <div class="hero-left">
                         <div class="hero-icon">
@@ -89,23 +89,23 @@
                         @endif
                     </div>
 
-                    {{-- Decorative --}}
+                    
                     <div class="hero-deco"></div>
                 </div>
 
-                {{-- ══ MAIN GRID ══ --}}
+                
                 <div class="detail-grid">
 
-                    {{-- LEFT --}}
+                    
                     <div class="detail-left">
 
-                        {{-- STOCK HIGHLIGHT --}}
+                        
                         <div class="detail-card stock-card">
                             <div class="stock-inner">
                                 <div class="stock-ring">
                                     @php
     $qty = $storage?->quantity ?? 0;
-    // Fix: cast to float to strip trailing zeros
+    
     $cleanQty = ($product->unit_type ?? 'piece') === 'weight' ? (float)$qty : (int)$qty;
     $displayQty = $cleanQty . ' ' . ($product->unit_label ?? ($product->unit_type === 'weight' ? 'kg' : 'pcs'));
     $isLow = $qty < 10;
@@ -126,7 +126,7 @@
                             </div>
                         </div>
 
-                        {{-- DESCRIPTION --}}
+                        
                         @if($product->description)
                         <div class="detail-card">
                             <div class="card-head">
@@ -137,7 +137,7 @@
                         </div>
                         @endif
 
-                        {{-- DETAILS GRID --}}
+                        
 <div class="detail-card">
     <div class="card-head">
         <div class="card-head-icon"><i class="bi bi-info-circle"></i></div>
@@ -215,14 +215,14 @@
         </div>
         @endif
     </div>
-</div>  {{-- closes detail-card (Details) --}}
+</div>  
 
-    </div> {{-- closes detail-left --}}
+    </div> 
 
-                    {{-- RIGHT --}}
+                    
                     <div class="detail-right">
 
-                        {{-- DATES --}}
+                        
                         <div class="detail-card">
                             <div class="card-head">
                                 <div class="card-head-icon"><i class="bi bi-calendar3"></i></div>
@@ -254,7 +254,7 @@
                             </div>
                         </div>
 
-                        {{-- QUICK STATS --}}
+                        
                         <div class="detail-card stats-card">
                             <div class="card-head">
                                 <div class="card-head-icon"><i class="bi bi-graph-up"></i></div>
@@ -282,7 +282,7 @@
                             </div>
                         </div>
 
-                        {{-- ACTIONS --}}
+                        
                         @if($storage)
                         <a href="{{ route('storage.edit', $storage->id) }}" class="btn-action primary">
                             <i class="bi bi-pencil-square"></i>
@@ -307,7 +307,7 @@
 </div>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+@import url('https:
 
 :root {
     --ora: #E8722A;

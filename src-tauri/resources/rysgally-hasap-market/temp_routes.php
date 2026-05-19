@@ -14,19 +14,19 @@ use App\Http\Controllers\LanguageController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Till;
 use Illuminate\Http\Request;
-// 1. Лицензия и Язык (Публичные)
+
 Route::get('/license', [LicenseController::class, 'show'])->name('license.show');
 Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
 Route::get('lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
 
-// 2. Группа под проверкой лицензии
+
 Route::middleware(['license'])->group(function () {
 
 
 
 Route::post('/api/setup-device', function (Request $request) {
     try {
-        // 1. Проверяем, пришло ли число
+        
         if (!$request->has('name')) {
             return response()->json(['error' => 'Номер кассы не указан'], 422);
         }
@@ -46,7 +46,7 @@ Route::post('/api/setup-device', function (Request $request) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 });
-    // Редирект после логина
+    
     Route::get('/', function () {
         if (!auth()->check()) return redirect()->route('login');
         $role = auth()->user()->role ?? 'guest';
@@ -59,29 +59,29 @@ Route::post('/api/setup-device', function (Request $request) {
         };
     });
 
-    // Гости (Логин)
+    
     Route::middleware(['guest'])->group(function () {
         Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
         Route::post('/login', [LoginController::class, 'login']);
     });
 
-    // Авторизованные пользователи
+    
     Route::middleware(['auth'])->group(function () {
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-        // Shortcut routes for role-based redirects
+        
         Route::redirect('/sales', '/admin/sales')->name('sales.index');
         Route::redirect('/storage', '/admin/inventory')->name('storage.redirect');
         Route::redirect('/wholesale', '/admin/wholesale')->name('wholesale.index');
 
-        // Группа только для АДМИНА
+        
         Route::middleware('role:admin')->prefix('admin')->group(function () {
             Route::get('/welcome', fn() => view('welcome'))->name('welcome');
             
-            // Admin Dashboard
+            
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
             
-            // Boss Dashboard
+            
           Route::prefix('boss')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('boss.dashboard');
     Route::get('/expense', [DashboardController::class, 'expensesIndex'])->name('boss.expense.index');
@@ -90,14 +90,14 @@ Route::post('/api/setup-device', function (Request $request) {
     Route::get('/revenue', [DashboardController::class, 'totalRevenue'])->name('boss.revenue');
     Route::get('/shifts', [DashboardController::class, 'shiftLogs'])->name('admin.shifts');
  
-    // ↓ NEW export routes
+    
     Route::get('/revenue/export',       [DashboardController::class, 'exportRevenue'])->name('boss.revenue.export');
     Route::get('/shifts/export',        [DashboardController::class, 'exportShifts'])->name('boss.shifts.export');
     Route::get('/till/{id}/export',     [DashboardController::class, 'exportTill'])->name('boss.till.export');
     Route::get('/expense/export',       [DashboardController::class, 'exportExpenses'])->name('boss.expense.export');
 });
 
-            // Управление лекарствами
+            
             Route::controller(ProductController::class)->prefix('product')->name('product.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
@@ -106,7 +106,7 @@ Route::post('/api/setup-device', function (Request $request) {
                 Route::get('/{id}', 'show')->name('show');
             });
 
-            // Сотрудники
+            
             Route::controller(EmployeeController::class)->prefix('employees')->name('employees.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
@@ -115,13 +115,13 @@ Route::post('/api/setup-device', function (Request $request) {
             });
         });
 
-        // Группа СКЛАД (Admin + Storage + Wholesale для трансфера)
+        
         Route::middleware('role:admin,storage,wholesale')->prefix('admin')->group(function () {
             Route::controller(WholesaleStorageController::class)->prefix('wholesale-storage')->name('wholesale_storage.')->group(function () {
                 Route::get('/', 'index')->name('storage_index');
                 Route::get('/create', 'create')->name('storage_create');
                 Route::post('/store', 'store')->name('storage_store');
-                Route::post('/transfer', 'transferToMarket')->name('storage_transfer'); // ТЕПЕРЬ ДОСТУПНО ОПТОВИКУ
+                Route::post('/transfer', 'transferToMarket')->name('storage_transfer'); 
                 Route::delete('/{id}', 'destroy')->name('storage_destroy');
                  Route::get('/export', 'export')->name('storage_export');
             });
@@ -133,7 +133,7 @@ Route::post('/api/setup-device', function (Request $request) {
     Route::put('/{id}', 'update')->name('inventory_update');
     Route::delete('/{id}', 'destroy')->name('inventory_destroy');
     
-    // ИСПРАВЛЕНИЕ: Добавляем метод export
+    
     Route::get('/export-data', 'export')->name('inventory_export');
 });
 
@@ -144,7 +144,7 @@ Route::middleware('role:admin,wholesale')->prefix('admin')->group(function () {
         Route::post('/', 'store')->name('wholesale_store');
         Route::post('/transfer', 'transfer')->name('wholesale_transfer');
         Route::get('/autocomplete', 'autocomplete')->name('wholesale_autocomplete');
-        Route::get('/export', 'exportExcel')->name('wholesale_export');  // BEFORE /{id}
+        Route::get('/export', 'exportExcel')->name('wholesale_export');  
         Route::get('/{id}', 'show')->name('wholesale_show');
         Route::get('/{id}/edit', 'edit')->name('wholesale_edit');
         Route::put('/{id}', 'update')->name('wholesale_update');
@@ -170,13 +170,13 @@ Route::middleware('role:admin,wholesale')->prefix('admin')->group(function () {
             });
             });
 Route::controller(CustomerController::class)
-    ->prefix('customers')          // -> /admin/sales/customers
-    ->name('customers.')           // -> sales.customers.*
+    ->prefix('customers')          
+    ->name('customers.')           
     ->group(function () {
-        Route::get('/', 'index')->name('customers_index'); // sales.customers.index
-        Route::get('/view/{transaction_id}', 'show')->name('customers_show'); // sales.customers.show
-        Route::get('/export-all', 'exportAll')->name('customers_export_all'); // sales.customers.export.all
-        Route::get('/export-single/{transaction_id}', 'exportSingle')->name('customers_export_single'); // sales.customers.export.single
+        Route::get('/', 'index')->name('customers_index'); 
+        Route::get('/view/{transaction_id}', 'show')->name('customers_show'); 
+        Route::get('/export-all', 'exportAll')->name('customers_export_all'); 
+        Route::get('/export-single/{transaction_id}', 'exportSingle')->name('customers_export_single'); 
     });
 });
             });

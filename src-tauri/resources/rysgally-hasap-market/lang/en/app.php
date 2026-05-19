@@ -635,7 +635,7 @@ return [
     'wholesale_transfer_js_barcode_placeholder' => 'Scan or type the item barcode',
     'wholesale_transfer_js_barcode_hint' => 'For piece items you use the barcode. Pre-filled from the product card when set.',
 
-    // Product create form
+    
     'product_identity' => 'Product Identity',
     'product_name' => 'Product Name',
     'product_name_placeholder' => 'e.g. Organic Apples',
@@ -678,7 +678,7 @@ return [
     'product_add_new' => 'Add New Product',
     'product_required_fields_note' => '* Required fields must be filled',
 
-    // Admin dashboard calculations
+    
     'admin_today' => 'Today',
     'admin_week' => 'This Week',
     'admin_month' => 'This Month',
@@ -727,7 +727,7 @@ return [
     'expense_label_amount' => 'Amount',
     'expense_placeholder_amount' => '0.00',
 
-    // Admin dashboard missing keys
+    
     'admin_dashboard_title' => 'Admin Dashboard',
     'admin_dashboard_subtitle' => 'System management and analytics',
     'admin_shift_logs' => 'Shift Logs',
@@ -745,7 +745,7 @@ return [
     'admin_table_all_time' => 'ALL TIME',
     'admin_table_details' => 'DETAILS',
 
-    // Till detail missing keys
+    
     'till_detail_subtitle' => 'Till detail report',
     'till_filter_dates' => 'Filter by dates',
     'till_results_shown' => 'Results shown:',
@@ -802,7 +802,7 @@ return [
     'expenses_table_description' => 'DESCRIPTION',
     'expenses_table_amount' => 'AMOUNT',
 
-    // Financial card missing keys
+    
     'till_detail_received_price_label' => 'RECEIVED',
     'till_detail_purchase_price_label' => 'PURCHASE',
     'till_detail_selling_price_label' => 'SELLING',
@@ -825,10 +825,10 @@ return [
     'till_detail_table_all_time_label' => 'ALL TIME',
     'till_detail_table_details_label' => 'DETAILS',
 
-    // Currency
+    
     'currency_tmt' => 'TMT',
 
-    // Shift status keys
+    
     'shift_status_active' => 'Active',
     'shift_status_closed' => 'Closed',
     'shift_no_shifts' => 'No shifts yet',
@@ -844,12 +844,12 @@ return [
     'shift_table_revenue' => 'Revenue',
     'shift_table_status' => 'Status',
 
-    // Storage table price headers
+    
     'storage_table_received_price' => 'Received Price',
     'storage_table_selling_price' => 'Selling Price',
     'storage_export_to_scale' => 'Export to Scale',
 
-    // Product show page keys
+    
     'product_type_weighable' => 'Weighable',
     'product_type_unit' => 'Unit',
     'product_type_boxed' => 'Boxed',
@@ -871,6 +871,6 @@ return [
     'product_unit' => 'Unit',
     'product_discount' => 'Discount',
 
-    // Product create date validation
+    
     'product_date_error' => 'Production date cannot be after expiry date',
 ];
