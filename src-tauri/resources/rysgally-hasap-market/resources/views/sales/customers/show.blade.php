@@ -77,27 +77,20 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($items as $item)
-                            @php
-                                $unit        = ($item->product->unit_type ?? 'piece') === 'weight' ? 'kg' : 'pcs';
-                                $qtyDisplay  = $unit === 'kg'
-                                    ? number_format((float)$item->quantity, 3, '.', '')
-                                    : (int)$item->quantity;
-                                $productCode = $item->product->product_code ?? ($item->product->barcode ?? '—');
-                            @endphp
+                            @foreach($lineItems as $line)
                             <tr>
-                                <td class="text-bold text-dark">{{ $item->product->name ?? __('app.receipt_product_deleted') }}</td>
-                                <td class="text-muted text-sm mono">{{ $productCode }}</td>
-                                <td class="text-center fw-medium">{{ $qtyDisplay }} {{ $unit }}</td>
-                                <td class="text-end">{{ number_format($item->price, 2) }}</td>
+                                <td class="text-bold text-dark">{{ $line['name'] }}</td>
+                                <td class="text-muted text-sm mono">{{ $line['barcode'] }}</td>
+                                <td class="text-center fw-medium">{{ $line['qty_display'] }} {{ $line['unit'] }}</td>
+                                <td class="text-end">{{ number_format($line['unit_price_original'], 2) }}</td>
                                 <td class="text-center">
-                                    @if((int) ($item->discount ?? 0) > 0)
-                                        <span class="disc-pill-receipt">-{{ (int) $item->discount }}%</span>
+                                    @if($line['discount_percent'] > 0)
+                                        <span class="disc-pill-receipt">-{{ $line['discount_percent'] }}%</span>
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
                                 </td>
-                                <td class="text-end pe-4 fw-black text-dark">{{ number_format($item->total_price, 2) }}</td>
+                                <td class="text-end pe-4 fw-black text-dark">{{ number_format($line['line_total'], 2) }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -105,19 +98,12 @@
 
                     
                     <div class="receipt-items-mobile d-md-none">
-                        @foreach($items as $item)
-                        @php
-                            $unit        = ($item->product->unit_type ?? 'piece') === 'weight' ? 'kg' : 'pcs';
-                            $qtyDisplay  = $unit === 'kg'
-                                ? number_format((float)$item->quantity, 3, '.', '')
-                                : (int)$item->quantity;
-                            $productCode = $item->product->product_code ?? ($item->product->barcode ?? '—');
-                        @endphp
+                        @foreach($lineItems as $line)
                         <div class="receipt-item-row">
-                            <div class="item-name">{{ $item->product->name ?? __('app.receipt_product_deleted') }}</div>
-                            <div class="item-meta">{{ $productCode }}@if((int) ($item->discount ?? 0) > 0) · <span class="text-danger fw-semibold">-{{ (int) $item->discount }}%</span>@endif</div>
-                            <div class="item-total">{{ number_format($item->total_price, 2) }}</div>
-                            <div class="item-qty">{{ $qtyDisplay }} {{ $unit }} × {{ number_format($item->price, 2) }}</div>
+                            <div class="item-name">{{ $line['name'] }}</div>
+                            <div class="item-meta">{{ $line['barcode'] }}@if($line['discount_percent'] > 0) · <span class="text-danger fw-semibold">-{{ $line['discount_percent'] }}%</span>@endif</div>
+                            <div class="item-total">{{ number_format($line['line_total'], 2) }}</div>
+                            <div class="item-qty">{{ $line['qty_display'] }} {{ $line['unit'] }} × {{ number_format($line['unit_price_original'], 2) }}</div>
                         </div>
                         @endforeach
                     </div>

@@ -446,7 +446,7 @@ return [
     'receipt_label_transaction' => 'Transaction',
     'receipt_label_date' => 'Date and Time',
     'receipt_table_product' => 'Product',
-    'receipt_table_sku' => 'SKU',
+    'receipt_table_sku' => 'Barcode',
     'receipt_table_qty' => 'Quantity',
     'receipt_table_price' => 'Price',
     'receipt_table_discount' => 'Discount',

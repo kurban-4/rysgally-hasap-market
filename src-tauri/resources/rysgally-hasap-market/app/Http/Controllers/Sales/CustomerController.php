@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\Sale;
-use Illuminate\Http\Request;
+use App\Models\Storage;
+use Illuminate\Support\Collection;
 
 class CustomerController extends Controller
 {
@@ -18,72 +20,46 @@ class CustomerController extends Controller
             ->orderBy('order_time', 'desc')
             ->get();
 
-        
         return view('sales.customers.index', compact('orders'));
     }
 
     public function show($transaction_id)
     {
-        
-        $db_id = str_starts_with($transaction_id, '#') ? $transaction_id : '#' . $transaction_id;
+        $db_id = $this->normalizeTransactionId($transaction_id);
+        $receipt = $this->buildReceipt($db_id);
 
-        $items = Sale::where('transaction_id', $db_id)
-            ->with('product') 
-            ->get();
-
-        if ($items->isEmpty()) {
+        if ($receipt === null) {
             return redirect()->route('sales.customers.index');
         }
 
-        $total = $items->sum('total_price');
-        $orderDate = $items->first()->created_at;
-
-        $subtotalBeforeDiscount = $items->sum(function (Sale $item) {
-            $d = (float) ($item->discount ?? 0);
-            $q = (float) $item->quantity;
-            $p = (float) $item->price;
-            if ($d <= 0) {
-                return round($q * $p, 2);
-            }
-            $den = 1 - ($d / 100);
-            if ($den <= 0) {
-                return round($q * $p, 2);
-            }
-
-            return round(($q * $p) / $den, 2);
-        });
-
-        $discountAmount = round(max(0, $subtotalBeforeDiscount - $total), 2);
-
-        
-        return view('sales.customers.show', compact(
-            'items',
-            'transaction_id',
-            'total',
-            'orderDate',
-            'subtotalBeforeDiscount',
-            'discountAmount'
-        ));
+        return view('sales.customers.show', [
+            'lineItems' => $receipt['lines'],
+            'transaction_id' => $transaction_id,
+            'total' => $receipt['total'],
+            'orderDate' => $receipt['orderDate'],
+            'subtotalBeforeDiscount' => $receipt['subtotalBeforeDiscount'],
+            'discountAmount' => $receipt['discountAmount'],
+        ]);
     }
-public function exportAll()
-{
-    $orders = Sale::select('transaction_id')
-        ->selectRaw('SUM(total_price) as total_sum')
-        ->selectRaw('MAX(created_at) as order_time')
-        ->groupBy('transaction_id')
-        ->orderBy('order_time', 'desc')
-        ->get();
 
-    $filename = "transactions_" . date('d_m_Y') . ".xls";
+    public function exportAll()
+    {
+        $orders = Sale::select('transaction_id')
+            ->selectRaw('SUM(total_price) as total_sum')
+            ->selectRaw('MAX(created_at) as order_time')
+            ->groupBy('transaction_id')
+            ->orderBy('order_time', 'desc')
+            ->get();
 
-    
-    $xml = '<?xml version="1.0"?>
+        $filename = 'transactions_' . date('d_m_Y') . '.xls';
+
+        $xml = '<?xml version="1.0"?>
     <?mso-application progid="Excel.Sheet"?>
     <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
      xmlns:o="urn:schemas-microsoft-com:office:office"
      xmlns:x="urn:schemas-microsoft-com:office:excel"
      xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-     xmlns:html="http:
+     xmlns:html="http://www.w3.org/TR/REC-html40">
      <Styles>
       <Style ss:ID="header">
        <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -116,38 +92,39 @@ public function exportAll()
         <Cell ss:StyleID="header"><Data ss:Type="String">СУММА (TMT)</Data></Cell>
        </Row>';
 
-    foreach ($orders as $order) {
-        $xml .= '<Row>
+        foreach ($orders as $order) {
+            $xml .= '<Row>
         <Cell ss:StyleID="cell"><Data ss:Type="String">' . $order->transaction_id . '</Data></Cell>
         <Cell ss:StyleID="cell"><Data ss:Type="String">' . $order->order_time . '</Data></Cell>
         <Cell ss:StyleID="cell"><Data ss:Type="Number">' . number_format($order->total_sum, 2, '.', '') . '</Data></Cell>
        </Row>';
+        }
+
+        $xml .= '</Table></Worksheet></Workbook>';
+
+        return response($xml)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', "attachment; filename=\"$filename\"");
     }
 
-    $xml .= '</Table></Worksheet></Workbook>';
+    public function exportSingle($transaction_id)
+    {
+        $db_id = $this->normalizeTransactionId($transaction_id);
+        $receipt = $this->buildReceipt($db_id);
 
-    return response($xml)
-        ->header('Content-Type', 'application/vnd.ms-excel')
-        ->header('Content-Disposition', "attachment; filename=\"$filename\"");
-}
+        if ($receipt === null) {
+            return redirect()->back();
+        }
 
-public function exportSingle($transaction_id)
-{
-    $db_id = str_starts_with($transaction_id, '#') ? $transaction_id : '#' . $transaction_id;
-    $items = Sale::where('transaction_id', $db_id)->with('product')->get();
+        $filename = 'order_' . str_replace('#', '', $db_id) . '.xls';
 
-    if ($items->isEmpty()) return redirect()->back();
-
-    $filename = "order_" . str_replace('#', '', $db_id) . ".xls";
-
-    
-    $xml = '<?xml version="1.0"?>
+        $xml = '<?xml version="1.0"?>
     <?mso-application progid="Excel.Sheet"?>
     <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
      xmlns:o="urn:schemas-microsoft-com:office:office"
      xmlns:x="urn:schemas-microsoft-com:office:excel"
      xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
-     xmlns:html="http:
+     xmlns:html="http://www.w3.org/TR/REC-html40">
      <Styles>
       <Style ss:ID="title">
        <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1"/>
@@ -181,71 +158,228 @@ public function exportSingle($transaction_id)
      <Worksheet ss:Name="Order Details">
       <Table ss:ExpandedColumnCount="6">
        <Column ss:Width="180"/>
-       <Column ss:Width="80"/>
+       <Column ss:Width="120"/>
        <Column ss:Width="80"/>
        <Column ss:Width="80"/>
        <Column ss:Width="60"/>
        <Column ss:Width="100"/>
-       
+
        <Row ss:Height="25">
         <Cell ss:StyleID="title"><Data ss:Type="String">ДЕТАЛИ ЧЕКА ' . $db_id . '</Data></Cell>
        </Row>
        <Row>
-        <Cell><Data ss:Type="String">Дата: ' . $items->first()->created_at->format('d.m.Y H:i') . '</Data></Cell>
+        <Cell><Data ss:Type="String">Дата: ' . $receipt['orderDate']->format('d.m.Y H:i') . '</Data></Cell>
        </Row>
-       <Row></Row> {{-- Пустая строка --}}
-       
+       <Row></Row>
+
        <Row ss:Height="20">
         <Cell ss:StyleID="header"><Data ss:Type="String">ТОВАР</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">АРТИКУЛ</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">ШТРИХ-КОД</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">КОЛ-ВО</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">ЦЕНА</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">СКИДКА %</Data></Cell>
         <Cell ss:StyleID="header"><Data ss:Type="String">ИТОГО</Data></Cell>
        </Row>';
 
-    foreach ($items as $item) {
-        $xml .= '<Row>
-        <Cell ss:StyleID="cell"><Data ss:Type="String">' . ($item->product->name ?? 'Удален') . '</Data></Cell>
-        <Cell ss:StyleID="cell"><Data ss:Type="String">' . $item->product_id . '</Data></Cell>
-        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . $item->quantity . '</Data></Cell>
-        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . number_format($item->price, 2, '.', '') . '</Data></Cell>
-        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . (int) ($item->discount ?? 0) . '</Data></Cell>
-        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . number_format($item->total_price, 2, '.', '') . '</Data></Cell>
+        foreach ($receipt['lines'] as $line) {
+            $xml .= '<Row>
+        <Cell ss:StyleID="cell"><Data ss:Type="String">' . htmlspecialchars($line['name'], ENT_XML1) . '</Data></Cell>
+        <Cell ss:StyleID="cell"><Data ss:Type="String">' . htmlspecialchars($line['barcode'], ENT_XML1) . '</Data></Cell>
+        <Cell ss:StyleID="cell"><Data ss:Type="String">' . $line['qty_display'] . ' ' . $line['unit'] . '</Data></Cell>
+        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . number_format($line['unit_price_original'], 2, '.', '') . '</Data></Cell>
+        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . (int) $line['discount_percent'] . '</Data></Cell>
+        <Cell ss:StyleID="cell"><Data ss:Type="Number">' . number_format($line['line_total'], 2, '.', '') . '</Data></Cell>
        </Row>';
-    }
-
-    $subGross = $items->sum(function (Sale $item) {
-        $d = (float) ($item->discount ?? 0);
-        $q = (float) $item->quantity;
-        $p = (float) $item->price;
-        if ($d <= 0) {
-            return round($q * $p, 2);
         }
-        $den = 1 - ($d / 100);
 
-        return $den <= 0 ? round($q * $p, 2) : round(($q * $p) / $den, 2);
-    });
-    $discAmt = round(max(0, $subGross - $items->sum('total_price')), 2);
-
-    $xml .= '<Row></Row>
+        $xml .= '<Row></Row>
        <Row>
         <Cell ss:StyleID="cell"><Data ss:Type="String">Промежуточный итог</Data></Cell>
-        <Cell ss:Index="6" ss:StyleID="cell"><Data ss:Type="Number">' . number_format($subGross, 2, '.', '') . '</Data></Cell>
+        <Cell ss:Index="6" ss:StyleID="cell"><Data ss:Type="Number">' . number_format($receipt['subtotalBeforeDiscount'], 2, '.', '') . '</Data></Cell>
        </Row>
        <Row>
         <Cell ss:StyleID="cell"><Data ss:Type="String">Скидка (TMT)</Data></Cell>
-        <Cell ss:Index="6" ss:StyleID="cell"><Data ss:Type="Number">' . number_format($discAmt, 2, '.', '') . '</Data></Cell>
+        <Cell ss:Index="6" ss:StyleID="cell"><Data ss:Type="Number">' . number_format($receipt['discountAmount'], 2, '.', '') . '</Data></Cell>
        </Row>
        <Row>
         <Cell ss:Index="5" ss:StyleID="total"><Data ss:Type="String">ИТОГО:</Data></Cell>
-        <Cell ss:StyleID="total"><Data ss:Type="Number">' . number_format($items->sum('total_price'), 2, '.', '') . '</Data></Cell>
+        <Cell ss:StyleID="total"><Data ss:Type="Number">' . number_format($receipt['total'], 2, '.', '') . '</Data></Cell>
        </Row>';
 
-    $xml .= '</Table></Worksheet></Workbook>';
+        $xml .= '</Table></Worksheet></Workbook>';
 
-    return response($xml)
-        ->header('Content-Type', 'application/vnd.ms-excel')
-        ->header('Content-Disposition', "attachment; filename=\"$filename\"");
-}
+        return response($xml)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', "attachment; filename=\"$filename\"");
+    }
+
+    private function normalizeTransactionId(string $transaction_id): string
+    {
+        return str_starts_with($transaction_id, '#') ? $transaction_id : '#' . $transaction_id;
+    }
+
+    /**
+     * @return array{lines: array<int, array<string, mixed>>, orderDate: \Illuminate\Support\Carbon, total: float, subtotalBeforeDiscount: float, discountAmount: float}|null
+     */
+    private function buildReceipt(string $db_id): ?array
+    {
+        $sales = Sale::where('transaction_id', $db_id)->with('product')->orderBy('id')->get();
+
+        if ($sales->isEmpty()) {
+            return null;
+        }
+
+        $rawItems = $this->extractRawLineItems($sales);
+        if ($rawItems === []) {
+            return null;
+        }
+
+        $productIds = array_values(array_unique(array_filter(array_map(
+            fn (array $item) => (int) ($item['product_id'] ?? 0),
+            $rawItems
+        ))));
+
+        $products = Product::with('barcodes')
+            ->whereIn('id', $productIds)
+            ->get()
+            ->keyBy('id');
+
+        $storagesByProduct = Storage::whereIn('product_id', $productIds)
+            ->get()
+            ->groupBy('product_id');
+
+        $lines = [];
+        foreach ($rawItems as $item) {
+            $lines[] = $this->normalizeLineItem($item, $products, $storagesByProduct);
+        }
+
+        $subtotalBeforeDiscount = round(array_sum(array_column($lines, 'line_subtotal')), 2);
+        $total = round(array_sum(array_column($lines, 'line_total')), 2);
+        $discountAmount = round(max(0, $subtotalBeforeDiscount - $total), 2);
+
+        return [
+            'lines' => $lines,
+            'orderDate' => $sales->max('created_at'),
+            'total' => $total,
+            'subtotalBeforeDiscount' => $subtotalBeforeDiscount,
+            'discountAmount' => $discountAmount,
+        ];
+    }
+
+    /**
+     * @param  Collection<int, Sale>  $sales
+     * @return array<int, array<string, mixed>>
+     */
+    private function extractRawLineItems(Collection $sales): array
+    {
+        $primary = $sales->first();
+        $decoded = json_decode((string) ($primary->items_json ?? ''), true);
+
+        if (is_array($decoded) && $decoded !== []) {
+            return $decoded;
+        }
+
+        if ($sales->count() > 1) {
+            return $sales->map(function (Sale $sale) {
+                return [
+                    'product_id' => $sale->product_id,
+                    'name' => $sale->product?->name,
+                    'quantity' => $sale->quantity,
+                    'price' => $sale->price,
+                    'total_price' => $sale->total_price,
+                    'sale_type' => $sale->sale_type,
+                    'discount' => (int) ($sale->discount ?? 0),
+                ];
+            })->all();
+        }
+
+        return [[
+            'product_id' => $primary->product_id,
+            'name' => $primary->product?->name,
+            'quantity' => $primary->quantity,
+            'price' => $primary->price,
+            'total_price' => $primary->total_price,
+            'sale_type' => $primary->sale_type,
+            'discount' => (int) ($primary->discount ?? 0),
+        ]];
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @param  Collection<int, Product>  $products
+     * @param  Collection<int, Collection<int, Storage>>  $storagesByProduct
+     * @return array<string, mixed>
+     */
+    private function normalizeLineItem(array $item, Collection $products, Collection $storagesByProduct): array
+    {
+        $productId = (int) ($item['product_id'] ?? 0);
+        $product = $products->get($productId);
+
+        $saleType = (string) ($item['sale_type'] ?? $product?->unit_type ?? 'piece');
+        $unit = $saleType === 'weight' ? 'kg' : 'pcs';
+        $quantity = (float) ($item['quantity'] ?? 0);
+        $unitPrice = (float) ($item['price'] ?? 0);
+        $discountPercent = max(0, (int) ($item['discount'] ?? 0));
+
+        $lineTotal = round((float) ($item['total_price'] ?? ($quantity * $unitPrice)), 2);
+
+        if ($discountPercent > 0 && $unitPrice > 0) {
+            $denominator = 1 - ($discountPercent / 100);
+            $originalUnitPrice = $denominator > 0
+                ? round($unitPrice / $denominator, 2)
+                : $unitPrice;
+        } else {
+            $originalUnitPrice = $unitPrice;
+        }
+
+        $lineSubtotal = round($quantity * $originalUnitPrice, 2);
+        $lineDiscount = round(max(0, $lineSubtotal - $lineTotal), 2);
+
+        $qtyDisplay = $unit === 'kg'
+            ? number_format($quantity, 3, '.', '')
+            : (string) (int) $quantity;
+
+        return [
+            'name' => (string) ($item['name'] ?? $product?->name ?? __('app.receipt_product_deleted')),
+            'barcode' => $this->resolveBarcode($product, $storagesByProduct->get($productId)),
+            'quantity' => $quantity,
+            'qty_display' => $qtyDisplay,
+            'unit' => $unit,
+            'unit_price' => $unitPrice,
+            'unit_price_original' => $originalUnitPrice,
+            'discount_percent' => $discountPercent,
+            'line_discount' => $lineDiscount,
+            'line_subtotal' => $lineSubtotal,
+            'line_total' => $lineTotal,
+        ];
+    }
+
+    private function resolveBarcode(?Product $product, ?Collection $storages): string
+    {
+        if ($product === null) {
+            return '—';
+        }
+
+        if (! empty($product->barcode)) {
+            return (string) $product->barcode;
+        }
+
+        $extra = $product->relationLoaded('barcodes')
+            ? $product->barcodes->first()?->barcode
+            : null;
+
+        if (! empty($extra)) {
+            return (string) $extra;
+        }
+
+        if ($storages !== null) {
+            foreach ($storages as $storage) {
+                if (! empty($storage->barcode)) {
+                    return (string) $storage->barcode;
+                }
+            }
+        }
+
+        return '—';
+    }
 }

@@ -440,7 +440,7 @@ return [
     'receipt_label_transaction' => 'Operasiýa',
     'receipt_label_date' => 'Sene we wagt',
     'receipt_table_product' => 'Haryt',
-    'receipt_table_sku' => 'SKU',
+    'receipt_table_sku' => 'Ştrih-kod',
     'receipt_table_qty' => 'Sany',
     'receipt_table_price' => 'Baha',
     'receipt_table_discount' => 'Arzanlyk',

@@ -450,7 +450,7 @@ return [
     'receipt_label_transaction' => 'Транзакция',
     'receipt_label_date' => 'Дата и время',
     'receipt_table_product' => 'Товар',
-    'receipt_table_sku' => 'Артикул',
+    'receipt_table_sku' => 'Штрих-код',
     'receipt_table_qty' => 'Кол-во',
     'receipt_table_price' => 'Цена',
     'receipt_table_discount' => 'Скидка',
