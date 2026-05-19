@@ -87,6 +87,7 @@ Route::middleware(['license'])->group(function () {
                     Route::get('/', [DashboardController::class, 'index'])->name('boss.dashboard');
                     Route::get('/expense', [DashboardController::class, 'expensesIndex'])->name('boss.expense.index');
                     Route::post('/expense/store', [DashboardController::class, 'storeExpense'])->name('boss.expense.store');
+                    Route::delete('/expense/{id}', [DashboardController::class, 'destroyExpense'])->name('boss.expense.destroy');
                     Route::get('/till/{id}', [DashboardController::class, 'showTill'])->name('boss.till.show');
                     Route::get('/revenue', [DashboardController::class, 'totalRevenue'])->name('boss.revenue');
                     Route::get('/shifts', [DashboardController::class, 'shiftLogs'])->name('admin.shifts');

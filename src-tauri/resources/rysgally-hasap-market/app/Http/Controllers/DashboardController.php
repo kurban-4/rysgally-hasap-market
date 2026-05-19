@@ -96,6 +96,12 @@ public function shiftLogs()
         return redirect()->back()->with('success', 'Расход успешно записан!');
     }
 
+    public function destroyExpense($id)
+    {
+        Expense::findOrFail($id)->delete();
+        return redirect()->back()->with('success', 'Расход успешно удален!');
+    }
+
     public function showTill($id)
     {
         $till = Till::with(['sales.product'])->findOrFail($id);

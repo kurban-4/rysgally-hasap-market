@@ -60,6 +60,7 @@
                         <th class="text-muted small fw-bold text-uppercase py-3" style="letter-spacing: 0.08em;">{{ __('app.expense_date') }}</th>
                         <th class="text-muted small fw-bold text-uppercase py-3" style="letter-spacing: 0.08em;">{{ __('app.expense_description') }}</th>
                         <th class="text-muted small fw-bold text-uppercase py-3 text-end" style="letter-spacing: 0.08em;">{{ __('app.expense_amount') }}</th>
+                        <th class="text-muted small fw-bold text-uppercase py-3 text-end" style="letter-spacing: 0.08em;">{{ __('app.expense_actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,6 +73,14 @@
                         <td class="py-3 fw-bold text-dark">{{ $ex->title }}</td>
                         <td class="py-3 text-end">
                             <span class="fw-black text-danger">-{{ number_format($ex->amount, 2) }} {{ __('app.currency_tmt') }}</span>
+                        </td>
+                        <td class="py-3 text-end">
+                            <form action="{{ route('boss.expense.destroy', $ex->id) }}" method="POST" onsubmit="return confirm('Удалить этот расход?')" class="d-inline">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     @endforeach
