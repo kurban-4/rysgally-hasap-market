@@ -16,9 +16,9 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             php-binary: php-aarch64-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            php-binary: php-x86_64-pc-windows-msvc.exe
+          # - os: windows-latest
+          #   target: x86_64-pc-windows-msvc
+          #   php-binary: php-x86_64-pc-windows-msvc.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -69,7 +69,12 @@ jobs:
           .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter" --prefer-pre-built
           .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter"
           Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
-
+      - name: Build Laravel assets
+        shell: bash
+        run: |
+          cd src-tauri/resources/rysgally-hasap-market
+          npm install
+          npm run build
       - name: Install Composer dependencies
         run: |
           cd src-tauri/resources/rysgally-hasap-market
