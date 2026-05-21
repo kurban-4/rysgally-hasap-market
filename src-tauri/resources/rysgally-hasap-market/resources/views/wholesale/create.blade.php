@@ -135,7 +135,7 @@
 </div>
 
 <style>
-@import url('https:
+
 
 body { 
     font-family: 'Plus Jakarta Sans', sans-serif; 

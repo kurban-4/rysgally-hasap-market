@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
         }
 
         
-        $admin = User::firstOrCreate([
+        $admin = User::updateOrCreate([
             'username' => 'admin',
         ], [
             'name' => 'Admin User',
@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
         ]);
 
         
-        $salesman = User::firstOrCreate([
+        $salesman = User::updateOrCreate([
             'username' => 'salesman',
         ], [
             'name' => 'Salesman User',
@@ -41,7 +41,7 @@ class UserSeeder extends Seeder
             'role' => 'salesman',
         ]);
 
-        $storage = User::firstOrCreate([
+        $storage = User::updateOrCreate([
             'username' => 'storage',
         ], [
             'name' => 'Storage User',
@@ -49,7 +49,7 @@ class UserSeeder extends Seeder
             'role' => 'storage',
         ]);
 
-        $wholesale = User::firstOrCreate([
+        $wholesale = User::updateOrCreate([
             'username' => 'wholesale',
         ], [
             'name' => 'Wholesale User',

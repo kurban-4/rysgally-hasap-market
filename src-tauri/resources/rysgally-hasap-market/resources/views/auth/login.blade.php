@@ -123,7 +123,7 @@ setAppHeight();
 </script>
 
 <style>
-@import url('https:
+
 
 :root {
     --ora: #E8722A;

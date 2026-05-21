@@ -258,4 +258,5 @@ public function transferToMarket(Request $request)
         return redirect()->back()->with('error', 'Transfer error: ' . $e->getMessage());
     }
 }
+}
 

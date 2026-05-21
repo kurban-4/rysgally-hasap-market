@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-@import url('https:
+
 
 :root {
     --ora: #E8722A;

@@ -207,9 +207,9 @@ public function exportExcel(Request $request)
 
         
         $ssCount = count($strings);
-        $ssXml   = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-                 . '<sst xmlns="http:
-                 . ' count="' . $ssCount . '" uniqueCount="' . $ssCount . '">';
+$ssXml   = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+         . '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+         . ' count="' . $ssCount . '" uniqueCount="' . $ssCount . '">';
         foreach (array_keys($strings) as $str) {
             $ssXml .= '<si><t xml:space="preserve">' . htmlspecialchars($str, ENT_XML1, 'UTF-8') . '</t></si>';
         }
@@ -217,12 +217,12 @@ public function exportExcel(Request $request)
 
         
         $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<worksheet xmlns="http:
+            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
             . '<sheetData>' . $sheetRows . '</sheetData></worksheet>';
 
         
         $stylesXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<styleSheet xmlns="http:
+            . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
             . '<fonts count="2">'
             . '<font><sz val="11"/><name val="Calibri"/></font>'
             . '<font><b/><sz val="11"/><name val="Calibri"/></font>'
@@ -231,32 +231,31 @@ public function exportExcel(Request $request)
             . '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
             . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
             . '<cellXfs count="2">'
-            . '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'   
-            . '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>'   
+            . '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+            . '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>'
             . '</cellXfs>'
             . '</styleSheet>';
 
-        
         $workbookXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<workbook xmlns="http:
-            . ' xmlns:r="http:
+            . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+            . ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
             . '<sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets>'
             . '</workbook>';
 
         $wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http:
-            . '<Relationship Id="rId1" Type="http:
-            . '<Relationship Id="rId2" Type="http:
-            . '<Relationship Id="rId3" Type="http:
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+            . '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>'
+            . '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
             . '</Relationships>';
 
         $pkgRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Relationships xmlns="http:
-            . '<Relationship Id="rId1" Type="http:
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
             . '</Relationships>';
 
         $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            . '<Types xmlns="http:
+            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
             . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
             . '<Default Extension="xml" ContentType="application/xml"/>'
             . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'

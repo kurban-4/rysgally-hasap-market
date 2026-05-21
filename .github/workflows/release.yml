@@ -16,9 +16,9 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             php-binary: php-aarch64-apple-darwin
-          # - os: windows-latest
-          #   target: x86_64-pc-windows-msvc
-          #   php-binary: php-x86_64-pc-windows-msvc.exe
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            php-binary: php-x86_64-pc-windows-msvc.exe
 
     runs-on: ${{ matrix.os }}
 
@@ -66,8 +66,8 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
           .\spc.exe doctor --auto-fix
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter" --prefer-pre-built
-          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter"
+          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter" --prefer-pre-built
+          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter"
           Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
       - name: Build Laravel assets
         shell: bash

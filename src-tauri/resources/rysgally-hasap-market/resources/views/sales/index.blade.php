@@ -607,7 +607,7 @@ function restoreTillId() {
 </script>
 
 <style>
-@import url('https:
+
 
 :root {
     --primary: #E8722A;

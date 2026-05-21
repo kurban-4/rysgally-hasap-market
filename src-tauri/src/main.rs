@@ -7,6 +7,7 @@ use tauri::Manager;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
+use std::net::TcpStream;
 
 const APP_KEY: &str = "base64:mL3/J3Jxsg7yS1WgaxI3mCXuB0iZTeKA5aVRSh9WMxg=";
 
@@ -130,6 +131,9 @@ fn apply_php_env(
         .env("APP_KEY", APP_KEY)
         .env("APP_ENV", "production")
         .env("APP_DEBUG", "false")
+        .env("SESSION_SECURE_COOKIE", "false")
+        .env("SESSION_DRIVER", "file")
+        .env("APP_URL", "http://127.0.0.1:8001")
 }
 
 async fn run_artisan(
@@ -250,7 +254,7 @@ fn main() {
                     &paths,
                     &storage_path,
                     &bootstrap_path,
-                    &["artisan", "db:seed", "--force"],
+                    &["artisan", "db:seed", "--class=UserSeeder", "--force"],
                 )
                 .await;
 
@@ -297,7 +301,15 @@ fn main() {
 
                 match server_cmd.spawn() {
                     Ok((mut rx, _)) => {
-                        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                        // Ждем, пока сервер реально начнет отвечать на порту 8001
+                        let mut attempts = 0;
+                        while attempts < 10 {
+                            if TcpStream::connect("127.0.0.1:8001").is_ok() {
+                                break;
+                            }
+                            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                            attempts += 1;
+                        }
 
                         if let Err(e) = WebviewWindowBuilder::new(
                             &handle,
