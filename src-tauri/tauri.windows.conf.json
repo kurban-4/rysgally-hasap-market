@@ -4,7 +4,7 @@
       "binaries/php-x86_64-pc-windows-msvc/**/*"
     ],
     "externalBin": [
-      "binaries/php-x86_64-pc-windows-msvc/php.exe"
+      "binaries/php-x86_64-pc-windows-msvc/php"
     ]
   }
 }
