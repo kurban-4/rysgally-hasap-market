@@ -52,7 +52,10 @@ fn ensure_storage_tree(storage_path: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn init_writable_paths(handle: &tauri::AppHandle, bundle_dir: &Path) -> Result<(PathBuf, PathBuf, PathBuf), String> {
+fn init_writable_paths(
+    handle: &tauri::AppHandle,
+    bundle_dir: &Path,
+) -> Result<(PathBuf, PathBuf, PathBuf, bool), String> {
     let data_root = handle
         .path()
         .app_data_dir()
@@ -63,16 +66,22 @@ fn init_writable_paths(handle: &tauri::AppHandle, bundle_dir: &Path) -> Result<(
     let storage_path = data_root.join("storage");
     let bootstrap_path = data_root.join("bootstrap");
 
-    fs::create_dir_all(&database_dir).map_err(|e| format!("create database dir: {e}"))?;
-    fs::create_dir_all(bootstrap_path.join("cache")).map_err(|e| format!("create bootstrap cache: {e}"))?;
+    fs::create_dir_all(&database_dir)
+        .map_err(|e| format!("create database dir: {e}"))?;
+    fs::create_dir_all(bootstrap_path.join("cache"))
+        .map_err(|e| format!("create bootstrap cache: {e}"))?;
 
     let db_path = database_dir.join("database.sqlite");
-    if !db_path.exists() {
+    let is_first_run = !db_path.exists();
+
+    if is_first_run {
         let bundled_db = bundle_dir.join("database").join("database.sqlite");
         if bundled_db.exists() {
-            fs::copy(&bundled_db, &db_path).map_err(|e| format!("copy database: {e}"))?;
+            fs::copy(&bundled_db, &db_path)
+                .map_err(|e| format!("copy database: {e}"))?;
         } else {
-            fs::File::create(&db_path).map_err(|e| format!("create database: {e}"))?;
+            fs::File::create(&db_path)
+                .map_err(|e| format!("create database: {e}"))?;
         }
     }
 
@@ -82,15 +91,19 @@ fn init_writable_paths(handle: &tauri::AppHandle, bundle_dir: &Path) -> Result<(
             copy_dir_all(&bundled_storage, &storage_path)
                 .map_err(|e| format!("copy storage: {e}"))?;
         } else {
-            ensure_storage_tree(&storage_path).map_err(|e| format!("init storage: {e}"))?;
+            ensure_storage_tree(&storage_path)
+                .map_err(|e| format!("init storage: {e}"))?;
         }
     }
 
-    Ok((db_path, storage_path, bootstrap_path))
+    Ok((db_path, storage_path, bootstrap_path, is_first_run))
 }
 
 impl AppPaths {
-    fn from_bundle(handle: &tauri::AppHandle, base_path: PathBuf) -> Result<Self, String> {
+    fn from_bundle(
+        handle: &tauri::AppHandle,
+        base_path: PathBuf,
+    ) -> Result<(Self, bool), String> {
         let project_dir = base_path.join("resources").join("rysgally-hasap-market");
         let php_ini = base_path.join("binaries").join("php.ini");
 
@@ -101,19 +114,19 @@ impl AppPaths {
             ));
         }
 
-        let (db_path, storage_path, _bootstrap_path) = init_writable_paths(handle, &project_dir)?;
+        let (db_path, _storage_path, _bootstrap_path, is_first_run) =
+            init_writable_paths(handle, &project_dir)?;
 
-        println!("project_dir: {:?}", project_dir);
-        println!("writable db: {:?}", db_path);
-        println!("writable storage: {:?}", storage_path);
-
-        Ok(Self {
-            public_dir_arg: path_for_php(&project_dir.join("public")),
-            server_php_arg: path_for_php(&project_dir.join("server.php")),
-            php_ini_arg: path_for_php(&php_ini),
-            db_path_arg: path_for_php(&db_path),
-            project_dir,
-        })
+        Ok((
+            Self {
+                public_dir_arg: path_for_php(&project_dir.join("public")),
+                server_php_arg: path_for_php(&project_dir.join("server.php")),
+                php_ini_arg: path_for_php(&php_ini),
+                db_path_arg: path_for_php(&db_path),
+                project_dir,
+            },
+            is_first_run,
+        ))
     }
 }
 
@@ -153,7 +166,11 @@ async fn run_artisan(
     };
 
     let cmd = apply_php_env(
-        sidecar.args(std::iter::once("-c").chain(std::iter::once(paths.php_ini_arg.as_str())).chain(args.iter().copied())),
+        sidecar.args(
+            std::iter::once("-c")
+                .chain(std::iter::once(paths.php_ini_arg.as_str()))
+                .chain(args.iter().copied()),
+        ),
         paths,
         storage_path,
         bootstrap_path,
@@ -163,9 +180,6 @@ async fn run_artisan(
         Ok((mut rx, _)) => {
             while let Some(event) = rx.recv().await {
                 match &event {
-                    CommandEvent::Stdout(line) => {
-                        println!("artisan ({label}): {}", String::from_utf8_lossy(line))
-                    }
                     CommandEvent::Stderr(line) => {
                         eprintln!("artisan ({label}) err: {}", String::from_utf8_lossy(line))
                     }
@@ -180,6 +194,26 @@ async fn run_artisan(
             }
         }
         Err(e) => eprintln!("Failed to spawn artisan ({label}): {e}"),
+    }
+}
+
+fn kill_port_8001() {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("sh")
+            .arg("-c")
+            .arg("lsof -ti:8001 | xargs kill -9 2>/dev/null || true")
+            .output();
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let _ = std::process::Command::new("cmd")
+            .args([
+                "/C",
+                "for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :8001') do taskkill /F /PID %a 2>nul",
+            ])
+            .output();
     }
 }
 
@@ -202,7 +236,7 @@ fn main() {
                 }
             };
 
-            let paths = match AppPaths::from_bundle(&handle, base_path) {
+            let (paths, is_first_run) = match AppPaths::from_bundle(&handle, base_path) {
                 Ok(p) => p,
                 Err(e) => {
                     eprintln!("{e}");
@@ -226,56 +260,32 @@ fn main() {
                 .unwrap_or_else(|| paths.project_dir.join("bootstrap"));
 
             tauri::async_runtime::spawn(async move {
-                run_artisan(
-                    &handle,
-                    &paths,
-                    &storage_path,
-                    &bootstrap_path,
-                    &[
-                        "artisan",
-                        "tinker",
-                        "--execute",
-                        "if (Schema::hasTable('licenses')) { App\\Models\\License::updateOrCreate(['key' => 'RYSGALLY-HASAP-BUILD'], ['is_activated' => true, 'activated_at' => now()]); }",
-                    ],
-                )
-                .await;
+                // Убиваем старый PHP процесс на порту 8001
+                kill_port_8001();
+                tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
-                run_artisan(
-                    &handle,
-                    &paths,
-                    &storage_path,
-                    &bootstrap_path,
-                    &["artisan", "migrate", "--force"],
-                )
-                .await;
+                // Миграции и сидинг — ТОЛЬКО при первом запуске
+                if is_first_run {
+                    run_artisan(
+                        &handle, &paths, &storage_path, &bootstrap_path,
+                        &["artisan", "migrate", "--force"],
+                    ).await;
 
-                run_artisan(
-                    &handle,
-                    &paths,
-                    &storage_path,
-                    &bootstrap_path,
-                    &["artisan", "db:seed", "--class=UserSeeder", "--force"],
-                )
-                .await;
+                    run_artisan(
+                        &handle, &paths, &storage_path, &bootstrap_path,
+                        &["artisan", "db:seed", "--class=UserSeeder", "--force"],
+                    ).await;
 
-                run_artisan(
-                    &handle,
-                    &paths,
-                    &storage_path,
-                    &bootstrap_path,
-                    &["artisan", "config:clear"],
-                )
-                .await;
+                    run_artisan(
+                        &handle, &paths, &storage_path, &bootstrap_path,
+                        &[
+                            "artisan", "tinker", "--execute",
+                            "if (Schema::hasTable('licenses')) { App\\Models\\License::updateOrCreate(['key' => 'RYSGALLY-HASAP-BUILD'], ['is_activated' => true, 'activated_at' => now()]); }",
+                        ],
+                    ).await;
+                }
 
-                run_artisan(
-                    &handle,
-                    &paths,
-                    &storage_path,
-                    &bootstrap_path,
-                    &["artisan", "route:clear"],
-                )
-                .await;
-
+                // Запускаем PHP встроенный сервер
                 let sidecar = match handle.shell().sidecar("php") {
                     Ok(cmd) => cmd,
                     Err(e) => {
@@ -301,13 +311,13 @@ fn main() {
 
                 match server_cmd.spawn() {
                     Ok((mut rx, _)) => {
-                        // Ждем, пока сервер реально начнет отвечать на порту 8001
+                        // Ждём пока сервер поднимется (до 10 секунд)
                         let mut attempts = 0;
-                        while attempts < 10 {
+                        while attempts < 40 {
                             if TcpStream::connect("127.0.0.1:8001").is_ok() {
                                 break;
                             }
-                            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
                             attempts += 1;
                         }
 
@@ -327,11 +337,8 @@ fn main() {
 
                         while let Some(event) = rx.recv().await {
                             match event {
-                                CommandEvent::Stdout(line) => {
-                                    println!("PHP: {}", String::from_utf8_lossy(&line))
-                                }
                                 CommandEvent::Stderr(line) => {
-                                    eprintln!("PHP ERR: {}", String::from_utf8_lossy(&line))
+                                    eprintln!("PHP: {}", String::from_utf8_lossy(&line))
                                 }
                                 CommandEvent::Terminated(payload) => {
                                     eprintln!("PHP server exited: {:?}", payload.code);
