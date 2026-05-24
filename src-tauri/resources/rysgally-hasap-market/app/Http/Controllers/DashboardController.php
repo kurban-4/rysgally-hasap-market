@@ -12,14 +12,30 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $expenses      = Expense::whereDate('created_at', now())->latest()->get();
+        $expenses      = Expense::whereDate('created_at', now())->latest()->limit(100)->get();
         $totalExpenses = $expenses->sum('amount');
 
-        $tills = Till::all()->map(function ($till) {
-            $dayRev   = $till->sales()->whereDate('created_at', now())->sum('total_price');
-            $weekRev  = $till->sales()->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('total_price');
-            $monthRev = $till->sales()->whereMonth('created_at', now()->month)->sum('total_price');
-            $totalRev = $till->sales()->sum('total_price');
+        // Use database aggregation instead of N+1 queries
+        $today = now()->startOfDay();
+        $weekStart = now()->startOfWeek();
+        $monthStart = now()->startOfMonth();
+
+        $tills = Till::with(['sales' => function($q) use ($today, $weekStart, $monthStart) {
+            $q->select('id', 'till_id', 'total_price', 'product_id', 'quantity', 'created_at')
+              ->where(function($query) use ($monthStart) {
+                  $query->where('created_at', '>=', $monthStart);
+              });
+        }, 'sales.product' => function($q) {
+            $q->select('id', 'received_price');
+        }])->get();
+
+        $tilsData = $tills->map(function ($till) use ($today, $weekStart, $monthStart) {
+            $sales = $till->sales;
+            
+            $dayRev   = $sales->where('created_at', '>=', $today)->sum('total_price');
+            $weekRev  = $sales->where('created_at', '>=', $weekStart)->sum('total_price');
+            $monthRev = $sales->where('created_at', '>=', $monthStart)->sum('total_price');
+            $totalRev = $sales->sum('total_price');
 
             return [
                 'id'             => $till->id,
@@ -33,14 +49,17 @@ class DashboardController extends Controller
             ];
         });
 
-        $dayEarned   = $tills->sum('day_rev');
-        $weekEarned  = $tills->sum('week_rev');
-        $monthEarned = $tills->sum('month_rev');
-        $totalEarned = $tills->sum('all_time_rev');
+        $dayEarned   = $tilsData->sum('day_rev');
+        $weekEarned  = $tilsData->sum('week_rev');
+        $monthEarned = $tilsData->sum('month_rev');
+        $totalEarned = $tilsData->sum('all_time_rev');
         $netProfit   = $monthEarned - $totalExpenses;
 
-        
-        $allSales = \App\Models\Sale::with('product')->get();
+        // Efficient aggregation queries
+        $allSales = \App\Models\Sale::where('created_at', '>=', $monthStart)
+                        ->with('product:id,received_price')
+                        ->limit(10000)
+                        ->get();
         
         $totalReceivedPrice = 0;
         $totalSellingPrice = $allSales->sum('total_price');
@@ -50,6 +69,18 @@ class DashboardController extends Controller
                 $totalReceivedPrice += $sale->product->received_price * $sale->quantity;
             }
         }
+        
+        $totalNetProfit = $totalSellingPrice - $totalReceivedPrice;
+        $totalProfitMargin = $totalReceivedPrice > 0 ? ($totalNetProfit / $totalReceivedPrice) * 100 : 0;
+
+        $tills = $tilsData;
+        
+        return view('admin.dashboard', compact(
+            'tills', 'expenses', 'dayEarned', 'weekEarned',
+            'monthEarned', 'totalEarned', 'totalExpenses', 'netProfit',
+            'totalReceivedPrice', 'totalSellingPrice', 'totalNetProfit', 'totalProfitMargin'
+        ));
+    }
         
         $totalNetProfit = $totalSellingPrice - $totalReceivedPrice;
         $totalProfitMargin = $totalReceivedPrice > 0 ? ($totalNetProfit / $totalReceivedPrice) * 100 : 0;
@@ -104,56 +135,52 @@ public function shiftLogs()
 
     public function showTill($id)
     {
-        $till = Till::with(['sales.product'])->findOrFail($id);
+        $till = Till::findOrFail($id);
 
         $from = request('from') ? Carbon::parse(request('from'))->startOfDay() : null;
         $to   = request('to')   ? Carbon::parse(request('to'))->endOfDay()     : null;
 
-        $dayEarned   = $till->sales->filter(fn($s) => $s->created_at >= Carbon::today())->sum('total_price');
-        $weekEarned  = $till->sales->filter(fn($s) => $s->created_at >= Carbon::now()->startOfWeek())->sum('total_price');
-        $monthEarned = $till->sales->filter(fn($s) => $s->created_at >= Carbon::now()->startOfMonth())->sum('total_price');
-        $totalEarned = $till->sales->sum('total_price');
+        // Use database queries instead of loading all sales
+        $today = Carbon::today();
+        $weekStart = Carbon::now()->startOfWeek();
+        $monthStart = Carbon::now()->startOfMonth();
 
-        $filteredSales = $till->sales;
-        if ($from) $filteredSales = $filteredSales->filter(fn($s) => $s->created_at >= $from);
-        if ($to)   $filteredSales = $filteredSales->filter(fn($s) => $s->created_at <= $to);
+        $dayEarned   = \App\Models\Sale::where('till_id', $id)->where('created_at', '>=', $today)->sum('total_price');
+        $weekEarned  = \App\Models\Sale::where('till_id', $id)->where('created_at', '>=', $weekStart)->sum('total_price');
+        $monthEarned = \App\Models\Sale::where('till_id', $id)->where('created_at', '>=', $monthStart)->sum('total_price');
+        $totalEarned = \App\Models\Sale::where('till_id', $id)->sum('total_price');
 
-        $filteredTotal = $filteredSales->sum('total_price');
-
-        $soldproducts = $filteredSales->groupBy('product_id')->map(function ($sales) use ($till) {
-            $allSales = $till->sales->where('product_id', $sales->first()->product_id);
-            
-            
-            $totalReceivedPrice = 0;
-            foreach ($sales as $sale) {
-                $product = $sale->product;
-                if ($product && $product->received_price) {
-                    $totalReceivedPrice += $product->received_price * $sale->quantity;
-                }
-            }
-            
-            return [
-                'name'      => $sales->first()->product->name,
-                'quantity'  => $sales->sum('quantity'),
-                'total'     => $sales->sum('total_price'),
-                'received_price' => $totalReceivedPrice,
-                'day_qty'   => $allSales->filter(fn($s) => $s->created_at >= Carbon::today())->sum('quantity'),
-                'week_qty'  => $allSales->filter(fn($s) => $s->created_at >= Carbon::now()->startOfWeek())->sum('quantity'),
-                'month_qty' => $allSales->filter(fn($s) => $s->created_at >= Carbon::now()->startOfMonth())->sum('quantity'),
-            ];
-        })->values();
-
+        // Limit paginated sales display
+        $salesQuery = \App\Models\Sale::where('till_id', $id)->with('product:id,name,received_price');
+        if ($from) $salesQuery->where('created_at', '>=', $from);
+        if ($to)   $salesQuery->where('created_at', '<=', $to);
         
-        $totalReceivedPrice = $soldproducts->sum('received_price');
-        $totalSellingPrice = $soldproducts->sum('total');
+        $filteredSales = $salesQuery->orderBy('created_at', 'desc')->paginate(50);
+        $salesQueryForSum = \App\Models\Sale::where('till_id', $id);
+        if ($from) $salesQueryForSum->where('created_at', '>=', $from);
+        if ($to)   $salesQueryForSum->where('created_at', '<=', $to);
+        $filteredTotal = $salesQueryForSum->sum('total_price');
+
+
+        // Calculate aggregates
+        $totalReceivedPrice = 0;
+        $totalSellingPrice = $filteredSales->sum('total_price');
+        
+        foreach ($filteredSales as $sale) {
+            if ($sale->product && $sale->product->received_price) {
+                $totalReceivedPrice += $sale->product->received_price * $sale->quantity;
+            }
+        }
+        
         $netProfit = $totalSellingPrice - $totalReceivedPrice;
         $profitMargin = $totalReceivedPrice > 0 ? ($netProfit / $totalReceivedPrice) * 100 : 0;
 
         return view('admin.till_detail', compact(
             'till', 'dayEarned', 'weekEarned', 'monthEarned',
-            'totalEarned', 'filteredTotal', 'soldproducts',
+            'totalEarned', 'filteredTotal', 'filteredSales',
             'totalReceivedPrice', 'totalSellingPrice', 'netProfit', 'profitMargin'
         ));
+    }
     }
 
     public function totalRevenue(Request $request)
@@ -161,9 +188,13 @@ public function shiftLogs()
         $from = $request->from ? Carbon::parse($request->from)->startOfDay() : null;
         $to   = $request->to   ? Carbon::parse($request->to)->endOfDay()     : null;
 
-        $dayEarned   = \App\Models\Sale::whereDate('created_at', Carbon::today())->sum('total_price');
-        $weekEarned  = \App\Models\Sale::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('total_price');
-        $monthEarned = \App\Models\Sale::whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->sum('total_price');
+        $today = Carbon::today();
+        $weekStart = Carbon::now()->startOfWeek();
+        $monthStart = Carbon::now()->startOfMonth();
+
+        $dayEarned   = \App\Models\Sale::where('created_at', '>=', $today)->sum('total_price');
+        $weekEarned  = \App\Models\Sale::where('created_at', '>=', $weekStart)->sum('total_price');
+        $monthEarned = \App\Models\Sale::where('created_at', '>=', $monthStart)->sum('total_price');
         $totalEarned = \App\Models\Sale::sum('total_price');
 
         $query = \App\Models\Sale::query();
@@ -171,32 +202,30 @@ public function shiftLogs()
         if ($to)   $query->where('created_at', '<=', $to);
         $filteredTotal = $query->sum('total_price');
 
-        $tills = Till::all()->map(function ($till) use ($from, $to) {
-            $salesQuery = $till->sales();
-            $dayRev     = (clone $salesQuery)->whereDate('created_at', Carbon::today())->sum('total_price');
-            $weekRev    = (clone $salesQuery)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('total_price');
-            $monthRev   = (clone $salesQuery)->whereMonth('created_at', Carbon::now()->month)->sum('total_price');
-
-            $filteredQuery = (clone $salesQuery);
-            if ($from) $filteredQuery->where('created_at', '>=', $from);
-            if ($to)   $filteredQuery->where('created_at', '<=', $to);
-
+        // Efficient till query with eager loading
+        $tills = Till::with(['sales' => function($q) use ($from, $to) {
+            $q->select('id', 'till_id', 'total_price', 'product_id', 'quantity', 'created_at');
+            if ($from) $q->where('created_at', '>=', $from);
+            if ($to) $q->where('created_at', '<=', $to);
+        }])->get()->map(function ($till) use ($today, $weekStart, $monthStart) {
+            $sales = $till->sales;
+            
             return [
                 'id'             => $till->id,
                 'name'           => $till->name,
-                'day_rev'        => $dayRev,
-                'week_rev'       => $weekRev,
-                'month_rev'      => $monthRev,
-                'all_time_rev'   => $salesQuery->sum('total_price'),
-                'filtered_total' => $filteredQuery->sum('total_price'),
+                'day_rev'        => $sales->where('created_at', '>=', $today)->sum('total_price'),
+                'week_rev'       => $sales->where('created_at', '>=', $weekStart)->sum('total_price'),
+                'month_rev'      => $sales->where('created_at', '>=', $monthStart)->sum('total_price'),
+                'all_time_rev'   => $sales->sum('total_price'),
+                'filtered_total' => $sales->sum('total_price'),
             ];
         });
 
-        
-        $salesQuery = \App\Models\Sale::with('product');
+        // Limit data to avoid memory bloat
+        $salesQuery = \App\Models\Sale::with('product:id,received_price');
         if ($from) $salesQuery->where('created_at', '>=', $from);
         if ($to)   $salesQuery->where('created_at', '<=', $to);
-        $filteredSales = $salesQuery->get();
+        $filteredSales = $salesQuery->limit(5000)->get();
         
         $totalReceivedPrice = 0;
         $totalSellingPrice = $filteredSales->sum('total_price');
