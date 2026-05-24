@@ -32,14 +32,21 @@ class AppServiceProvider extends ServiceProvider
             \DB::connection()->disableQueryLog();
         }
 
-        // Enable query caching for SQLite
+        // Enable query caching for SQLite (only if database exists)
         if (\DB::getDriverName() === 'sqlite') {
-            // SQLite optimizations
-            \DB::statement("PRAGMA journal_mode = WAL");      // Write-Ahead Logging for better concurrency
-            \DB::statement("PRAGMA synchronous = NORMAL");     // Faster writes
-            \DB::statement("PRAGMA cache_size = -64000");      // 64MB cache
-            \DB::statement("PRAGMA temp_store = MEMORY");      // Use memory for temp storage
-            \DB::statement("PRAGMA foreign_keys = ON");        // Enable foreign keys
+            try {
+                $dbPath = \DB::connection()->getDatabaseName();
+                if (file_exists($dbPath)) {
+                    // SQLite optimizations
+                    \DB::statement("PRAGMA journal_mode = WAL");      // Write-Ahead Logging for better concurrency
+                    \DB::statement("PRAGMA synchronous = NORMAL");     // Faster writes
+                    \DB::statement("PRAGMA cache_size = -64000");      // 64MB cache
+                    \DB::statement("PRAGMA temp_store = MEMORY");      // Use memory for temp storage
+                    \DB::statement("PRAGMA foreign_keys = ON");        // Enable foreign keys
+                }
+            } catch (\Exception $e) {
+                // Silently fail if database doesn't exist yet (e.g., during composer install)
+            }
         }
     }
 }
