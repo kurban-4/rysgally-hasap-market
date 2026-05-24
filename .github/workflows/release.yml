@@ -53,8 +53,8 @@ jobs:
           tar -xzf spc.tar.gz
           chmod +x spc
           ./spc doctor --auto-fix
-          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter" --prefer-pre-built
-          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter"
+          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
+          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache"
           cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
           chmod +x src-tauri/binaries/php-aarch64-apple-darwin
 
@@ -66,15 +66,17 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
           .\spc.exe doctor --auto-fix
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter" --prefer-pre-built
-          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter"
+          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
+          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache"
           Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
+
       - name: Build Laravel assets
         shell: bash
         run: |
           cd src-tauri/resources/rysgally-hasap-market
           npm install
           npm run build
+
       - name: Install Composer dependencies
         run: |
           cd src-tauri/resources/rysgally-hasap-market
@@ -87,7 +89,6 @@ jobs:
           if [ ! -f .env ]; then
             cp .env.example .env || touch .env
           fi
-          # File sessions/cache avoid extra SQLite tables when the DB is still initializing.
           grep -q '^SESSION_DRIVER=' .env && sed -i.bak 's/^SESSION_DRIVER=.*/SESSION_DRIVER=file/' .env || echo 'SESSION_DRIVER=file' >> .env
           grep -q '^CACHE_STORE=' .env && sed -i.bak 's/^CACHE_STORE=.*/CACHE_STORE=file/' .env || echo 'CACHE_STORE=file' >> .env
           grep -q '^QUEUE_CONNECTION=' .env && sed -i.bak 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/' .env || echo 'QUEUE_CONNECTION=sync' >> .env
@@ -114,6 +115,9 @@ jobs:
             exit 1
           fi
           echo "Found PHP sidecar: $PHP_BIN"
+          # Проверяем что opcache скомпилирован
+          src-tauri/binaries/${{ matrix.php-binary }} -c src-tauri/binaries/php.ini \
+            -r "echo extension_loaded('Zend OPcache') ? 'opcache: OK' : 'opcache: MISSING';" || true
 
       - name: Clean Install
         shell: bash
