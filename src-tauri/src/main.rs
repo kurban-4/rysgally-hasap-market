@@ -264,7 +264,7 @@ fn main() {
                 kill_port_8001();
                 tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
-                // Миграции и сидинг — ТОЛЬКО при первом запуске
+                // Всё ниже — ТОЛЬКО при первом запуске
                 if is_first_run {
                     run_artisan(
                         &handle, &paths, &storage_path, &bootstrap_path,
@@ -282,6 +282,22 @@ fn main() {
                             "artisan", "tinker", "--execute",
                             "if (Schema::hasTable('licenses')) { App\\Models\\License::updateOrCreate(['key' => 'RYSGALLY-HASAP-BUILD'], ['is_activated' => true, 'activated_at' => now()]); }",
                         ],
+                    ).await;
+
+                    // Кэшируем конфиги, роуты и вьюхи — страницы будут быстрыми
+                    run_artisan(
+                        &handle, &paths, &storage_path, &bootstrap_path,
+                        &["artisan", "config:cache"],
+                    ).await;
+
+                    run_artisan(
+                        &handle, &paths, &storage_path, &bootstrap_path,
+                        &["artisan", "route:cache"],
+                    ).await;
+
+                    run_artisan(
+                        &handle, &paths, &storage_path, &bootstrap_path,
+                        &["artisan", "view:cache"],
                     ).await;
                 }
 
