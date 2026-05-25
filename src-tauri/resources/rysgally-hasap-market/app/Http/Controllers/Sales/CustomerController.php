@@ -391,4 +391,35 @@ class CustomerController extends Controller
 
         return '—';
     }
+
+    public function destroy($transaction_id)
+    {
+        $db_id = $this->normalizeTransactionId($transaction_id);
+        Sale::where('transaction_id', $db_id)->delete();
+        
+        return redirect()->route('sales.customers.index')->with('success', 'Transaction deleted successfully');
+    }
+
+    public function deleted()
+    {
+        $orders = Sale::onlyTrashed()
+            ->select('transaction_id', 'till_id')
+            ->selectRaw('SUM(total_price) as total_sum')
+            ->selectRaw('MAX(created_at) as order_time')
+            ->with('till')
+            ->groupBy('transaction_id', 'till_id')
+            ->orderBy('order_time', 'desc')
+            ->get();
+
+        return view('sales.customers.deleted', compact('orders'));
+    }
+
+    public function restore($transaction_id)
+    {
+        $db_id = $this->normalizeTransactionId($transaction_id);
+        Sale::onlyTrashed()->where('transaction_id', $db_id)->restore();
+        
+        return redirect()->route('sales.customers.deleted')->with('success', 'Transaction restored successfully');
+    }
 }
+

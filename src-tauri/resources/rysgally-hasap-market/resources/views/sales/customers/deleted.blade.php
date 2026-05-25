@@ -9,22 +9,22 @@
         
         <header class="main-header">
             <div class="header-info">
-                <i class="bi bi-clock-history text-light me-2 fs-5"></i>
+                <i class="bi bi-trash3 text-light me-2 fs-5"></i>
                 <div class="ms-1">
-                    <h4 class="mb-0 fw-black">{{ __('app.customers_title') }}</h4>
+                    <h4 class="mb-0 fw-black">Deleted Transactions</h4>
                     <p class="text-muted small mb-0 d-none d-md-block">
-                        {{ __('app.customers_subtitle') }}
+                        Archive of deleted customer transactions
                     </p>
                 </div>
             </div>
 
             <div class="header-stats ms-auto">
                 <div class="mini-stat">
-                    <span class="mini-label">{{ __('app.customers_orders') }}</span>
+                    <span class="mini-label">Deleted Orders</span>
                     <span class="mini-value">{{ count($orders) }}</span>
                 </div>
                 <div class="mini-stat d-none d-md-flex">
-                    <span class="mini-label">{{ __('app.customers_revenue') }}</span>
+                    <span class="mini-label">Archived Revenue</span>
                     <span class="mini-value orange">
                         {{ number_format($orders->sum('total_sum'), 2) }}
                         <small>TMT</small>
@@ -33,19 +33,13 @@
             </div>
 
             <div class="system-status">
-                <span class="dot-pulse"></span>
-                <span class="d-none d-lg-inline fw-bold" style="font-size:.7rem;color:#4ADE80;">{{ __('app.customers_live') }}</span>
+                <span class="d-none d-lg-inline fw-bold" style="font-size:.7rem;color:#666;">Read-only archive</span>
             </div>
 
-            <a href="{{ route('sales.customers.deleted') }}"
-               class="btn-export d-none d-md-flex me-2" style="background: #FFF5F5; color: #e53e3e; border: 1.5px solid #feb2b2;">
-                <i class="bi bi-trash3"></i>
-                <span>Deleted</span>
-            </a>
-            <a href="{{ route('sales.customers.export.all') }}"
+            <a href="{{ route('sales.customers.index') }}"
                class="btn-export d-none d-md-flex">
-                <i class="bi bi-file-earmark-excel-fill"></i>
-                <span>Export</span>
+                <i class="bi bi-arrow-left"></i>
+                <span>Back to Active</span>
             </a>
         </header>
 
@@ -56,13 +50,13 @@
 
                     <div class="panel-header">
                         <h5 class="mb-0 fw-black">
-                            <i class="bi bi-list-ul me-2 text-orange"></i>
-                            {{ __('app.customers_log_heading') }}
+                            <i class="bi bi-archive me-2 text-muted"></i>
+                            Deleted Transaction Log
                         </h5>
                         <div class="search-box">
                             <i class="bi bi-search"></i>
                             <input type="text" id="searchInput"
-                                   placeholder="{{ __('app.customers_search_placeholder') }}"
+                                   placeholder="Search deleted transactions..."
                                    class="search-input">
                         </div>
                     </div>
@@ -88,16 +82,12 @@
                                     {{ number_format($order->total_sum, 2) }}
                                     <small>TMT</small>
                                 </div>
-                                <span class="badge-done">Выполнено</span>
-                                <div class="mt-2" style="display: flex; gap: 8px;">
-                                    <a href="{{ route('sales.customers.show', ['transaction_id' => ltrim($order->transaction_id, '#')]) }}"
-                                       class="btn-detail" style="flex: 1;">
-                                        {{ __('app.customers_link_details') }} <i class="bi bi-arrow-right-short"></i>
-                                    </a>
-                                    <form action="{{ route('sales.customers.destroy', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this transaction?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn-delete" title="Delete transaction">
-                                            <i class="bi bi-trash3"></i>
+                                <span class="badge-done" style="background: #FFF5F5; color: #e53e3e;">Deleted</span>
+                                <div class="mt-2">
+                                    <form action="{{ route('sales.customers.restore', ltrim($order->transaction_id, '#')) }}" method="POST" style="width: 100%;">
+                                        @csrf
+                                        <button type="submit" class="btn-restore" style="width: 100%;">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Restore
                                         </button>
                                     </form>
                                 </div>
@@ -106,7 +96,7 @@
                         @empty
                         <div class="empty-state">
                             <i class="bi bi-folder-x"></i>
-                            <p>{{ __('app.customers_no_data') }}</p>
+                            <p>No deleted transactions</p>
                         </div>
                         @endforelse
                     </div>
@@ -116,12 +106,12 @@
                         <table class="table pos-table align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th class="ps-3">{{ __('app.customers_table_id') }}</th>
-                                    <th>{{ __('app.customers_table_date') }}</th>
-                                    <th>Касса</th>
-                                    <th class="text-center">{{ __('app.customers_table_status') }}</th>
-                                    <th class="text-end">{{ __('app.customers_table_amount') }}</th>
-                                    <th class="text-center pe-3">{{ __('app.customers_table_action') }}</th>
+                                    <th class="ps-3">Transaction ID</th>
+                                    <th>Date & Time</th>
+                                    <th>Till</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-center pe-3">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="ordersTableBody">
@@ -142,31 +132,25 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge-done">{{ __('app.customers_status_completed') }}</span>
+                                        <span class="badge-done" style="background: #FFF5F5; color: #e53e3e;">Deleted</span>
                                     </td>
                                     <td class="text-center fw-black text-orange">
                                         {{ number_format($order->total_sum, 2) }}
                                         <small class="text-muted fw-normal">TMT</small>
                                     </td>
                                     <td class="text-center pe-4">
-                                        <div style="display: flex; gap: 8px; justify-content: center;">
-                                            <a href="{{ route('sales.customers.show', ['transaction_id' => ltrim($order->transaction_id, '#')]) }}"
-                                               class="btn-detail">
-                                                {{ __('app.customers_link_details') }} <i class="bi bi-arrow-right-short"></i>
-                                            </a>
-                                            <form action="{{ route('sales.customers.destroy', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this transaction?')">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="btn-delete" title="Delete transaction">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
-                                            </form>
-                                        </div>
+                                        <form action="{{ route('sales.customers.restore', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;">
+                                            @csrf
+                                            <button type="submit" class="btn-restore">
+                                                <i class="bi bi-arrow-counterclockwise me-1"></i> Restore
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
                                     <td colspan="6" class="text-center py-5 text-muted">
-                                        {{ __('app.customers_no_data') }}
+                                        No deleted transactions
                                     </td>
                                 </tr>
                                 @endforelse
@@ -199,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap');
 
 :root {
     --ora: #E8722A;
@@ -208,24 +192,19 @@ document.addEventListener('DOMContentLoaded', function() {
     --ora-glow: rgba(232,114,42,0.2);
     --bg: #FBF7F3;
     --card: #FFFFFF;
-    --border: #EDE4DA;
-    --text: #1A0A00;
-    --muted: #8B7355;
-    --shadow: 0 2px 14px rgba(26,10,0,0.06);
+    --border: #E8DDD0;
+    --text: #4A3520;
+    --muted: #997A6A;
+    --shadow: 0 2px 12px rgba(74, 53, 32, 0.08);
 }
-*, *::before, *::after { box-sizing: border-box; }
-body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 
-/* LAYOUT */
-.desktop-app-layout { position: fixed; inset: 0; display: flex; overflow: hidden; }
-.desktop-app-layout .sidebar-wrapper { position: relative !important; flex-shrink: 0; height: 100%; }
-.app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%; }
+* { box-sizing: border-box; }
+body { font-family: 'Sora', sans-serif; color: var(--text); background: var(--bg); }
 
-/* HEADER */
 .main-header {
-    height: 70px; background: var(--card);
-    border-bottom: 1px solid var(--border);
     display: flex; align-items: center; padding: 0 24px; gap: 16px; flex-shrink: 0;
+    height: 80px; background: var(--card); border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
 }
 .header-info { display: flex; align-items: center; }
 .fw-black { font-family: 'Sora', sans-serif; font-weight: 800; color: var(--text); }
@@ -238,16 +217,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .mini-value small { font-size: 0.62rem; font-weight: 600; color: var(--muted); }
 
 .system-status { display: flex; align-items: center; gap: 7px; }
-.dot-pulse {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #4ADE80;
-    animation: pulse-green 2s infinite;
-}
-@keyframes pulse-green {
-    0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.7); }
-    70%  { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
-    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
-}
 
 .btn-export {
     display: flex; align-items: center; gap: 7px;
@@ -258,11 +227,9 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 }
 .btn-export:hover { background: var(--ora); color: white; }
 
-/* WORKSPACE */
 .workspace { flex: 1; overflow-y: auto; padding: 20px 24px; }
 .orders-container { max-width: 1200px; margin: 0 auto; height: 100%; }
 
-/* PANEL CARD */
 .panel-card {
     background: var(--card); border-radius: 20px;
     border: 1px solid var(--border); box-shadow: var(--shadow);
@@ -270,27 +237,15 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 }
 .panel-header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 18px 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 16px;
 }
-.text-orange { color: var(--ora) !important; }
+.panel-header h5 { margin: 0; }
 
-/* SEARCH */
-.search-box {
-    position: relative; display: flex; align-items: center;
-}
-.search-box i {
-    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-    color: var(--muted); font-size: 0.85rem; pointer-events: none;
-}
-.search-input {
-    padding: 8px 14px 8px 34px; border-radius: 11px;
-    border: 1.5px solid var(--border); background: #FDFAF7;
-    font-size: 0.83rem; color: var(--text); outline: none; width: 220px;
-    font-family: 'DM Sans', sans-serif; transition: 0.18s;
-}
+.search-box { position: relative; }
+.search-input { width: 250px; padding: 8px 12px 8px 32px; border-radius: 9px; border: 1px solid var(--border); font-size: 0.87rem; }
 .search-input:focus { border-color: var(--ora); box-shadow: 0 0 0 3px var(--ora-glow); background: white; }
+.search-box i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; }
 
-/* TABLE */
 .table-scroll-container { overflow-x: auto; }
 .pos-table { width: 100%; border-collapse: collapse; }
 .pos-table thead th {
@@ -321,38 +276,32 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .badge-done {
     display: inline-flex; align-items: center;
     background: #E8F5E9; color: #2E7D32;
-    font-size: 0.68rem; font-weight: 800; padding: 4px 10px; border-radius: 50px;
+    font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 50px;
 }
 
 .btn-detail {
     display: inline-flex; align-items: center; gap: 4px;
     background: var(--ora-light); color: var(--ora);
-    border: 1.5px solid rgba(232,114,42,0.2); border-radius: 9px;
-    padding: 6px 12px; font-size: 0.78rem; font-weight: 700;
-    text-decoration: none; transition: 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); white-space: nowrap;
-    cursor: pointer; font-family: inherit;
+    border: 1px solid rgba(232,114,42,0.3); border-radius: 8px;
+    padding: 6px 12px; font-size: 0.75rem; font-weight: 700;
+    text-decoration: none; cursor: pointer; transition: 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); white-space: nowrap;
+    font-family: inherit; border: 1.5px solid rgba(232,114,42,0.2); border-radius: 9px;
 }
 .btn-detail:hover { background: var(--ora); color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,114,42,0.25); }
 .btn-detail:active { transform: translateY(0); }
 
-.btn-delete {
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 4px; width: 36px; height: 36px;
-    background: #FFF5F5; color: #e53e3e;
-    border: 1.5px solid #feb2b2; border-radius: 9px;
-    padding: 0; font-size: 0.85rem; font-weight: 600;
-    text-decoration: none; transition: 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-    cursor: pointer; font-family: inherit; flex-shrink: 0;
+.btn-restore {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #E8F5E9; color: #2E7D32;
+    border: 1.5px solid #C8E6C9; border-radius: 9px;
+    padding: 6px 12px; font-size: 0.78rem; font-weight: 700;
+    text-decoration: none; cursor: pointer; transition: 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); white-space: nowrap;
+    font-family: inherit;
 }
-.btn-delete:hover {
-    background: #e53e3e; color: white;
-    transform: translateY(-2px); box-shadow: 0 6px 16px rgba(229,62,62,0.3);
-}
-.btn-delete:active { transform: translateY(0); }
-.btn-delete i { display: flex; align-items: center; justify-content: center; }
+.btn-restore:hover { background: #2E7D32; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,125,50,0.3); }
+.btn-restore:active { transform: translateY(0); }
 
-/* MOBILE CARDS */
-.orders-card-list { padding: 10px; }
+.orders-card-list { display: flex; flex-direction: column; }
 .order-mobile-card {
     display: flex; justify-content: space-between; align-items: flex-start;
     padding: 14px 14px; border-bottom: 1px solid var(--border); gap: 12px;
@@ -364,17 +313,14 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .order-mobile-right { text-align: right; }
 .order-mobile-right .fw-black { font-size: 1rem; }
 
-/* EMPTY */
 .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
 .empty-state i { font-size: 2.2rem; opacity: 0.3; display: block; margin-bottom: 10px; }
 .empty-state p { font-weight: 700; margin: 0; }
 
-/* SCROLLBAR */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-thumb { background: #D4C4B0; border-radius: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* RESPONSIVE */
 @media (max-width: 1023px) { .main-header { padding: 0 16px; height: 70px; } }
 @media (max-width: 767px) {
     .desktop-app-layout { position: relative; inset: auto; flex-direction: column; min-height: 100vh; height: auto !important; overflow: auto !important; }

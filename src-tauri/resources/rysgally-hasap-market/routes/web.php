@@ -176,6 +176,9 @@ Route::middleware(['license'])->group(function () {
                         Route::get('/view/{transaction_id}', 'show')->name('show');
                         Route::get('/export-all', 'exportAll')->name('export.all');
                         Route::get('/export-single/{transaction_id}', 'exportSingle')->name('export.single');
+                        Route::delete('/delete/{transaction_id}', 'destroy')->name('destroy');
+                        Route::get('/deleted', 'deleted')->name('deleted');
+                        Route::post('/restore/{transaction_id}', 'restore')->name('restore');
                     });
                 });
             });

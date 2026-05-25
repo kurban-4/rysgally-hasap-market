@@ -284,7 +284,7 @@
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <form action="{{ route('storage.destroy', $item->id) }}" method="POST"
-                                      onsubmit="event.preventDefault(); if(confirm('Удалить?')){ this.submit(); }" class="m-0">
+                                      onsubmit="event.preventDefault(); if(confirm('{{ __('app.storage_delete_confirm') }}')){ this.submit(); }" class="m-0">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="act-btn delete">
                                         <i class="bi bi-trash"></i>
