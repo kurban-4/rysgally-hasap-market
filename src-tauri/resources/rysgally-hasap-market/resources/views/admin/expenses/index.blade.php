@@ -75,7 +75,7 @@
                             <span class="fw-black text-danger">-{{ number_format($ex->amount, 2) }} {{ __('app.currency_tmt') }}</span>
                         </td>
                         <td class="py-3 text-end">
-                            <form action="{{ route('boss.expense.destroy', $ex->id) }}" method="POST" onsubmit="return confirm('Удалить этот расход?')" class="d-inline">
+                            <form action="{{ route('boss.expense.destroy', $ex->id) }}" method="POST" class="d-inline">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">
                                     <i class="bi bi-trash"></i>

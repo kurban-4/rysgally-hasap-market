@@ -94,7 +94,7 @@
                                        class="btn-detail" style="flex: 1;">
                                         {{ __('app.customers_link_details') }} <i class="bi bi-arrow-right-short"></i>
                                     </a>
-                                    <form action="{{ route('sales.customers.destroy', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this transaction?')">
+                                    <form action="{{ route('sales.customers.destroy', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;" >
                                         @csrf @method('DELETE')
                                         <button type="submit" class="btn-delete" title="Delete transaction">
                                             <i class="bi bi-trash3"></i>
@@ -154,7 +154,7 @@
                                                class="btn-detail">
                                                 {{ __('app.customers_link_details') }} <i class="bi bi-arrow-right-short"></i>
                                             </a>
-                                            <form action="{{ route('sales.customers.destroy', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this transaction?')">
+                                            <form action="{{ route('sales.customers.destroy', ltrim($order->transaction_id, '#')) }}" method="POST" style="margin: 0;" >
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn-delete" title="Delete transaction">
                                                     <i class="bi bi-trash3"></i>
@@ -302,7 +302,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 .pos-table tbody tr { transition: background 0.18s; }
 .pos-table tbody tr:hover { background: #FFF8F3; }
 .pos-table tbody td {
-    padding: 14px 16px; border-bottom: 1px solid #F5EDE4;
     font-size: 0.88rem; color: var(--text);
 }
 .pos-table tbody tr:last-child td { border-bottom: none; }

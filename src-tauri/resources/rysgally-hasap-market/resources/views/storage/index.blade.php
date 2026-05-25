@@ -214,8 +214,7 @@
                                             <a href="{{ route('storage.edit', $item->id) }}" class="act-btn edit" title="{{ __('app.storage_edit_title') }}">
                                                 <i class="bi bi-pencil-square"></i>
                                             </a>
-                                            <form action="{{ route('storage.destroy', $item->id) }}" method="POST"
-                                                  onsubmit="event.preventDefault(); if(confirm('{{ __('app.storage_delete_confirm') }}')){ this.submit(); }" class="m-0">
+                                            <form action="{{ route('storage.destroy', $item->id) }}" method="POST" class="m-0">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="act-btn delete" title="{{ __('app.storage_delete_title') }}">
                                                     <i class="bi bi-trash"></i>
@@ -283,8 +282,7 @@
                                 <a href="{{ route('storage.edit', $item->id) }}" class="act-btn edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <form action="{{ route('storage.destroy', $item->id) }}" method="POST"
-                                      onsubmit="event.preventDefault(); if(confirm('{{ __('app.storage_delete_confirm') }}')){ this.submit(); }" class="m-0">
+                                <form action="{{ route('storage.destroy', $item->id) }}" method="POST" class="m-0">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="act-btn delete">
                                         <i class="bi bi-trash"></i>
