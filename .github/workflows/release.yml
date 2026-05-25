@@ -18,7 +18,7 @@ jobs:
             php-binary: php-aarch64-apple-darwin
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            php-binary: php-x86_64-pc-windows-msvc
+            php-binary: php-x86_64-pc-windows-msvc.exe 
 
     runs-on: ${{ matrix.os }}
 
@@ -115,7 +115,6 @@ jobs:
             exit 1
           fi
           echo "Found PHP sidecar: $PHP_BIN"
-          # Проверяем что opcache скомпилирован
           src-tauri/binaries/${{ matrix.php-binary }} -c src-tauri/binaries/php.ini \
             -r "echo extension_loaded('Zend OPcache') ? 'opcache: OK' : 'opcache: MISSING';" || true
 
