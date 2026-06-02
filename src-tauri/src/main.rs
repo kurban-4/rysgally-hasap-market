@@ -265,11 +265,11 @@ fn main() {
                 tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
                 // Всё ниже — ТОЛЬКО при первом запуске
+                run_artisan(
+                    &handle, &paths, &storage_path, &bootstrap_path,
+                    &["artisan", "migrate", "--force"],
+                ).await;
                 if is_first_run {
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "migrate", "--force"],
-                    ).await;
 
                     run_artisan(
                         &handle, &paths, &storage_path, &bootstrap_path,
