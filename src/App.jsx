@@ -7,12 +7,15 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    fetchProducts();
-  }, [retryCount]);
+    fetchProducts(currentPage);
+  }, [retryCount, currentPage]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (page = 1) => {
     setLoading(true);
     setError(null);
     
@@ -20,7 +23,7 @@ function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
       
-      const response = await fetch("http://localhost:8001/api", {
+      const response = await fetch(`http://localhost:8001/api?page=${page}`, {
         signal: controller.signal,
         headers: { "Accept": "application/json" }
       });
@@ -33,11 +36,13 @@ function App() {
       
       const data = await response.json();
       
-      if (!Array.isArray(data)) {
+      if (!data.data || !Array.isArray(data.data)) {
         throw new Error("Unexpected response format");
       }
       
-      setProducts(data);
+      setProducts(data.data);
+      setTotalPages(data.pagination.last_page);
+      setTotal(data.pagination.total);
     } catch (e) {
       console.error("Ýükleme säwligi:", e);
       
@@ -63,19 +68,19 @@ function App() {
     setCart(cart.filter(item => item.cartId !== cartId));
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price || 0), 0);
 
   return (
     <div className="app-container">
       <aside className="sidebar">
         <h2>Rysgally Hasap Market</h2>
-        <div className="stats">Jemi: {total.toFixed(2)} TMT</div>
+        <div className="stats">Jemi: {cartTotal.toFixed(2)} TMT</div>
         <button className="pay-button" onClick={() => {
           if (cart.length === 0) {
             alert('Sebetde haryt ýok!');
             return;
           }
-          alert(`Söwda tamamlady: ${total.toFixed(2)} TMT`);
+          alert(`Söwda tamamlady: ${cartTotal.toFixed(2)} TMT`);
           setCart([]);
         }}>
           Töleg Et
@@ -129,12 +134,58 @@ function App() {
             </button>
           </div>
         ) : products.length > 0 ? (
-          products.map((p) => (
-            <div key={p.id} className="product-card" onClick={() => addToCart(p)}>
-              <h3>{p.name}</h3>
-              <p>{p.price} TMT</p>
+          <>
+            <div style={{ width: "100%", gridColumn: "1 / -1" }}>
+              {products.map((p) => (
+                <div key={p.id} className="product-card" onClick={() => addToCart(p)}>
+                  <h3>{p.name}</h3>
+                  <p>{p.price} TMT</p>
+                </div>
+              ))}
             </div>
-          ))
+            <div style={{ 
+              width: "100%", 
+              gridColumn: "1 / -1", 
+              display: "flex", 
+              justifyContent: "center", 
+              gap: "10px", 
+              marginTop: "20px",
+              paddingTop: "20px",
+              borderTop: "1px solid #ccc"
+            }}>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: currentPage === 1 ? "#ccc" : "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: currentPage === 1 ? "default" : "pointer"
+                }}
+              >
+                Öňki
+              </button>
+              <span style={{ padding: "8px 12px" }}>
+                {currentPage} / {totalPages} (Jemi: {total})
+              </span>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: currentPage === totalPages ? "#ccc" : "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: currentPage === totalPages ? "default" : "pointer"
+                }}
+              >
+                Indiki
+              </button>
+            </div>
+          </>
         ) : (
           <div className="no-products">Harytlar tapylmady</div>
         )}

@@ -2,6 +2,8 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use tauri::Manager;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
@@ -11,6 +13,7 @@ use std::net::TcpStream;
 
 const APP_KEY: &str = "base64:mL3/J3Jxsg7yS1WgaxI3mCXuB0iZTeKA5aVRSh9WMxg=";
 
+#[derive(Clone)]
 struct AppPaths {
     project_dir: PathBuf,
     php_ini_arg: String,
@@ -259,6 +262,9 @@ fn main() {
                 .map(|d| d.join("rysgally-hasap-market").join("bootstrap"))
                 .unwrap_or_else(|| paths.project_dir.join("bootstrap"));
 
+            let app_running = Arc::new(AtomicBool::new(true));
+            let app_running_clone = app_running.clone();
+
             tauri::async_runtime::spawn(async move {
                 // Убиваем старый PHP процесс на порту 8001
                 kill_port_8001();
@@ -351,6 +357,33 @@ fn main() {
                             eprintln!("Failed to open main window: {e}");
                         }
 
+                        // Periodically clean up sessions and optimize database
+                        let cleanup_handle = handle.clone();
+                        let cleanup_paths = paths.clone();
+                        let cleanup_storage = storage_path.clone();
+                        let cleanup_bootstrap = bootstrap_path.clone();
+                        
+                        tauri::async_runtime::spawn(async move {
+                            loop {
+                                tokio::time::sleep(std::time::Duration::from_secs(3600)).await; // Every hour
+                                if !app_running.load(Ordering::Relaxed) {
+                                    break;
+                                }
+                                
+                                // Clear old sessions
+                                run_artisan(
+                                    &cleanup_handle, &cleanup_paths, &cleanup_storage, &cleanup_bootstrap,
+                                    &["artisan", "session:prune"],
+                                ).await;
+                                
+                                // Optimize database
+                                run_artisan(
+                                    &cleanup_handle, &cleanup_paths, &cleanup_storage, &cleanup_bootstrap,
+                                    &["artisan", "db:optimize"],
+                                ).await;
+                            }
+                        });
+
                         while let Some(event) = rx.recv().await {
                             match event {
                                 CommandEvent::Stderr(line) => {
@@ -367,6 +400,9 @@ fn main() {
                     Err(e) => eprintln!("Failed to start PHP built-in server: {e}"),
                 }
 
+                app_running_clone.store(false, Ordering::Relaxed);
+                kill_port_8001();
+
                 use tauri_plugin_updater::UpdaterExt;
                 if let Ok(updater) = handle.updater() {
                     if let Ok(Some(update)) = updater.check().await {
@@ -376,6 +412,11 @@ fn main() {
             });
 
             Ok(())
+        })
+        .on_window_event(|_window, event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                kill_port_8001();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
