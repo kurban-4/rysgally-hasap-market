@@ -13,7 +13,8 @@
   "resources/rysgally-hasap-market/**/*",
   "resources/rysgally-hasap-market/server.php",
   "resources/rysgally-hasap-market/.env",
-  "binaries/php.ini"
+  "binaries/php.ini",
+  "binaries/php-x86_64-pc-windows-msvc/**/*"
 ],
     "externalBin": [
       "binaries/php"

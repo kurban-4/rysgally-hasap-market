@@ -20,10 +20,22 @@ struct AppPaths {
     db_path_arg: String,
     public_dir_arg: String,
     server_php_arg: String,
+    public_dir_native: String,
+    server_php_native: String,
 }
 
 fn path_for_php(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
+}
+
+#[cfg(target_os = "windows")]
+fn path_for_server_arg(path: &Path) -> String {
+    path.to_string_lossy().to_string()
+}
+
+#[cfg(not(target_os = "windows"))]
+fn path_for_server_arg(path: &Path) -> String {
+    path.to_string_lossy().to_string()
 }
 
 fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
@@ -120,10 +132,15 @@ impl AppPaths {
         let (db_path, _storage_path, _bootstrap_path, is_first_run) =
             init_writable_paths(handle, &project_dir)?;
 
+        let public_dir_path = project_dir.join("public");
+        let server_php_path = project_dir.join("server.php");
+
         Ok((
             Self {
-                public_dir_arg: path_for_php(&project_dir.join("public")),
-                server_php_arg: path_for_php(&project_dir.join("server.php")),
+                public_dir_arg: path_for_php(&public_dir_path),
+                server_php_arg: path_for_php(&server_php_path),
+                public_dir_native: path_for_server_arg(&public_dir_path),
+                server_php_native: path_for_server_arg(&server_php_path),
                 php_ini_arg: path_for_php(&php_ini),
                 db_path_arg: path_for_php(&db_path),
                 project_dir,
@@ -315,32 +332,53 @@ fn main() {
                         return;
                     }
                 };
+                
+                eprintln!("Starting PHP server with:");
+                eprintln!("  Public dir: {}", paths.public_dir_native);
+                eprintln!("  Server script: {}", paths.server_php_native);
+                eprintln!("  PHP ini: {}", paths.php_ini_arg);
+                eprintln!("  Public dir exists: {}", paths.project_dir.join("public").exists());
+                eprintln!("  Server script exists: {}", paths.project_dir.join("server.php").exists());
 
-                let server_cmd = apply_php_env(
-                    sidecar.args([
-                        "-c",
-                        paths.php_ini_arg.as_str(),
-                        "-S",
-                        "127.0.0.1:8001",
-                        "-t",
-                        paths.public_dir_arg.as_str(),
-                        paths.server_php_arg.as_str(),
-                    ]),
-                    &paths,
-                    &storage_path,
-                    &bootstrap_path,
-                );
+                let server_cmd = {
+                    let sidecar_base = apply_php_env(
+                        sidecar.args([
+                            "-c",
+                            paths.php_ini_arg.as_str(),
+                            "-S",
+                            "127.0.0.1:8001",
+                            "-t",
+                            paths.public_dir_native.as_str(),
+                        ]),
+                        &paths,
+                        &storage_path,
+                        &bootstrap_path,
+                    );
+                    sidecar_base.arg(paths.server_php_native.as_str())
+                };
 
                 match server_cmd.spawn() {
                     Ok((mut rx, _)) => {
-                        // Ждём пока сервер поднимется (до 10 секунд)
+                        // Ждём пока сервер поднимется (дольше на Windows)
+                        #[cfg(target_os = "windows")]
+                        let max_attempts = 100; // 25 секунд на Windows
+                        #[cfg(not(target_os = "windows"))]
+                        let max_attempts = 40;  // 10 секунд на других ОС
+                        
                         let mut attempts = 0;
-                        while attempts < 40 {
+                        let mut server_started = false;
+                        while attempts < max_attempts {
                             if TcpStream::connect("127.0.0.1:8001").is_ok() {
+                                eprintln!("PHP server ready after {} ms", attempts * 250);
+                                server_started = true;
                                 break;
                             }
                             tokio::time::sleep(std::time::Duration::from_millis(250)).await;
                             attempts += 1;
+                        }
+                        
+                        if !server_started {
+                            eprintln!("PHP server failed to start within {} seconds", max_attempts * 250 / 1000);
                         }
 
                         if let Err(e) = WebviewWindowBuilder::new(
