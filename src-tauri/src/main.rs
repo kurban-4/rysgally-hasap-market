@@ -18,6 +18,8 @@ struct AppPaths {
     project_dir: PathBuf,
     php_ini_arg: String,
     db_path_arg: String,
+    public_dir_native: String,
+    server_php_native: String,
 }
 
 fn path_for_php(path: &Path) -> String {
@@ -135,6 +137,8 @@ impl AppPaths {
             Self {
                 php_ini_arg: path_for_php(&php_ini),
                 db_path_arg: path_for_php(&db_path),
+                public_dir_native: path_for_server_arg(&public_dir_path),
+                server_php_native: path_for_server_arg(&server_php_path),
                 project_dir,
             },
             is_first_run,
