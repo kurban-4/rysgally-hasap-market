@@ -1,7 +1,7 @@
 {
   "bundle": {
     "externalBin": [
-      "binaries/php"
+      "binaries/php-aarch64-apple-darwin"
     ]
   }
 }
