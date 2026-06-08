@@ -50,31 +50,31 @@ jobs:
         shell: bash
         run: mkdir -p src-tauri/binaries
 
-      - name: Build Static PHP (macOS)
+      - name: Verify PHP Binary (macOS)
         if: matrix.os == 'macos-latest'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          curl -L https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-macos-aarch64.tar.gz -o spc.tar.gz
-          tar -xzf spc.tar.gz
-          chmod +x spc
-          ./spc doctor --auto-fix
-          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
-          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache"
-          cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
-          chmod +x src-tauri/binaries/php-aarch64-apple-darwin
+          PHP_BIN="src-tauri/binaries/php-aarch64-apple-darwin"
+          if [ ! -f "$PHP_BIN" ]; then
+            echo "Error: Missing PHP binary at $PHP_BIN"
+            echo "Available files:"
+            ls -la src-tauri/binaries/
+            exit 1
+          fi
+          chmod +x "$PHP_BIN"
+          echo "PHP binary found and executable"
 
-      - name: Build Static PHP (Windows)
+      - name: Verify PHP Binary (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
-          .\spc.exe doctor --auto-fix
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
-          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache"
-          Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
+          $PHP_BIN = "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
+          if (-not (Test-Path $PHP_BIN)) {
+            Write-Error "Missing PHP binary at $PHP_BIN"
+            Get-ChildItem "src-tauri\binaries\"
+            exit 1
+          }
+          Write-Host "PHP binary found: $PHP_BIN"
 
       - name: Build Laravel assets
         shell: bash
