@@ -17,9 +17,6 @@
   "binaries/php-aarch64-apple-darwin",
   "binaries/php-x86_64-pc-windows-msvc/**/*"
 ],
-    "externalBin": [
-      "binaries/php-aarch64-apple-darwin"
-    ],
     "active": true,
     "targets": ["dmg", "nsis"],
     "icon": [

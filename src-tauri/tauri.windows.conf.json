@@ -1,5 +1,5 @@
 {
   "bundle": {
-    "externalBin": ["binaries/php-x86_64-pc-windows-msvc/php"]
+    "externalBin": ["binaries/php-x86_64-pc-windows-msvc/php.exe"]
   }
 }
