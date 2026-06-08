@@ -18,7 +18,7 @@ jobs:
             php-binary: php-aarch64-apple-darwin
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            php-binary: php-x86_64-pc-windows-msvc.exe 
+            php-binary: php-x86_64-pc-windows-msvc/php.exe 
 
     runs-on: ${{ matrix.os }}
 
@@ -68,13 +68,23 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $PHP_BIN = "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
-          if (-not (Test-Path $PHP_BIN)) {
-            Write-Error "Missing PHP binary at $PHP_BIN"
-            Get-ChildItem "src-tauri\binaries\"
+          $PHP_DIR = "src-tauri\binaries\php-x86_64-pc-windows-msvc"
+          $PHP_EXE = Join-Path $PHP_DIR "php.exe"
+          $PHP_DLL = Join-Path $PHP_DIR "php8.dll"
+          
+          if (-not (Test-Path $PHP_EXE)) {
+            Write-Error "Missing PHP executable at $PHP_EXE"
+            Write-Host "Available files in binaries:"
+            Get-ChildItem "src-tauri\binaries\" -Recurse | Select-Object FullName
             exit 1
           }
-          Write-Host "PHP binary found: $PHP_BIN"
+          
+          if (-not (Test-Path $PHP_DLL)) {
+            Write-Error "Missing php8.dll at $PHP_DLL"
+            exit 1
+          }
+          
+          Write-Host "PHP binary and DLLs found in: $PHP_DIR"
 
       - name: Build Laravel assets
         shell: bash
@@ -117,12 +127,12 @@ jobs:
           PHP_BIN="src-tauri/binaries/${{ matrix.php-binary }}"
           if [ ! -f "$PHP_BIN" ]; then
             echo "Missing PHP sidecar: $PHP_BIN"
-            ls -la src-tauri/binaries || true
+            echo "Available files in binaries:"
+            find src-tauri/binaries -type f -name 'php*' | head -20
+            ls -la src-tauri/binaries/ || true
             exit 1
           fi
           echo "Found PHP sidecar: $PHP_BIN"
-          src-tauri/binaries/${{ matrix.php-binary }} -c src-tauri/binaries/php.ini \
-            -r "echo extension_loaded('Zend OPcache') ? 'opcache: OK' : 'opcache: MISSING';" || true
 
       - name: Clean Install
         shell: bash
