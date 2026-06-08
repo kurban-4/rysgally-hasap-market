@@ -30,12 +30,23 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup PHP
+      - name: Setup PHP and Composer (macOS)
+        if: matrix.os == 'macos-latest'
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           extensions: pdo_sqlite, sqlite3, mbstring, zip, fileinfo
           tools: composer:v2
+
+      - name: Install Composer (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $ComposerUrl = "https://getcomposer.org/composer.phar"
+          $ComposerPath = "composer.phar"
+          Invoke-WebRequest -Uri $ComposerUrl -OutFile $ComposerPath
+          Move-Item -Path $ComposerPath -Destination "C:\composer.phar" -Force
+          Write-Host "Composer installed"
 
       - name: Setup Xcode (macOS)
         if: matrix.os == 'macos-latest'
@@ -94,9 +105,16 @@ jobs:
           npm run build
 
       - name: Install Composer dependencies
+        shell: bash
         run: |
           cd src-tauri/resources/rysgally-hasap-market
-          composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            # Use bundled PHP on Windows
+            ../../binaries/php-x86_64-pc-windows-msvc/php.exe /c/composer.phar install --no-dev --optimize-autoloader --ignore-platform-reqs
+          else
+            # Use system PHP on macOS
+            composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+          fi
 
       - name: Create temporary .env
         shell: bash
