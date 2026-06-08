@@ -183,14 +183,32 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash
         run: |
-          SIDECAR="src-tauri/target/${{ matrix.target }}/release/php-x86_64-pc-windows-msvc.exe"
-          if [ ! -f "$SIDECAR" ]; then
-            echo "ERROR: PHP sidecar missing from release output: $SIDECAR"
-            ls -la "src-tauri/target/${{ matrix.target }}/release/" || true
+          RELEASE_DIR="src-tauri/target/${{ matrix.target }}/release"
+          SIDECAR=""
+          # Tauri strips the target triple and copies the sidecar as php.exe on Windows.
+          for CANDIDATE in \
+            "$RELEASE_DIR/php.exe" \
+            "$RELEASE_DIR/php-x86_64-pc-windows-msvc.exe"
+          do
+            if [ -f "$CANDIDATE" ]; then
+              SIDECAR="$CANDIDATE"
+              break
+            fi
+          done
+          if [ -z "$SIDECAR" ]; then
+            echo "ERROR: PHP sidecar missing from release output"
+            ls -la "$RELEASE_DIR/" || true
             exit 1
           fi
           echo "Sidecar present in release bundle: $SIDECAR"
           "$SIDECAR" -v
+          NSIS_INSTALLER=$(find "$RELEASE_DIR/bundle/nsis" -name "*.exe" 2>/dev/null | head -1)
+          if [ -z "$NSIS_INSTALLER" ]; then
+            echo "ERROR: NSIS installer not found"
+            find "$RELEASE_DIR/bundle" -type f 2>/dev/null || true
+            exit 1
+          fi
+          echo "NSIS installer: $NSIS_INSTALLER"
 
       - name: Debug - Find built files
         if: always()

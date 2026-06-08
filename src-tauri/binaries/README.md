@@ -11,7 +11,7 @@ CI builds static PHP with [static-php-cli](https://github.com/crazywhalecc/stati
 | macOS (Apple Silicon) | `php-aarch64-apple-darwin` |
 | Windows (x64) | `php-x86_64-pc-windows-msvc.exe` |
 
-Tauri `externalBin` is configured as `binaries/php`, so the sidecar must be named with the `-$TARGET_TRIPLE` suffix above.
+Tauri `externalBin` is configured as `binaries/php`, so the source sidecar must be named with the `-$TARGET_TRIPLE` suffix above. On Windows, Tauri then copies it next to the app as `php.exe` in the release output.
 
 ## Local development
 
