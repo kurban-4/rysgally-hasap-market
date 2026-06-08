@@ -109,8 +109,8 @@ jobs:
         run: |
           cd src-tauri/resources/rysgally-hasap-market
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            # Use bundled PHP on Windows
-            ../../binaries/php-x86_64-pc-windows-msvc/php.exe /c/composer.phar install --no-dev --optimize-autoloader --ignore-platform-reqs
+            # Use bundled PHP on Windows (without openssl extension, so disable TLS)
+            ../../binaries/php-x86_64-pc-windows-msvc/php.exe /c/composer.phar install --no-dev --optimize-autoloader --ignore-platform-reqs --disable-tls --no-interaction
           else
             # Use system PHP on macOS
             composer install --no-dev --optimize-autoloader --ignore-platform-reqs
