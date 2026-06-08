@@ -16,9 +16,14 @@ jobs:
           - os: macos-latest
             target: aarch64-apple-darwin
             php-binary: php-aarch64-apple-darwin
+            php-extensions: pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache
+            php-verify-extensions: pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            php-binary: php-x86_64-pc-windows-msvc.exe 
+            php-binary: php-x86_64-pc-windows-msvc.exe
+            # curl does not pass static-php-cli compile checks on Windows
+            php-extensions: pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache
+            php-verify-extensions: pdo_sqlite,sqlite3,mbstring,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter
 
     runs-on: ${{ matrix.os }}
 
@@ -59,8 +64,8 @@ jobs:
           tar -xzf spc.tar.gz
           chmod +x spc
           ./spc doctor --auto-fix
-          ./spc download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
-          ./spc build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache"
+          ./spc download --with-php=8.4 --for-extensions="${{ matrix.php-extensions }}" --prefer-pre-built
+          ./spc build --build-cli "${{ matrix.php-extensions }}"
           cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
           chmod +x src-tauri/binaries/php-aarch64-apple-darwin
 
@@ -72,8 +77,8 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
           .\spc.exe doctor --auto-fix
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
-          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache"
+          .\spc.exe download --with-php=8.4 --for-extensions="${{ matrix.php-extensions }}" --prefer-pre-built
+          .\spc.exe build --build-cli "${{ matrix.php-extensions }}"
           # Remove the non-static PHP distribution from git (php.exe needs php8.dll at runtime).
           Remove-Item -Recurse -Force "src-tauri\binaries\php-x86_64-pc-windows-msvc" -ErrorAction SilentlyContinue
           Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
@@ -125,7 +130,7 @@ jobs:
           echo "Found PHP sidecar: $PHP_BIN"
           "$PHP_BIN" -v
           "$PHP_BIN" -c src-tauri/binaries/php.ini -r "
-            \$required = ['pdo_sqlite','sqlite3','mbstring','fileinfo','zip','openssl','curl','tokenizer','xml','dom','session','ctype','filter'];
+            \$required = explode(',', '${{ matrix.php-verify-extensions }}');
             foreach (\$required as \$ext) {
               if (!extension_loaded(\$ext)) {
                 fwrite(STDERR, \"MISSING extension: \$ext\n\");
