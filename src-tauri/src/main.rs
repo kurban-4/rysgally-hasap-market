@@ -26,9 +26,80 @@ fn path_for_php(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
 
+fn path_for_php_config(path: &Path) -> String {
+    #[cfg(target_os = "windows")]
+    {
+        // Windows PHP is more reliable with native paths for php.ini (-c).
+        path.to_string_lossy().to_string()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        path_for_php(path)
+    }
+}
+
 fn path_for_server_arg(path: &Path) -> String {
     // PHP built-in server accepts forward slashes on all platforms.
     path_for_php(path)
+}
+
+fn server_host_port() -> &'static str {
+    #[cfg(target_os = "windows")]
+    {
+        // 8001 is often blocked by Windows Hyper-V reserved port ranges.
+        "127.0.0.1:18081"
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        "127.0.0.1:8001"
+    }
+}
+
+fn server_url() -> String {
+    format!("http://{}", server_host_port())
+}
+
+#[cfg(target_os = "windows")]
+fn append_startup_log(handle: &tauri::AppHandle, message: &str) {
+    if let Ok(dir) = handle.path().app_data_dir() {
+        let log_path = dir.join("rysgally-hasap-market").join("startup.log");
+        let _ = fs::create_dir_all(log_path.parent().unwrap_or(&dir));
+        use std::io::Write;
+        if let Ok(mut file) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(log_path)
+        {
+            let _ = writeln!(file, "{message}");
+        }
+    }
+    eprintln!("{message}");
+}
+
+#[cfg(not(target_os = "windows"))]
+fn append_startup_log(_handle: &tauri::AppHandle, message: &str) {
+    eprintln!("{message}");
+}
+
+fn resolve_php_command(
+    handle: &tauri::AppHandle,
+) -> Result<tauri_plugin_shell::process::Command, String> {
+    #[cfg(target_os = "windows")]
+    {
+        for name in ["php", "binaries/php"] {
+            if let Ok(cmd) = handle.shell().sidecar(name) {
+                append_startup_log(handle, &format!("Using PHP sidecar: {name}"));
+                return Ok(cmd);
+            }
+        }
+        append_startup_log(handle, "PHP sidecar lookup failed for php and binaries/php");
+        return Err("PHP sidecar not found".to_string());
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        handle.shell().sidecar("php").map_err(|e| e.to_string())
+    }
 }
 
 fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
@@ -130,7 +201,7 @@ impl AppPaths {
 
         Ok((
             Self {
-                php_ini_arg: path_for_php(&php_ini),
+                php_ini_arg: path_for_php_config(&php_ini),
                 db_path_arg: path_for_php(&db_path),
                 public_dir_native: path_for_server_arg(&public_dir_path),
                 server_php_native: path_for_server_arg(&server_php_path),
@@ -157,7 +228,7 @@ fn apply_php_env(
         .env("APP_DEBUG", "false")
         .env("SESSION_SECURE_COOKIE", "false")
         .env("SESSION_DRIVER", "file")
-        .env("APP_URL", "http://127.0.0.1:8001")
+        .env("APP_URL", server_url())
 }
 
 async fn run_artisan(
@@ -168,10 +239,10 @@ async fn run_artisan(
     args: &[&str],
 ) {
     let label = args.join(" ");
-    let sidecar = match handle.shell().sidecar("php") {
+    let sidecar = match resolve_php_command(handle) {
         Ok(cmd) => cmd,
         Err(e) => {
-            eprintln!("PHP sidecar unavailable for {label}: {e}");
+            append_startup_log(handle, &format!("PHP sidecar unavailable for {label}: {e}"));
             return;
         }
     };
@@ -208,7 +279,7 @@ async fn run_artisan(
     }
 }
 
-fn kill_port_8001() {
+fn kill_server_port() {
     #[cfg(target_os = "macos")]
     {
         let _ = std::process::Command::new("sh")
@@ -224,10 +295,130 @@ fn kill_port_8001() {
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
-                "Get-NetTCPConnection -LocalPort 8001 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }",
+                "Get-NetTCPConnection -LocalPort 18081 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }",
             ])
             .output();
     }
+}
+
+async fn wait_for_php_server(
+    handle: &tauri::AppHandle,
+    event_rx: &mut tauri::async_runtime::Receiver<CommandEvent>,
+) -> bool {
+    #[cfg(target_os = "windows")]
+    let max_attempts = 120;
+    #[cfg(not(target_os = "windows"))]
+    let max_attempts = 40;
+
+    let host_port = server_host_port();
+    for attempt in 0..max_attempts {
+        while let Ok(event) = event_rx.try_recv() {
+            match event {
+                CommandEvent::Stderr(line) => {
+                    let msg = format!("PHP: {}", String::from_utf8_lossy(&line));
+                    append_startup_log(handle, &msg);
+                }
+                CommandEvent::Terminated(payload) => {
+                    append_startup_log(
+                        handle,
+                        &format!("PHP server exited before ready: {:?}", payload.code),
+                    );
+                    return false;
+                }
+                _ => {}
+            }
+        }
+
+        if TcpStream::connect(host_port).is_ok() {
+            append_startup_log(
+                handle,
+                &format!("PHP server ready after {} ms", attempt * 250),
+            );
+            return true;
+        }
+
+        tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+    }
+
+    append_startup_log(
+        handle,
+        &format!(
+            "PHP server failed to start within {} seconds",
+            max_attempts * 250 / 1000
+        ),
+    );
+    false
+}
+
+async fn run_setup_commands(
+    handle: &tauri::AppHandle,
+    paths: &AppPaths,
+    storage_path: &Path,
+    bootstrap_path: &Path,
+    is_first_run: bool,
+) {
+    run_artisan(
+        handle,
+        paths,
+        storage_path,
+        bootstrap_path,
+        &["artisan", "migrate", "--force"],
+    )
+    .await;
+
+    if !is_first_run {
+        return;
+    }
+
+    run_artisan(
+        handle,
+        paths,
+        storage_path,
+        bootstrap_path,
+        &["artisan", "db:seed", "--class=UserSeeder", "--force"],
+    )
+    .await;
+
+    run_artisan(
+        handle,
+        paths,
+        storage_path,
+        bootstrap_path,
+        &[
+            "artisan",
+            "tinker",
+            "--execute",
+            "if (Schema::hasTable('licenses')) { App\\Models\\License::updateOrCreate(['key' => 'RYSGALLY-HASAP-BUILD'], ['is_activated' => true, 'activated_at' => now()]); }",
+        ],
+    )
+    .await;
+
+    run_artisan(
+        handle,
+        paths,
+        storage_path,
+        bootstrap_path,
+        &["artisan", "config:cache"],
+    )
+    .await;
+
+    run_artisan(
+        handle,
+        paths,
+        storage_path,
+        bootstrap_path,
+        &["artisan", "route:cache"],
+    )
+    .await;
+
+    run_artisan(
+        handle,
+        paths,
+        storage_path,
+        bootstrap_path,
+        &["artisan", "view:cache"],
+    )
+    .await;
 }
 
 fn main() {
@@ -276,62 +467,61 @@ fn main() {
             let app_running_clone = app_running.clone();
 
             tauri::async_runtime::spawn(async move {
-                // Убиваем старый PHP процесс на порту 8001
-                kill_port_8001();
+                kill_server_port();
                 tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
-                // Всё ниже — ТОЛЬКО при первом запуске
-                run_artisan(
-                    &handle, &paths, &storage_path, &bootstrap_path,
-                    &["artisan", "migrate", "--force"],
-                ).await;
-                if is_first_run {
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "db:seed", "--class=UserSeeder", "--force"],
-                    ).await;
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &[
-                            "artisan", "tinker", "--execute",
-                            "if (Schema::hasTable('licenses')) { App\\Models\\License::updateOrCreate(['key' => 'RYSGALLY-HASAP-BUILD'], ['is_activated' => true, 'activated_at' => now()]); }",
-                        ],
-                    ).await;
-
-                    // Кэшируем конфиги, роуты и вьюхи — страницы будут быстрыми
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "config:cache"],
-                    ).await;
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "route:cache"],
-                    ).await;
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "view:cache"],
-                    ).await;
+                #[cfg(not(target_os = "windows"))]
+                {
+                    run_setup_commands(
+                        &handle,
+                        &paths,
+                        &storage_path,
+                        &bootstrap_path,
+                        is_first_run,
+                    )
+                    .await;
                 }
 
-                // Запускаем PHP встроенный сервер
-                let sidecar = match handle.shell().sidecar("php") {
+                #[cfg(target_os = "windows")]
+                {
+                    append_startup_log(&handle, "Windows startup: launching PHP server before setup");
+                }
+
+                let sidecar = match resolve_php_command(&handle) {
                     Ok(cmd) => cmd,
                     Err(e) => {
-                        eprintln!("PHP sidecar unavailable for built-in server: {e}");
+                        append_startup_log(
+                            &handle,
+                            &format!("PHP sidecar unavailable for built-in server: {e}"),
+                        );
                         return;
                     }
                 };
-                
-                eprintln!("Starting PHP server with:");
-                eprintln!("  Public dir: {}", paths.public_dir_native);
-                eprintln!("  Server script: {}", paths.server_php_native);
-                eprintln!("  PHP ini: {}", paths.php_ini_arg);
-                eprintln!("  Public dir exists: {}", paths.project_dir.join("public").exists());
-                eprintln!("  Server script exists: {}", paths.project_dir.join("server.php").exists());
+
+                append_startup_log(
+                    &handle,
+                    &format!("Starting PHP server on {}", server_host_port()),
+                );
+                append_startup_log(&handle, &format!("  Public dir: {}", paths.public_dir_native));
+                append_startup_log(
+                    &handle,
+                    &format!("  Server script: {}", paths.server_php_native),
+                );
+                append_startup_log(&handle, &format!("  PHP ini: {}", paths.php_ini_arg));
+                append_startup_log(
+                    &handle,
+                    &format!(
+                        "  Public dir exists: {}",
+                        paths.project_dir.join("public").exists()
+                    ),
+                );
+                append_startup_log(
+                    &handle,
+                    &format!(
+                        "  Server script exists: {}",
+                        paths.project_dir.join("server.php").exists()
+                    ),
+                );
 
                 let server_cmd = {
                     let sidecar_base = apply_php_env(
@@ -339,7 +529,7 @@ fn main() {
                             "-c",
                             paths.php_ini_arg.as_str(),
                             "-S",
-                            "127.0.0.1:8001",
+                            server_host_port(),
                             "-t",
                             paths.public_dir_native.as_str(),
                         ]),
@@ -352,32 +542,26 @@ fn main() {
 
                 match server_cmd.spawn() {
                     Ok((mut rx, _)) => {
-                        // Ждём пока сервер поднимется (дольше на Windows)
                         #[cfg(target_os = "windows")]
-                        let max_attempts = 100; // 25 секунд на Windows
-                        #[cfg(not(target_os = "windows"))]
-                        let max_attempts = 40;  // 10 секунд на других ОС
-                        
-                        let mut attempts = 0;
-                        let mut server_started = false;
-                        while attempts < max_attempts {
-                            if TcpStream::connect("127.0.0.1:8001").is_ok() {
-                                eprintln!("PHP server ready after {} ms", attempts * 250);
-                                server_started = true;
-                                break;
+                        {
+                            if !wait_for_php_server(&handle, &mut rx).await {
+                                append_startup_log(
+                                    &handle,
+                                    "Not opening window because PHP server did not start",
+                                );
+                                return;
                             }
-                            tokio::time::sleep(std::time::Duration::from_millis(250)).await;
-                            attempts += 1;
                         }
-                        
-                        if !server_started {
-                            eprintln!("PHP server failed to start within {} seconds", max_attempts * 250 / 1000);
+
+                        #[cfg(not(target_os = "windows"))]
+                        {
+                            wait_for_php_server(&handle, &mut rx).await;
                         }
 
                         if let Err(e) = WebviewWindowBuilder::new(
                             &handle,
                             "main",
-                            WebviewUrl::External("http://127.0.0.1:8001".parse().unwrap()),
+                            WebviewUrl::External(server_url().parse().unwrap()),
                         )
                         .title("rysgally-hasap-market")
                         .inner_size(1200.0, 800.0)
@@ -385,7 +569,25 @@ fn main() {
                         .additional_browser_args("--kiosk-printing")
                         .build()
                         {
-                            eprintln!("Failed to open main window: {e}");
+                            append_startup_log(&handle, &format!("Failed to open main window: {e}"));
+                        }
+
+                        #[cfg(target_os = "windows")]
+                        {
+                            let setup_handle = handle.clone();
+                            let setup_paths = paths.clone();
+                            let setup_storage = storage_path.clone();
+                            let setup_bootstrap = bootstrap_path.clone();
+                            tauri::async_runtime::spawn(async move {
+                                run_setup_commands(
+                                    &setup_handle,
+                                    &setup_paths,
+                                    &setup_storage,
+                                    &setup_bootstrap,
+                                    is_first_run,
+                                )
+                                .await;
+                            });
                         }
 
                         // Periodically clean up sessions and optimize database
@@ -428,11 +630,16 @@ fn main() {
                             }
                         }
                     }
-                    Err(e) => eprintln!("Failed to start PHP built-in server: {e}"),
+                    Err(e) => {
+                        append_startup_log(
+                            &handle,
+                            &format!("Failed to start PHP built-in server: {e}"),
+                        );
+                    }
                 }
 
                 app_running_clone.store(false, Ordering::Relaxed);
-                kill_port_8001();
+                kill_server_port();
 
                 use tauri_plugin_updater::UpdaterExt;
                 if let Ok(updater) = handle.updater() {
@@ -446,7 +653,7 @@ fn main() {
         })
         .on_window_event(|_window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {
-                kill_port_8001();
+                kill_server_port();
             }
         })
         .run(tauri::generate_context!())

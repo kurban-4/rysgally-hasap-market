@@ -13,6 +13,11 @@
           "name": "binaries/php",
           "sidecar": true,
           "args": true
+        },
+        {
+          "name": "php",
+          "sidecar": true,
+          "args": true
         }
       ]
     },
