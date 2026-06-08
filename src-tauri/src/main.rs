@@ -26,14 +26,9 @@ fn path_for_php(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
 
-#[cfg(target_os = "windows")]
 fn path_for_server_arg(path: &Path) -> String {
-    path.to_string_lossy().to_string()
-}
-
-#[cfg(not(target_os = "windows"))]
-fn path_for_server_arg(path: &Path) -> String {
-    path.to_string_lossy().to_string()
+    // PHP built-in server accepts forward slashes on all platforms.
+    path_for_php(path)
 }
 
 fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
@@ -224,10 +219,12 @@ fn kill_port_8001() {
 
     #[cfg(target_os = "windows")]
     {
-        let _ = std::process::Command::new("cmd")
+        let _ = std::process::Command::new("powershell")
             .args([
-                "/C",
-                "for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :8001') do taskkill /F /PID %a 2>nul",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                "Get-NetTCPConnection -LocalPort 8001 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }",
             ])
             .output();
     }

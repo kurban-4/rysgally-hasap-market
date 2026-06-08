@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Tauri sidecar binaries are built in CI (static-php-cli), not committed
+src-tauri/binaries/php-x86_64-pc-windows-msvc/
+src-tauri/binaries/php-x86_64-pc-windows-msvc.exe
+src-tauri/binaries/php-aarch64-apple-darwin

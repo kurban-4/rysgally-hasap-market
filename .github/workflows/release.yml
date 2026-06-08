@@ -72,8 +72,10 @@ jobs:
         run: |
           Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
           .\spc.exe doctor --auto-fix
-          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
-          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,tokenizer,xml,dom,session,ctype,filter,opcache"
+          .\spc.exe download --with-php=8.4 --for-extensions="pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache" --prefer-pre-built
+          .\spc.exe build --build-cli "pdo,pdo_sqlite,sqlite3,mbstring,mbregex,fileinfo,zip,openssl,curl,tokenizer,xml,dom,session,ctype,filter,opcache"
+          # Remove the non-static PHP distribution from git (php.exe needs php8.dll at runtime).
+          Remove-Item -Recurse -Force "src-tauri\binaries\php-x86_64-pc-windows-msvc" -ErrorAction SilentlyContinue
           Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
 
       - name: Build Laravel assets
@@ -121,8 +123,28 @@ jobs:
             exit 1
           fi
           echo "Found PHP sidecar: $PHP_BIN"
-          src-tauri/binaries/${{ matrix.php-binary }} -c src-tauri/binaries/php.ini \
-            -r "echo extension_loaded('Zend OPcache') ? 'opcache: OK' : 'opcache: MISSING';" || true
+          "$PHP_BIN" -v
+          "$PHP_BIN" -c src-tauri/binaries/php.ini -r "
+            \$required = ['pdo_sqlite','sqlite3','mbstring','fileinfo','zip','openssl','curl','tokenizer','xml','dom','session','ctype','filter'];
+            foreach (\$required as \$ext) {
+              if (!extension_loaded(\$ext)) {
+                fwrite(STDERR, \"MISSING extension: \$ext\n\");
+                exit(1);
+              }
+              echo \"\$ext: OK\n\";
+            }
+            echo extension_loaded('Zend OPcache') ? 'opcache: OK' : 'opcache: MISSING';
+          "
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            if [ -f "src-tauri/binaries/php-x86_64-pc-windows-msvc/php.exe" ]; then
+              echo "ERROR: Non-static php.exe must not be bundled (requires php8.dll)."
+              exit 1
+            fi
+            if [ -f "src-tauri/binaries/php-x86_64-pc-windows-msvc/php8.dll" ]; then
+              echo "ERROR: php8.dll folder must not be present in the bundle."
+              exit 1
+            fi
+          fi
 
       - name: Clean Install
         shell: bash
@@ -151,6 +173,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Verify Windows bundle sidecar
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          SIDECAR="src-tauri/target/${{ matrix.target }}/release/php-x86_64-pc-windows-msvc.exe"
+          if [ ! -f "$SIDECAR" ]; then
+            echo "ERROR: PHP sidecar missing from release output: $SIDECAR"
+            ls -la "src-tauri/target/${{ matrix.target }}/release/" || true
+            exit 1
+          fi
+          echo "Sidecar present in release bundle: $SIDECAR"
+          "$SIDECAR" -v
 
       - name: Debug - Find built files
         if: always()
