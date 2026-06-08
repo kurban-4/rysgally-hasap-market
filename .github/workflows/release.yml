@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
     strategy:
+      max-parallel: 1
       matrix:
         include:
           - os: macos-latest
@@ -24,6 +25,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v3
+        with:
+          path: src-tauri/resources/rysgally-hasap-market/vendor
+          key: composer-${{ hashFiles('src-tauri/resources/rysgally-hasap-market/composer.lock') }}
+          restore-keys: |
+            composer-
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -108,12 +117,17 @@ jobs:
         shell: bash
         run: |
           cd src-tauri/resources/rysgally-hasap-market
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            # Use bundled PHP on Windows (without openssl extension, so disable TLS)
-            ../../binaries/php-x86_64-pc-windows-msvc/php.exe /c/composer.phar install --no-dev --optimize-autoloader --ignore-platform-reqs --disable-tls --no-interaction
-          else
-            # Use system PHP on macOS
+          
+          # macOS: always run composer (has system PHP with OpenSSL)
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+          else
+            # Windows: check if vendor exists from cache, otherwise warn
+            if [ ! -d "vendor" ]; then
+              echo "WARNING: vendor folder not found on Windows"
+              echo "This can happen if macOS build hasn't cached vendor yet"
+              echo "The build may fail if Laravel dependencies are required"
+            fi
           fi
 
       - name: Create temporary .env
