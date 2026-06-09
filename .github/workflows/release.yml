@@ -69,57 +69,40 @@ jobs:
           cp buildroot/bin/php src-tauri/binaries/php-aarch64-apple-darwin
           chmod +x src-tauri/binaries/php-aarch64-apple-darwin
 
-      - name: Build Static PHP (Windows)
+      - name: Download Static PHP (Windows)
         if: matrix.os == 'windows-latest'
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_SSL_NO_REVOKE: true
         run: |
           set -euo pipefail
 
-          # GitHub Actions Windows runners can fail curl/schannel with CRYPT_E_REVOCATION_OFFLINE.
+          # Compiling static PHP on GHA Windows is flaky (php-src tar extraction / path bugs).
+          # Use the official pre-built static CLI from static-php-cli (spc-max bundle).
           export PATH="/c/Program Files/Git/mingw64/bin:$PATH"
           git config --global http.schannelCheckRevoke false
           git config --global http.sslRevokeBestEffort true
           echo "ssl-revoke-best-effort" > "$HOME/.curlrc"
 
-          EXTENSIONS="${{ matrix.php-extensions }}"
-
-          # GitHub release spc.exe is an older CLI (no build:php/craft). Use official nightly v3 binary.
-          curl -fsSL -o spc.exe "https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-windows-x64.exe"
-          ./spc.exe --version
-
-          {
-            echo "php-version: 8.4"
-            echo "extensions: \"${EXTENSIONS}\""
-            echo "sapi:"
-            echo "  - cli"
-            echo "download-options:"
-            echo "  prefer-pre-built: true"
-          } > craft.yml
-
-          ./spc.exe doctor --auto-fix
-
-          crafted=false
+          PHP_ZIP_URL="https://dl.static-php.dev/static-php-cli/windows/spc-max/php-8.4.20-cli-win.zip"
           for attempt in 1 2 3; do
-            echo "static-php-cli craft attempt ${attempt}..."
-            if ./spc.exe craft -vv; then
-              crafted=true
+            echo "Download static PHP attempt ${attempt}..."
+            if curl -fsSL -o php-win.zip "$PHP_ZIP_URL"; then
               break
             fi
             if [ "$attempt" -eq 3 ]; then
-              echo "static-php-cli craft failed after 3 attempts"
+              echo "Failed to download static PHP from $PHP_ZIP_URL"
               exit 1
             fi
             sleep 15
           done
 
-          php_exe="buildroot/bin/php.exe"
+          rm -rf php-win-tmp
+          unzip -o php-win.zip -d php-win-tmp
+          php_exe="php-win-tmp/php.exe"
           if [ ! -f "$php_exe" ]; then
-            echo "buildroot tree:"
-            find buildroot 2>/dev/null || echo "(buildroot missing)"
-            echo "Missing static PHP output: $php_exe"
+            echo "Missing php.exe in downloaded archive"
+            unzip -l php-win.zip || true
             exit 1
           fi
 
