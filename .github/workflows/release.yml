@@ -87,15 +87,11 @@ jobs:
           "ssl-revoke-best-effort" | Out-File -FilePath "$env:USERPROFILE\.curlrc" -Encoding ascii -NoNewline
           New-Item -ItemType Directory -Force -Path "downloads" | Out-Null
 
-          $spcArgs = @(
-            "download", "--with-php=8.4",
-            "--for-extensions=${{ matrix.php-extensions }}",
-            "--prefer-pre-built"
-          )
-          $buildArgs = @("build", "--build-cli", "${{ matrix.php-extensions }}")
+          $extensions = "${{ matrix.php-extensions }}"
 
           function Invoke-Spc {
             param([string[]]$Args)
+            Write-Host ">> spc $($Args -join ' ')"
             & .\spc.exe @Args
             if ($LASTEXITCODE -ne 0) {
               throw "spc.exe failed: spc $($Args -join ' ')"
@@ -109,7 +105,11 @@ jobs:
           foreach ($attempt in 1..3) {
             try {
               Write-Host "static-php-cli download attempt $attempt..."
-              Invoke-Spc $spcArgs
+              Invoke-Spc @(
+                "download", "--with-php=8.4",
+                "--for-extensions=$extensions",
+                "--prefer-pre-built"
+              )
               $downloaded = $true
               break
             } catch {
@@ -122,10 +122,17 @@ jobs:
             throw "static-php-cli download failed after 3 attempts"
           }
 
-          Invoke-Spc $buildArgs
+          # static-php-cli v2+ expects build:php (plain "build --build-cli" can exit without output).
+          Invoke-Spc @("build:php", $extensions, "--build-cli", "-vv")
 
           $phpExe = "buildroot\bin\php.exe"
           if (-not (Test-Path $phpExe)) {
+            Write-Host "buildroot tree:"
+            if (Test-Path "buildroot") {
+              Get-ChildItem -Path "buildroot" -Recurse | ForEach-Object { $_.FullName }
+            } else {
+              Write-Host "(buildroot missing)"
+            }
             throw "Missing static PHP output: $phpExe"
           }
 
