@@ -474,7 +474,84 @@ async fn run_setup_commands(
     .await;
 }
 
+#[cfg(target_os = "windows")]
+fn ensure_supported_windows() {
+    use std::ffi::c_void;
+
+    #[repr(C)]
+    struct OsVersionInfo {
+        size: u32,
+        major: u32,
+        minor: u32,
+        build: u32,
+        platform_id: u32,
+        csd: [u16; 128],
+    }
+
+    #[link(name = "ntdll")]
+    extern "system" {
+        fn RtlGetVersion(info: *mut OsVersionInfo) -> i32;
+    }
+
+    #[link(name = "user32")]
+    extern "system" {
+        fn MessageBoxW(
+            hwnd: *mut c_void,
+            text: *const u16,
+            caption: *const u16,
+            utype: u32,
+        ) -> i32;
+    }
+
+    fn to_wide(value: &str) -> Vec<u16> {
+        value.encode_utf16().chain(std::iter::once(0)).collect()
+    }
+
+    let mut info = OsVersionInfo {
+        size: std::mem::size_of::<OsVersionInfo>() as u32,
+        major: 0,
+        minor: 0,
+        build: 0,
+        platform_id: 0,
+        csd: [0; 128],
+    };
+
+    let supported = unsafe {
+        if RtlGetVersion(&mut info) != 0 {
+            true
+        } else {
+            info.major > 10 || (info.major == 10 && info.build >= 17763)
+        }
+    };
+
+    if supported {
+        return;
+    }
+
+    let text = to_wide(
+        "This app requires Windows 10 version 1809 or later.\r\n\
+         Windows 7 and Windows 8 are not supported.\r\n\r\n\
+         Это приложение требует Windows 10 (версия 1809) или новее.\r\n\
+         Windows 7 и Windows 8 не поддерживаются.",
+    );
+    let caption = to_wide("rysgally-hasap-market");
+    unsafe {
+        MessageBoxW(
+            std::ptr::null_mut(),
+            text.as_ptr(),
+            caption.as_ptr(),
+            0x00000010,
+        );
+    }
+    std::process::exit(1);
+}
+
+#[cfg(not(target_os = "windows"))]
+fn ensure_supported_windows() {}
+
 fn main() {
+    ensure_supported_windows();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(

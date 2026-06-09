@@ -28,3 +28,4 @@ dist-ssr
 src-tauri/binaries/php-x86_64-pc-windows-msvc/
 src-tauri/binaries/php-x86_64-pc-windows-msvc.exe
 src-tauri/binaries/php-aarch64-apple-darwin
+src-tauri/Microsoft.WebView2.FixedVersionRuntime.*/

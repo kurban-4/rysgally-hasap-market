@@ -111,6 +111,44 @@ jobs:
           mkdir -p src-tauri/binaries
           cp "$php_exe" src-tauri/binaries/php-x86_64-pc-windows-msvc.exe
 
+      - name: Prepare WebView2 Fixed Runtime (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = "131.0.2903.112"
+          $runtimeName = "Microsoft.WebView2.FixedVersionRuntime.$version.x64"
+          $dest = "src-tauri/$runtimeName"
+
+          if (Test-Path "$dest/msedge.exe") {
+            Write-Host "WebView2 fixed runtime already present at $dest"
+            exit 0
+          }
+
+          $nupkg = "$env:RUNNER_TEMP/WebView2.Runtime.X64.$version.nupkg"
+          Write-Host "Downloading WebView2.Runtime.X64 $version from NuGet..."
+          Invoke-WebRequest -Uri "https://www.nuget.org/api/v2/package/WebView2.Runtime.X64/$version" -OutFile $nupkg
+
+          $extract = "$env:RUNNER_TEMP/wv2-nupkg"
+          Remove-Item -Recurse -Force $extract -ErrorAction SilentlyContinue
+          Expand-Archive -Path $nupkg -DestinationPath $extract -Force
+
+          $edgeExe = Get-ChildItem -Path $extract -Recurse -Filter "msedge.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $edgeExe) {
+            $edgeExe = Get-ChildItem -Path $extract -Recurse -Filter "msedgewebview2.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+          if (-not $edgeExe) {
+            Write-Host "NuGet package contents:"
+            Get-ChildItem -Path $extract -Recurse | ForEach-Object { $_.FullName }
+            throw "WebView2 runtime binaries not found in NuGet package"
+          }
+
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item -Path "$($edgeExe.DirectoryName)\*" -Destination $dest -Recurse -Force
+          if (-not (Test-Path "$dest/msedge.exe")) {
+            throw "WebView2 runtime copy failed: missing $dest/msedge.exe"
+          }
+          Write-Host "Prepared WebView2 fixed runtime at $dest"
+
       - name: Build Laravel assets
         shell: bash
         run: |
