@@ -71,75 +71,62 @@ jobs:
 
       - name: Build Static PHP (Windows)
         if: matrix.os == 'windows-latest'
-        shell: pwsh
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_SSL_NO_REVOKE: true
         run: |
+          set -euo pipefail
+
           # GitHub Actions Windows runners can fail curl/schannel with CRYPT_E_REVOCATION_OFFLINE.
-          # Prefer Git for Windows curl (OpenSSL) and soften revocation checks for git/spc.
-          $gitCurlDir = "C:\Program Files\Git\mingw64\bin"
-          if (Test-Path $gitCurlDir) {
-            $env:PATH = "$gitCurlDir;$env:PATH"
-          }
+          export PATH="/c/Program Files/Git/mingw64/bin:$PATH"
           git config --global http.schannelCheckRevoke false
           git config --global http.sslRevokeBestEffort true
-          "ssl-revoke-best-effort" | Out-File -FilePath "$env:USERPROFILE\.curlrc" -Encoding ascii -NoNewline
-          New-Item -ItemType Directory -Force -Path "downloads" | Out-Null
+          echo "ssl-revoke-best-effort" > "$HOME/.curlrc"
 
-          $extensions = "${{ matrix.php-extensions }}"
+          EXTENSIONS="${{ matrix.php-extensions }}"
 
-          function Invoke-Spc {
-            param([string[]]$Args)
-            Write-Host ">> spc $($Args -join ' ')"
-            & .\spc.exe @Args
-            if ($LASTEXITCODE -ne 0) {
-              throw "spc.exe failed: spc $($Args -join ' ')"
-            }
-          }
+          # GitHub release spc.exe is an older CLI (no build:php/craft). Use official nightly v3 binary.
+          curl -fsSL -o spc.exe "https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-windows-x64.exe"
+          ./spc.exe --version
 
-          Invoke-WebRequest -Uri "https://github.com/crazywhalecc/static-php-cli/releases/latest/download/spc-windows-x64.exe" -OutFile "spc.exe"
-          Invoke-Spc @("doctor", "--auto-fix")
+          {
+            echo "php-version: 8.4"
+            echo "extensions: \"${EXTENSIONS}\""
+            echo "sapi:"
+            echo "  - cli"
+            echo "download-options:"
+            echo "  prefer-pre-built: true"
+          } > craft.yml
 
-          $downloaded = $false
-          foreach ($attempt in 1..3) {
-            try {
-              Write-Host "static-php-cli download attempt $attempt..."
-              Invoke-Spc @(
-                "download", "--with-php=8.4",
-                "--for-extensions=$extensions",
-                "--prefer-pre-built"
-              )
-              $downloaded = $true
+          ./spc.exe doctor --auto-fix
+
+          crafted=false
+          for attempt in 1 2 3; do
+            echo "static-php-cli craft attempt ${attempt}..."
+            if ./spc.exe craft -vv; then
+              crafted=true
               break
-            } catch {
-              Write-Warning $_
-              if ($attempt -eq 3) { throw }
-              Start-Sleep -Seconds 15
-            }
-          }
-          if (-not $downloaded) {
-            throw "static-php-cli download failed after 3 attempts"
-          }
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "static-php-cli craft failed after 3 attempts"
+              exit 1
+            fi
+            sleep 15
+          done
 
-          # static-php-cli v2+ expects build:php (plain "build --build-cli" can exit without output).
-          Invoke-Spc @("build:php", $extensions, "--build-cli", "-vv")
-
-          $phpExe = "buildroot\bin\php.exe"
-          if (-not (Test-Path $phpExe)) {
-            Write-Host "buildroot tree:"
-            if (Test-Path "buildroot") {
-              Get-ChildItem -Path "buildroot" -Recurse | ForEach-Object { $_.FullName }
-            } else {
-              Write-Host "(buildroot missing)"
-            }
-            throw "Missing static PHP output: $phpExe"
-          }
+          php_exe="buildroot/bin/php.exe"
+          if [ ! -f "$php_exe" ]; then
+            echo "buildroot tree:"
+            find buildroot 2>/dev/null || echo "(buildroot missing)"
+            echo "Missing static PHP output: $php_exe"
+            exit 1
+          fi
 
           # Remove the non-static PHP distribution from git (php.exe needs php8.dll at runtime).
-          Remove-Item -Recurse -Force "src-tauri\binaries\php-x86_64-pc-windows-msvc" -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path "src-tauri\binaries" | Out-Null
-          Copy-Item $phpExe -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
+          rm -rf src-tauri/binaries/php-x86_64-pc-windows-msvc
+          mkdir -p src-tauri/binaries
+          cp "$php_exe" src-tauri/binaries/php-x86_64-pc-windows-msvc.exe
 
       - name: Build Laravel assets
         shell: bash
