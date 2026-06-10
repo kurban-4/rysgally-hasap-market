@@ -340,10 +340,11 @@ fn kill_server_port() {
 
     #[cfg(target_os = "windows")]
     {
-        let _ = std::process::Command::new("cmd")
+        let _ = std::process::Command::new("powershell")
             .args([
-                "/C",
-                "for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :8001') do taskkill /F /PID %a 2>nul",
+                "-Command",
+                "Get-NetTCPConnection -LocalPort 8001 -ErrorAction SilentlyContinue | \
+                 ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }",
             ])
             .output();
     }
@@ -591,63 +592,90 @@ fn main() {
                 );
 
                 match server_cmd.spawn() {
-                    Ok((mut rx, _)) => {
-                        let _server_started = wait_for_php_server(&handle, &mut rx).await;
-                        open_main_window(&handle, &server_url());
+    Ok((mut rx, _)) => {
+        let server_started = wait_for_php_server(&handle, &mut rx).await;
 
-                        let cleanup_handle = handle.clone();
-                        let cleanup_paths = paths.clone();
-                        let cleanup_storage = storage_path.clone();
-                        let cleanup_bootstrap = bootstrap_path.clone();
+        #[cfg(target_os = "windows")]
+        if !server_started {
+            let log_path = handle
+                .path()
+                .app_data_dir()
+                .map(|d| {
+                    d.join("rysgally-hasap-market")
+                        .join("startup.log")
+                        .to_string_lossy()
+                        .to_string()
+                })
+                .unwrap_or_else(|_| "unknown".to_string());
 
-                        tauri::async_runtime::spawn(async move {
-                            loop {
-                                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
-                                if !app_running.load(Ordering::Relaxed) {
-                                    break;
-                                }
+            let message = format!(
+                "PHP server failed to start on {SERVER_ADDR}\n\
+                 PHP binary: {}\n\
+                 Public dir exists: {}\n\
+                 server.php exists: {}\n\
+                 \nPlease send this file to developer:\n{}",
+                paths.public_dir_native,
+                paths.project_dir.join("public").exists(),
+                paths.project_dir.join("server.php").exists(),
+                log_path
+            );
+            open_error_window(&handle, &message);
+            return;
+        }
 
-                                run_artisan(
-                                    &cleanup_handle,
-                                    &cleanup_paths,
-                                    &cleanup_storage,
-                                    &cleanup_bootstrap,
-                                    &["artisan", "session:prune"],
-                                )
-                                .await;
+        open_main_window(&handle, &server_url());
 
-                                run_artisan(
-                                    &cleanup_handle,
-                                    &cleanup_paths,
-                                    &cleanup_storage,
-                                    &cleanup_bootstrap,
-                                    &["artisan", "db:optimize"],
-                                )
-                                .await;
-                            }
-                        });
+        let cleanup_handle = handle.clone();
+        let cleanup_paths = paths.clone();
+        let cleanup_storage = storage_path.clone();
+        let cleanup_bootstrap = bootstrap_path.clone();
 
-                        while let Some(event) = rx.recv().await {
-                            match event {
-                                CommandEvent::Stderr(line) => {
-                                    eprintln!("PHP: {}", String::from_utf8_lossy(&line))
-                                }
-                                CommandEvent::Terminated(payload) => {
-                                    eprintln!("PHP server exited: {:?}", payload.code);
-                                    break;
-                                }
-                                _ => {}
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        let message = format!("Failed to start PHP built-in server: {e}");
-                        append_startup_log(&handle, &message);
-                        #[cfg(target_os = "windows")]
-                        open_error_window(&handle, &message);
-                        open_main_window(&handle, &server_url());
-                    }
+        tauri::async_runtime::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+                if !app_running.load(Ordering::Relaxed) {
+                    break;
                 }
+                run_artisan(
+                    &cleanup_handle,
+                    &cleanup_paths,
+                    &cleanup_storage,
+                    &cleanup_bootstrap,
+                    &["artisan", "session:prune"],
+                )
+                .await;
+                run_artisan(
+                    &cleanup_handle,
+                    &cleanup_paths,
+                    &cleanup_storage,
+                    &cleanup_bootstrap,
+                    &["artisan", "db:optimize"],
+                )
+                .await;
+            }
+        });
+
+        while let Some(event) = rx.recv().await {
+            match event {
+                CommandEvent::Stderr(line) => {
+                    eprintln!("PHP: {}", String::from_utf8_lossy(&line))
+                }
+                CommandEvent::Terminated(payload) => {
+                    eprintln!("PHP server exited: {:?}", payload.code);
+                    break;
+                }
+                _ => {}
+            }
+        }
+    }
+    Err(e) => {
+        let message = format!("Failed to start PHP built-in server: {e}");
+        append_startup_log(&handle, &message);
+        #[cfg(target_os = "windows")]
+        open_error_window(&handle, &message);
+        open_main_window(&handle, &server_url());
+    }
+}
 
                 app_running_clone.store(false, Ordering::Relaxed);
                 kill_server_port();
