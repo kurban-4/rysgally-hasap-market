@@ -1,17 +1,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::fs;
+use std::net::TcpStream;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 
 use tauri::Manager;
 use tauri::{WebviewUrl, WebviewWindowBuilder};
-use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
-use std::net::TcpStream;
 
 const APP_KEY: &str = "base64:mL3/J3Jxsg7yS1WgaxI3mCXuB0iZTeKA5aVRSh9WMxg=";
+
+/// Handle of the PHP built-in server we spawned, so we can kill exactly that
+/// process on close/update instead of whatever happens to use the port.
+static PHP_SERVER: Mutex<Option<CommandChild>> = Mutex::new(None);
 
 #[derive(Clone)]
 struct AppPaths {
@@ -26,12 +29,6 @@ fn path_for_php(path: &Path) -> String {
     path.to_string_lossy().replace('\\', "/")
 }
 
-#[cfg(target_os = "windows")]
-fn path_for_server_arg(path: &Path) -> String {
-    path.to_string_lossy().to_string()
-}
-
-#[cfg(not(target_os = "windows"))]
 fn path_for_server_arg(path: &Path) -> String {
     path.to_string_lossy().to_string()
 }
@@ -176,7 +173,7 @@ async fn run_artisan(
     let sidecar = match handle.shell().sidecar("php") {
         Ok(cmd) => cmd,
         Err(e) => {
-            eprintln!("PHP sidecar unavailable for {label}: {e}");
+            log::error!("PHP sidecar unavailable for {label}: {e}");
             return;
         }
     };
@@ -197,11 +194,11 @@ async fn run_artisan(
             while let Some(event) = rx.recv().await {
                 match &event {
                     CommandEvent::Stderr(line) => {
-                        eprintln!("artisan ({label}) err: {}", String::from_utf8_lossy(line))
+                        log::warn!("artisan ({label}) err: {}", String::from_utf8_lossy(line))
                     }
                     CommandEvent::Terminated(payload) => {
                         if payload.code != Some(0) {
-                            eprintln!("artisan ({label}) exited with {:?}", payload.code);
+                            log::error!("artisan ({label}) exited with {:?}", payload.code);
                         }
                         break;
                     }
@@ -209,10 +206,13 @@ async fn run_artisan(
                 }
             }
         }
-        Err(e) => eprintln!("Failed to spawn artisan ({label}): {e}"),
+        Err(e) => log::error!("Failed to spawn artisan ({label}): {e}"),
     }
 }
 
+/// Fallback cleanup: clears anything LISTENING on 8001 (e.g. an orphaned PHP
+/// process left over from a crashed previous run). Normal shutdown uses
+/// `stop_php_server`, which kills the exact child we spawned.
 fn kill_port_8001() {
     #[cfg(target_os = "macos")]
     {
@@ -224,17 +224,35 @@ fn kill_port_8001() {
 
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         let _ = std::process::Command::new("cmd")
             .args([
                 "/C",
-                "for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :8001') do taskkill /F /PID %a 2>nul",
+                "for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :8001 ^| findstr LISTENING') do taskkill /F /PID %a 2>nul",
             ])
+            .creation_flags(CREATE_NO_WINDOW)
             .output();
     }
 }
 
+/// Kill the PHP server we spawned (if any), then clear the port as a fallback.
+fn stop_php_server() {
+    if let Ok(mut guard) = PHP_SERVER.lock() {
+        if let Some(child) = guard.take() {
+            let _ = child.kill();
+        }
+    }
+    kill_port_8001();
+}
+
 fn main() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .level(log::LevelFilter::Info)
+                .build(),
+        )
         .plugin(tauri_plugin_shell::init())
         .plugin(
             tauri_plugin_updater::Builder::new()
@@ -247,7 +265,7 @@ fn main() {
             let base_path = match handle.path().resource_dir() {
                 Ok(p) => p,
                 Err(e) => {
-                    eprintln!("Resource dir error: {e}");
+                    log::error!("Resource dir error: {e}");
                     return Ok(());
                 }
             };
@@ -255,7 +273,7 @@ fn main() {
             let (paths, is_first_run) = match AppPaths::from_bundle(&handle, base_path) {
                 Ok(p) => p,
                 Err(e) => {
-                    eprintln!("{e}");
+                    log::error!("{e}");
                     return Ok(());
                 }
             };
@@ -263,7 +281,7 @@ fn main() {
             let storage_path = handle
                 .path()
                 .app_data_dir()
-                .map_err(|e| eprintln!("app_data_dir: {e}"))
+                .map_err(|e| log::error!("app_data_dir: {e}"))
                 .ok()
                 .map(|d| d.join("rysgally-hasap-market").join("storage"))
                 .unwrap_or_else(|| paths.project_dir.join("storage"));
@@ -275,66 +293,58 @@ fn main() {
                 .map(|d| d.join("rysgally-hasap-market").join("bootstrap"))
                 .unwrap_or_else(|| paths.project_dir.join("bootstrap"));
 
-            let app_running = Arc::new(AtomicBool::new(true));
-            let app_running_clone = app_running.clone();
-
             tauri::async_runtime::spawn(async move {
-                // Убиваем старый PHP процесс на порту 8001
+                // Очистка осиротевшего PHP процесса на порту 8001
                 kill_port_8001();
                 tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
-                // Всё ниже — ТОЛЬКО при первом запуске
+                // Миграции — на каждом запуске (идемпотентные)
                 run_artisan(
                     &handle, &paths, &storage_path, &bootstrap_path,
                     &["artisan", "migrate", "--force"],
                 ).await;
-                if is_first_run {
 
+                if is_first_run {
+                    // Создаёт пользователей и активирует лицензию
+                    // (лицензия активируется внутри UserSeeder)
                     run_artisan(
                         &handle, &paths, &storage_path, &bootstrap_path,
                         &["artisan", "db:seed", "--class=UserSeeder", "--force"],
                     ).await;
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &[
-                            "artisan", "tinker", "--execute",
-                            "if (Schema::hasTable('licenses')) { App\\Models\\License::updateOrCreate(['key' => 'RYSGALLY-HASAP-BUILD'], ['is_activated' => true, 'activated_at' => now()]); }",
-                        ],
-                    ).await;
-
-                    // Кэшируем конфиги, роуты и вьюхи — страницы будут быстрыми
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "config:cache"],
-                    ).await;
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "route:cache"],
-                    ).await;
-
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "view:cache"],
-                    ).await;
                 }
+
+                // Кэшируем конфиги, роуты и вьюхи НА КАЖДОМ запуске —
+                // иначе после обновления приложения останутся старые кэши
+                run_artisan(
+                    &handle, &paths, &storage_path, &bootstrap_path,
+                    &["artisan", "config:cache"],
+                ).await;
+
+                run_artisan(
+                    &handle, &paths, &storage_path, &bootstrap_path,
+                    &["artisan", "route:cache"],
+                ).await;
+
+                run_artisan(
+                    &handle, &paths, &storage_path, &bootstrap_path,
+                    &["artisan", "view:cache"],
+                ).await;
 
                 // Запускаем PHP встроенный сервер
                 let sidecar = match handle.shell().sidecar("php") {
                     Ok(cmd) => cmd,
                     Err(e) => {
-                        eprintln!("PHP sidecar unavailable for built-in server: {e}");
+                        log::error!("PHP sidecar unavailable for built-in server: {e}");
                         return;
                     }
                 };
-                
-                eprintln!("Starting PHP server with:");
-                eprintln!("  Public dir: {}", paths.public_dir_native);
-                eprintln!("  Server script: {}", paths.server_php_native);
-                eprintln!("  PHP ini: {}", paths.php_ini_arg);
-                eprintln!("  Public dir exists: {}", paths.project_dir.join("public").exists());
-                eprintln!("  Server script exists: {}", paths.project_dir.join("server.php").exists());
+
+                log::info!("Starting PHP server with:");
+                log::info!("  Public dir: {}", paths.public_dir_native);
+                log::info!("  Server script: {}", paths.server_php_native);
+                log::info!("  PHP ini: {}", paths.php_ini_arg);
+                log::info!("  Public dir exists: {}", paths.project_dir.join("public").exists());
+                log::info!("  Server script exists: {}", paths.project_dir.join("server.php").exists());
 
                 let server_cmd = {
                     let sidecar_base = apply_php_env(
@@ -354,27 +364,32 @@ fn main() {
                 };
 
                 match server_cmd.spawn() {
-                    Ok((mut rx, _)) => {
+                    Ok((mut rx, child)) => {
+                        // Запоминаем дочерний процесс, чтобы убивать именно его
+                        if let Ok(mut guard) = PHP_SERVER.lock() {
+                            *guard = Some(child);
+                        }
+
                         // Ждём пока сервер поднимется (дольше на Windows)
                         #[cfg(target_os = "windows")]
                         let max_attempts = 100; // 25 секунд на Windows
                         #[cfg(not(target_os = "windows"))]
                         let max_attempts = 40;  // 10 секунд на других ОС
-                        
+
                         let mut attempts = 0;
                         let mut server_started = false;
                         while attempts < max_attempts {
                             if TcpStream::connect("127.0.0.1:8001").is_ok() {
-                                eprintln!("PHP server ready after {} ms", attempts * 250);
+                                log::info!("PHP server ready after {} ms", attempts * 250);
                                 server_started = true;
                                 break;
                             }
                             tokio::time::sleep(std::time::Duration::from_millis(250)).await;
                             attempts += 1;
                         }
-                        
+
                         if !server_started {
-                            eprintln!("PHP server failed to start within {} seconds", max_attempts * 250 / 1000);
+                            log::error!("PHP server failed to start within {} seconds", max_attempts * 250 / 1000);
                         }
 
                         if let Err(e) = WebviewWindowBuilder::new(
@@ -385,63 +400,66 @@ fn main() {
                         .title("rysgally-hasap-market")
                         .inner_size(1200.0, 800.0)
                         .resizable(true)
-                        .additional_browser_args("--kiosk-printing")
+                        // ВАЖНО: additional_browser_args заменяет дефолтные флаги
+                        // WebView2, поэтому добавляем их обратно вместе с kiosk-printing
+                        .additional_browser_args(
+                            "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --kiosk-printing",
+                        )
                         .build()
                         {
-                            eprintln!("Failed to open main window: {e}");
+                            log::error!("Failed to open main window: {e}");
                         }
-
-                        // Periodically clean up sessions and optimize database
-                        let cleanup_handle = handle.clone();
-                        let cleanup_paths = paths.clone();
-                        let cleanup_storage = storage_path.clone();
-                        let cleanup_bootstrap = bootstrap_path.clone();
-                        
-                        tauri::async_runtime::spawn(async move {
-                            loop {
-                                tokio::time::sleep(std::time::Duration::from_secs(3600)).await; // Every hour
-                                if !app_running.load(Ordering::Relaxed) {
-                                    break;
-                                }
-                                
-                                // Clear old sessions
-                                run_artisan(
-                                    &cleanup_handle, &cleanup_paths, &cleanup_storage, &cleanup_bootstrap,
-                                    &["artisan", "session:prune"],
-                                ).await;
-                                
-                                // Optimize database
-                                run_artisan(
-                                    &cleanup_handle, &cleanup_paths, &cleanup_storage, &cleanup_bootstrap,
-                                    &["artisan", "db:optimize"],
-                                ).await;
-                            }
-                        });
 
                         while let Some(event) = rx.recv().await {
                             match event {
                                 CommandEvent::Stderr(line) => {
-                                    eprintln!("PHP: {}", String::from_utf8_lossy(&line))
+                                    log::info!("PHP: {}", String::from_utf8_lossy(&line))
                                 }
                                 CommandEvent::Terminated(payload) => {
-                                    eprintln!("PHP server exited: {:?}", payload.code);
+                                    log::error!("PHP server exited: {:?}", payload.code);
                                     break;
                                 }
                                 _ => {}
                             }
                         }
                     }
-                    Err(e) => eprintln!("Failed to start PHP built-in server: {e}"),
+                    Err(e) => log::error!("Failed to start PHP built-in server: {e}"),
                 }
 
-                app_running_clone.store(false, Ordering::Relaxed);
-                kill_port_8001();
+                stop_php_server();
+            });
 
+            // Проверяем обновления в фоне вскоре после запуска,
+            // а не при выходе из приложения
+            let updater_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(std::time::Duration::from_secs(20)).await;
                 use tauri_plugin_updater::UpdaterExt;
-                if let Ok(updater) = handle.updater() {
-                    if let Ok(Some(update)) = updater.check().await {
-                        let _ = update.download_and_install(|_, _| {}, || {}).await;
+                let updater = match updater_handle.updater() {
+                    Ok(u) => u,
+                    Err(e) => {
+                        log::error!("Updater unavailable: {e}");
+                        return;
                     }
+                };
+                match updater.check().await {
+                    Ok(Some(update)) => {
+                        log::info!("Update {} found, downloading", update.version);
+                        // Сначала скачиваем, и только потом останавливаем PHP —
+                        // иначе инсталлятор не сможет заменить запущенный php.exe
+                        match update.download(|_, _| {}, || {}).await {
+                            Ok(bytes) => {
+                                log::info!("Update downloaded, stopping PHP server and installing");
+                                stop_php_server();
+                                if let Err(e) = update.install(bytes) {
+                                    log::error!("Failed to install update: {e}");
+                                }
+                            }
+                            Err(e) => log::error!("Failed to download update: {e}"),
+                        }
+                    }
+                    Ok(None) => log::info!("No update available"),
+                    Err(e) => log::error!("Update check failed: {e}"),
                 }
             });
 
@@ -449,7 +467,7 @@ fn main() {
         })
         .on_window_event(|_window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {
-                kill_port_8001();
+                stop_php_server();
             }
         })
         .run(tauri::generate_context!())

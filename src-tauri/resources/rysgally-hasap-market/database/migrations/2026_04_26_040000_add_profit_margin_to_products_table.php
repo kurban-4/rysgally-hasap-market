@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->decimal('profit_margin', 5, 2)->nullable()->after('received_price');
-        });
+        if (!Schema::hasColumn('products', 'profit_margin')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->decimal('profit_margin', 5, 2)->nullable()->after('received_price');
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('profit_margin');
-        });
+        if (Schema::hasColumn('products', 'profit_margin')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->dropColumn('profit_margin');
+            });
+        }
     }
 };
