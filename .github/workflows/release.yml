@@ -132,6 +132,21 @@ jobs:
           cd src-tauri
           cargo fetch
 
+      - name: Create PHP placeholder for Tauri (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          if (!(Test-Path "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe")) {
+            Copy-Item "buildroot\bin\php.exe" -Destination "src-tauri\binaries\php-x86_64-pc-windows-msvc.exe"
+          }
+
+      - name: Clean Cargo cache
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          cargo clean
+          rm -rf src-tauri/target
+
       - name: Build App
         run: |
           npm run build
