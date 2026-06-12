@@ -300,14 +300,14 @@
                             <span>{{ __('app.btn_edit_product') }}</span>
                         </a>
 
-                        <form action="{{ route('storage.destroy', $storage->id) }}" method="POST"
-                              onsubmit="return confirm('Delete this item from storage?')">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn-action danger">
-                                <i class="bi bi-trash3"></i>
-                                <span>{{ __('app.btn_remove_product') }}</span>
-                            </button>
+                        <form id="deleteForm{{ $storage->id }}" action="{{ route('storage.destroy', $storage->id) }}" method="POST" style="display: none;">
+                            @csrf
+                            @method('DELETE')
                         </form>
+                        <button type="button" class="btn-action danger" onclick="document.getElementById('deleteForm{{ $storage->id }}').submit();" style="cursor: pointer; width: 100%;">
+                            <i class="bi bi-trash3"></i>
+                            <span>{{ __('app.btn_remove_product') }}</span>
+                        </button>
                         @endif
 
                     </div>

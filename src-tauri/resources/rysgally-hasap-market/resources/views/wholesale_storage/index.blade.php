@@ -102,13 +102,12 @@
                                                 data-bs-target="#transferModal{{ $item->id }}" title="{{ __('app.wholesale_storage_transfer') }}">
                                                 <i class="bi bi-truck"></i>
                                             </button>
-                                            <form action="{{ route('wholesale_storage.destroy', $item->id) }}" method="POST" class="m-0">
+                                            <form id="deleteForm{{ $item->id }}" action="{{ route('wholesale_storage.destroy', $item->id) }}" method="POST" style="display: none;">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="act-btn delete"
-                                                    onclick="return confirm('{{ __('app.wholesale_storage_remove_confirm') }}')">
-                                                    <i class="bi bi-trash3"></i>
-                                                </button>
                                             </form>
+                                            <button type="button" class="act-btn delete" onclick="document.getElementById('deleteForm{{ $item->id }}').submit();">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -160,12 +159,12 @@
                             <button class="act-btn transfer flex-grow-1" data-bs-toggle="modal" data-bs-target="#transferModal{{ $item->id }}">
                                 <i class="bi bi-truck me-1"></i> {{ __('app.wholesale_storage_transfer') }}
                             </button>
-                            <form action="{{ route('wholesale_storage.destroy', $item->id) }}" method="POST" class="m-0">
+                            <form id="deleteMobileForm{{ $item->id }}" action="{{ route('wholesale_storage.destroy', $item->id) }}" method="POST" style="display: none;">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="act-btn delete" onclick="return confirm('{{ __('app.wholesale_storage_remove_short_confirm') }}')">
-                                    <i class="bi bi-trash3"></i>
-                                </button>
                             </form>
+                            <button type="button" class="act-btn delete" onclick="document.getElementById('deleteMobileForm{{ $item->id }}').submit();">
+                                <i class="bi bi-trash3"></i>
+                            </button>
                         </div>
                     </div>
                     @endforeach

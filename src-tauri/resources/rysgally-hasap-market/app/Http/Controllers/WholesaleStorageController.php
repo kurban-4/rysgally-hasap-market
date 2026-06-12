@@ -258,5 +258,22 @@ public function transferToMarket(Request $request)
         return redirect()->back()->with('error', 'Transfer error: ' . $e->getMessage());
     }
 }
+
+public function destroy($id)
+{
+    $batch = WholesaleStorage::findOrFail($id);
+    $product = $batch->product;
+
+    try {
+        DB::transaction(function () use ($batch, $product) {
+            $product->decrement('total_quantity_units', $batch->quantity);
+            $batch->delete();
+        });
+
+        return redirect()->back()->with('success', 'Batch removed from wholesale inventory.');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
 }
 

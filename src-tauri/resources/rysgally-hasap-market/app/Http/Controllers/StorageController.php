@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Storage;
 use App\Models\Product;
+use App\Models\ProductBarcode;
 use App\Services\ScaleService;
 
     use App\Http\Controllers\WholesaleController; 
@@ -135,7 +136,19 @@ class StorageController extends Controller
 
     public function destroy($id)
     {
-        Storage::findOrFail($id)->delete();
+        $storage = Storage::findOrFail($id);
+        $productId = $storage->product_id;
+        $storage->delete();
+        
+        // Check if this product has any remaining storage entries
+        $remainingStorage = Storage::where('product_id', $productId)->count();
+        
+        // If no storage entries remain, delete the product and its barcodes
+        if ($remainingStorage === 0) {
+            ProductBarcode::where('product_id', $productId)->delete();
+            Product::findOrFail($productId)->delete();
+        }
+        
         return redirect()->route('storage.index')->with('success', 'Deleted!');
     }
 
@@ -168,6 +181,8 @@ public function export(Request $request)
         'Категория',
         'Количество',
         'Ед. изм.',
+        'Цена получения',
+        'Цена продажи',
         'Статус',
         'Срок годности',
     ];
@@ -185,6 +200,11 @@ public function export(Request $request)
         }
 
         
+        $discount = (int) ($item->discount ?? $item->product->discount ?? 0);
+        $originalPrice = (float) ($item->selling_price ?? $item->product->price ?? 0);
+        $finalPrice = $discount > 0 ? round($originalPrice * (1 - $discount / 100), 2) : $originalPrice;
+        $receivedPrice = (float) ($item->received_price ?? $item->product->received_price ?? 0);
+
         $rawDate = $item->expiry_date ?? $item->product->expiry_date ?? null;
         $expiryStr = $rawDate ? \Carbon\Carbon::parse($rawDate)->format('d.m.Y') : '—';
 
@@ -194,6 +214,8 @@ public function export(Request $request)
             $item->category ?? '—',
             $amount,
             $unit,
+            $receivedPrice,
+            $finalPrice,
             $item->quantity < 10 ? 'Мало' : 'Достаточно',
             $expiryStr,
         ];

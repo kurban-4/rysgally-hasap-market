@@ -149,7 +149,13 @@
                                         <td><div class="fw-bold text-primary">${{ number_format($invoice->total_amount, 2) }}</div></td>
                                         <td class="text-muted small">{{ $invoice->created_at->format('M d, Y · H:i') }}</td>
                                         <td class="pe-4 text-end">
-                                            <a href="{{ route('wholesale.show', $invoice->id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                            <a href="{{ route('wholesale.show', $invoice->id) }}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                                            <form id="deleteForm{{ $invoice->id }}" action="{{ route('wholesale.destroy', $invoice->id) }}" method="POST" style="display: none;">
+                                                @csrf @method('DELETE')
+                                            </form>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('deleteForm{{ $invoice->id }}').submit();">
+                                                <i class="bi bi-trash3"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 @else
@@ -313,7 +319,7 @@
           <button type="submit" id="submit_transfer_btn"
                   class="btn text-white px-4" disabled
                   style="background-color: #E8722A; border-radius: 10px;">
-            {{ __('app.wholesale_transfer_modal_confirm') }}
+            
           </button>
         </div>
       </form>

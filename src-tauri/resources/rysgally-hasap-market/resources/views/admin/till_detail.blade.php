@@ -175,7 +175,7 @@
                 </span>
             </h5>
             <span class="badge rounded-pill px-3 py-2 fw-bold" style="background: #e0f2f4; color: #E8722A;">
-                {{ count($soldproducts) }} {{ __('app.till_items_count', ['count' => count($soldproducts)]) }}
+                {{ count($soldproducts ?? []) }} {{ __('app.till_items_count', ['count' => count($soldproducts)]) }}
             </span>
         </div>
 

@@ -157,7 +157,11 @@ class ProductController extends Controller
     {
         $query = $request->get('search');
         if (empty($query)) return response()->json([]);
-        $products = Product::where('name', 'LIKE', "%{$query}%")->limit(10)->get();
+        // Only show products that have active storage entries
+        $products = Product::where('name', 'LIKE', "%{$query}%")
+            ->whereHas('storage')
+            ->limit(10)
+            ->get();
         return response()->json($products);
     }
 }

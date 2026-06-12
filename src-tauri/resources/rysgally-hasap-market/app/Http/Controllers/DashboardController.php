@@ -161,11 +161,29 @@ public function shiftLogs()
         
         $netProfit = $totalSellingPrice - $totalReceivedPrice;
         $profitMargin = $totalReceivedPrice > 0 ? ($netProfit / $totalReceivedPrice) * 100 : 0;
-
+        
+        // Calculate sold products with daily/weekly/monthly breakdown
+        $today = Carbon::today();
+        $weekStart = Carbon::now()->startOfWeek();
+        $monthStart = Carbon::now()->startOfMonth();
+        
+        $soldproducts = $filteredSales->getCollection()
+            ->groupBy('product_id')
+            ->map(function ($sales) use ($today, $weekStart, $monthStart) {
+                return [
+                    'name'      => $sales->first()->product->name ?? '—',
+                    'day_qty'   => $sales->where('created_at', '>=', $today)->sum('quantity'),
+                    'week_qty'  => $sales->where('created_at', '>=', $weekStart)->sum('quantity'),
+                    'month_qty' => $sales->where('created_at', '>=', $monthStart)->sum('quantity'),
+                    'quantity'  => $sales->sum('quantity'),
+                    'total'     => $sales->sum('total_price'),
+                ];
+            })->values();
         return view('admin.till_detail', compact(
             'till', 'dayEarned', 'weekEarned', 'monthEarned',
             'totalEarned', 'filteredTotal', 'filteredSales',
-            'totalReceivedPrice', 'totalSellingPrice', 'netProfit', 'profitMargin'
+            'totalReceivedPrice', 'totalSellingPrice', 'netProfit', 'profitMargin',
+            'soldproducts'
         ));
     
     }

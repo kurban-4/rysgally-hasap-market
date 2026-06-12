@@ -197,6 +197,14 @@
                                                     @else {{ $daysLeft }} дн.
                                                     @endif
                                                 </div>
+                                                <div class="expiry-col-price" style="margin-top: 6px; font-size: 0.75rem; color: #666;">
+                                                    @php
+                                                        $discount = (int) ($item->discount ?? $item->product->discount ?? 0);
+                                                        $originalPrice = (float) ($item->selling_price ?? $item->product->price ?? 0);
+                                                        $finalPrice = $discount > 0 ? round($originalPrice * (1 - $discount / 100), 2) : $originalPrice;
+                                                    @endphp
+                                                    <strong>{{ __('app.currency_tmt') }}{{ number_format($finalPrice, 2) }}</strong>
+                                                </div>
                                             </div>
                                         @else
                                             <span class="text-muted small">—</span>
