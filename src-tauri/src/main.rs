@@ -389,14 +389,61 @@ fn main() {
                         }
 
                         if !server_started {
-                            log::error!("PHP server failed to start within {} seconds", max_attempts * 250 / 1000);
-                        }
+    log::error!("PHP server failed to start within {} seconds", max_attempts * 250 / 1000);
+}
 
-                        if let Err(e) = WebviewWindowBuilder::new(
-                            &handle,
-                            "main",
-                            WebviewUrl::External("http://127.0.0.1:8001".parse().unwrap()),
-                        )
+let window_url = if server_started {
+    WebviewUrl::External("http://127.0.0.1:8001".parse().unwrap())
+} else {
+    let data_dir = handle.path().app_data_dir()
+        .map(|d| d.join("rysgally-hasap-market"))
+        .unwrap_or_default();
+    let log_path = data_dir.join("logs").join("laravel.log");
+    let error_file = data_dir.join("startup_error.html");
+
+    let html = format!(r#"<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><title>Ошибка запуска</title>
+<style>
+  body {{ margin:0; font-family:system-ui,sans-serif; background:#0f172a; color:#e2e8f0;
+         display:flex; align-items:center; justify-content:center; min-height:100vh; }}
+  .card {{ background:#1e293b; border-radius:12px; padding:40px; max-width:600px;
+           text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.5); }}
+  h1 {{ color:#ef4444; font-size:1.8rem; margin:0 0 12px; }}
+  p {{ color:#94a3b8; line-height:1.6; }}
+  .path {{ background:#0f172a; border:1px solid #334155; border-radius:8px;
+           padding:12px 16px; font-family:monospace; font-size:13px;
+           color:#7dd3fc; word-break:break-all; margin:16px 0; text-align:left; }}
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="font-size:4rem;margin-bottom:16px">⚠️</div>
+  <h1>Не удалось запустить приложение</h1>
+  <p>PHP сервер не запустился. Отправьте разработчику этот файл:</p>
+  <div class="path">{}</div>
+  <p style="font-size:13px;color:#64748b">Если файл не существует — попробуйте переустановить приложение.</p>
+</div>
+</body>
+</html>"#, log_path.display());
+
+    let _ = fs::write(&error_file, &html);
+
+    #[cfg(target_os = "windows")]
+    let url_str = format!("file:///{}", error_file.to_string_lossy().replace('\\', "/"));
+    #[cfg(not(target_os = "windows"))]
+    let url_str = format!("file://{}", error_file.to_string_lossy());
+
+    url_str.parse().map(WebviewUrl::External)
+        .unwrap_or_else(|_| WebviewUrl::External("http://127.0.0.1:8001".parse().unwrap()))
+};
+
+if let Err(e) = WebviewWindowBuilder::new(
+    &handle,
+    "main",
+    window_url,
+)
                         .title("rysgally-hasap-market")
                         .inner_size(1200.0, 800.0)
                         .resizable(true)
