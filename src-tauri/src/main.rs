@@ -407,7 +407,7 @@ fn main() {
                         }
  
                         // Переходим на нужный URL в уже открытом загрузочном окне
-                        let final_url: url::Url = if server_started {
+                        let final_url = if server_started {
                             "http://127.0.0.1:8001".parse().unwrap()
                         } else {
                             let error_file = std::env::temp_dir().join("rysgally_error.html");
