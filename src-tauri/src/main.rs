@@ -414,17 +414,19 @@ fn main() {
                 tokio::time::sleep(std::time::Duration::from_millis(300)).await;
 
                 // ── Миграции только при первом запуске ──
-                if is_first_run {
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "migrate", "--force"],
-                    ).await;
+                // migrate — каждый запуск (идемпотентно, быстро если уже мигрировано)
+run_artisan(
+    &handle, &paths, &storage_path, &bootstrap_path,
+    &["artisan", "migrate", "--force"],
+).await;
 
-                    run_artisan(
-                        &handle, &paths, &storage_path, &bootstrap_path,
-                        &["artisan", "db:seed", "--class=UserSeeder", "--force"],
-                    ).await;
-                }
+// seed — только первый запуск
+if is_first_run {
+    run_artisan(
+        &handle, &paths, &storage_path, &bootstrap_path,
+        &["artisan", "db:seed", "--class=UserSeeder", "--force"],
+    ).await;
+}
 
                 // ── Запускаем PHP сервер ──
                 let sidecar = match handle.shell().sidecar("php") {
