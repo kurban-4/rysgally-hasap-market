@@ -24,11 +24,14 @@ struct AppPaths {
 }
 
 fn path_for_php(path: &Path) -> String {
-    path.to_string_lossy().replace('\\', "/")
+    let s = path.to_string_lossy().to_string();
+    let s = s.strip_prefix(r"\\?\").unwrap_or(&s);
+    s.replace('\\', "/")
 }
 
 fn path_for_server_arg(path: &Path) -> String {
-    path.to_string_lossy().to_string()
+    let s = path.to_string_lossy().to_string();
+    s.strip_prefix(r"\\?\").unwrap_or(&s).to_string()
 }
 
 fn copy_dir_all(src: &Path, dst: &Path) -> std::io::Result<()> {
