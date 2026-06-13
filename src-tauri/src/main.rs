@@ -421,12 +421,10 @@ run_artisan(
 ).await;
 
 // seed — только первый запуск
-if is_first_run {
-    run_artisan(
-        &handle, &paths, &storage_path, &bootstrap_path,
-        &["artisan", "db:seed", "--class=UserSeeder", "--force"],
-    ).await;
-}
+run_artisan(
+    &handle, &paths, &storage_path, &bootstrap_path,
+    &["artisan", "db:seed", "--class=UserSeeder", "--force"],
+).await;
 
                 // ── Запускаем PHP сервер ──
                 let sidecar = match handle.shell().sidecar("php") {
