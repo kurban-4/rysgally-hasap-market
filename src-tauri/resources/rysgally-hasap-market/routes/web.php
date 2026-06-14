@@ -11,6 +11,7 @@ use App\Http\Controllers\WholesaleController;
 use App\Http\Controllers\WholesaleStorageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Till;
 use Illuminate\Http\Request;
@@ -47,7 +48,6 @@ Route::middleware(['license'])->group(function () {
         }
     });
 
-    
     Route::get('/', function () {
         if (!auth()->check()) return redirect()->route('login');
         $role = auth()->user()->role ?? 'guest';
@@ -60,13 +60,11 @@ Route::middleware(['license'])->group(function () {
         };
     });
 
-    
     Route::middleware(['guest'])->group(function () {
         Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
         Route::post('/login', [LoginController::class, 'login']);
     });
 
-    
     Route::middleware(['auth'])->group(function () {
 
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -75,13 +73,17 @@ Route::middleware(['license'])->group(function () {
         Route::redirect('/storage', '/admin/inventory')->name('storage.redirect');
         Route::redirect('/wholesale', '/admin/wholesale')->name('wholesale.redirect');
 
-        
         Route::prefix('admin')->group(function () {
 
-            
+            // Admin only
             Route::middleware('role:admin')->group(function () {
 
                 Route::get('/welcome', fn() => view('welcome'))->name('welcome');
+
+                // Settings
+                Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+                Route::post('/settings', [SettingsController::class, 'save'])->name('settings.save');
+                Route::post('/settings/test-print', [SettingsController::class, 'testPrint'])->name('settings.test-print');
 
                 Route::prefix('boss')->group(function () {
                     Route::get('/', [DashboardController::class, 'index'])->name('boss.dashboard');
@@ -113,7 +115,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            
+            // Admin + Storage + Wholesale
             Route::middleware('role:admin,storage,wholesale')->group(function () {
 
                 Route::controller(WholesaleStorageController::class)->prefix('wholesale-storage')->name('wholesale_storage.')->group(function () {
@@ -136,7 +138,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            
+            // Admin + Wholesale
             Route::middleware('role:admin,wholesale')->group(function () {
 
                 Route::controller(WholesaleController::class)->prefix('wholesale')->name('wholesale.')->group(function () {
@@ -153,7 +155,7 @@ Route::middleware(['license'])->group(function () {
                 });
             });
 
-            
+            // Admin + Salesman
             Route::middleware('role:admin,salesman')->group(function () {
 
                 Route::prefix('sales')->name('sales.')->group(function () {
@@ -181,18 +183,15 @@ Route::middleware(['license'])->group(function () {
                         Route::post('/restore/{transaction_id}', 'restore')->name('restore');
                     });
                 });
-            });
 
-            
-            Route::middleware('role:admin,salesman')->group(function () {
                 Route::controller(SaleController::class)->prefix('receipt')->name('receipt.')->group(function () {
                     Route::get('/thermal/print/{saleId}', 'printThermalReceipt')->name('thermal.print');
                     Route::get('/thermal/test', 'testThermalPrint')->name('thermal.test');
                 });
             });
 
-        }); 
+        });
 
-    }); 
+    });
 
-}); 
+});

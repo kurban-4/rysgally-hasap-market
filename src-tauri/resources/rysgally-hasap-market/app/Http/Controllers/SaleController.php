@@ -397,15 +397,17 @@ public function addToCart(Request $request)
         ]);
 
         DB::commit();
-        session()->forget('pos_cart');
-        
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Checkout completed!',
-            'receipt_id' => $sale->id,
-            'receipt_url' => route('receipt.thermal.print', $sale->id)
-        ]);
+session()->forget('pos_cart');
+
+$printerService = new \App\Services\ThermalPrinterService();
+$printerService->printReceipt($sale);
+
+return response()->json([
+    'success' => true,
+    'message' => 'Checkout completed!',
+    'receipt_id' => $sale->id,
+    'receipt_url' => route('receipt.thermal.print', $sale->id)
+]);
 
     } catch (\Exception $e) {
         DB::rollBack();

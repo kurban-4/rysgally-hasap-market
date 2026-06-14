@@ -42,6 +42,7 @@
         ['route'=>'wholesale.index',          'label'=>'Wholesale',         'icon'=>'truck',            'active'=>request()->routeIs('wholesale.index') || (request()->routeIs('wholesale.*') && !request()->routeIs('wholesale_storage.*'))],
         ['route'=>'wholesale_storage.index',  'label'=>'Whsl. Storage',     'icon'=>'building-fill',    'active'=>request()->routeIs('wholesale_storage.*')],
         ['route'=>'sales.customers.index',    'label'=>'Customers',         'icon'=>'person-badge',     'active'=>request()->routeIs('sales.customers.*')],
+        ['route'=>'settings.index',           'label'=>'Settings',          'icon'=>'gear',             'active'=>request()->routeIs('settings.*')],
     ];
 @endphp
             @foreach($navLinks as $link)
