@@ -187,29 +187,29 @@
 
     {{-- HEADER --}}
     <div class="header">
-        <div class="store-name">RysgallyMarket</div>
-        <div class="store-subtitle">Ashgabat, Turkmenistan</div>
+        <div class="store-name">ARWAP</div>
+        <div class="store-subtitle">Telefon WE Maşyn Bezegleri</div>
     </div>
 
     {{-- META --}}
     <div class="meta">
         <div class="meta-row">
-            <span class="meta-label">Receipt #</span>
+            <span class="meta-label">CHECK #</span>
             <span class="meta-value">{{ str_pad($sale->id, 6, '0', STR_PAD_LEFT) }}</span>
         </div>
         <div class="meta-row">
-            <span class="meta-label">Date</span>
+            <span class="meta-label">WAGT</span>
             <span class="meta-value">{{ $sale->created_at->format('d.m.Y H:i') }}</span>
         </div>
         <div class="meta-row">
-            <span class="meta-label">Cashier</span>
+            <span class="meta-label">ALYJY</span>
             <span class="meta-value">
                 @auth {{ auth()->user()->name }} @else Guest @endauth
             </span>
         </div>
         @if($sale->till_id)
         <div class="meta-row">
-            <span class="meta-label">Till</span>
+            <span class="meta-label">KASSA</span>
             <span class="meta-value">#{{ $sale->till_id }}</span>
         </div>
         @endif
@@ -253,34 +253,36 @@
     {{-- TOTALS --}}
     <div class="totals">
         <div class="total-row">
-            <span class="total-label">Subtotal</span>
+            <span class="total-label">Baha</span>
             <span>{{ number_format($subtotal, 2) }} TMT</span>
         </div>
 
         @if($sale->discount > 0)
         <div class="total-row discount-row">
-            <span class="total-label">Discount</span>
+            <span class="total-label">Skidka</span>
             <span>− {{ number_format($sale->discount, 2) }} TMT</span>
         </div>
         @endif
 
         <div class="total-row grand-total">
-            <span>TOTAL</span>
+            <span>Jemi</span>
             <span>{{ number_format($sale->total_price, 2) }} TMT</span>
         </div>
 
         <div class="total-row payment-row">
-            <span class="total-label">Payment</span>
-            <span>CASH</span>
+            <span class="total-label">Töleg</span>
+            <span>Nagt</span>
         </div>
     </div>
 
     {{-- FOOTER --}}
     <hr class="sep-dashed">
     <div class="footer">
-        <div class="thank-you">THANK YOU!</div>
-        <div class="footer-sub">Please come again</div>
+        <div class="thank-you">NESIP ETSIN!</div>
+        <div class="footer-sub">YENE GARAŞÝAS</div>
+        <div class="footer-sub">+99361885917</div>
         <div class="timestamp">{{ $sale->created_at->format('d.m.Y H:i:s') }}</div>
+
     </div>
 
 </div>

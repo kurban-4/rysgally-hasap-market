@@ -5,7 +5,25 @@
 @include('app.navbar')
    
     <main class="app-main">
-        @if(session('error'))
+
+    {{-- CART TABS --}}
+    <div class="cart-tabs-bar">
+        @foreach($carts as $cartTabId => $cartTab)
+        <button 
+            class="cart-tab {{ $cartTabId == $activeCartId ? 'active' : '' }}"
+            onclick="switchCart({{ $cartTabId }})"
+        >
+            <span>{{ $cartTab['label'] }}</span>
+            <span class="cart-tab-count">{{ count($cartTab['items']) }}</span>
+            @if(count($carts) > 1)
+            <span class="cart-tab-close" onclick="closeCart(event, {{ $cartTabId }})">×</span>
+            @endif
+        </button>
+        @endforeach
+        <button class="cart-tab-new" onclick="newCart()">+ New</button>
+    </div>
+
+    @if(session('error'))
     <div class="alert alert-danger mx-4 mt-3">{{ session('error') }}</div>
 @endif
         @if(session('success'))
@@ -232,6 +250,68 @@
 </div>
 
 <style>
+    .cart-tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: white;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    flex-shrink: 0;
+}
+.cart-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+.cart-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.cart-tab-count {
+    background: rgba(255,255,255,0.3);
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+}
+.cart-tab:not(.active) .cart-tab-count {
+    background: var(--border-color);
+    color: var(--text-muted);
+}
+.cart-tab-close {
+    font-size: 1rem;
+    opacity: 0.7;
+    margin-left: 2px;
+    line-height: 1;
+}
+.cart-tab-close:hover { opacity: 1; }
+.cart-tab-new {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1.5px dashed var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.cart-tab-new:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
 .cart-field-input {
     width: 78px;
     text-align: center;
@@ -602,7 +682,38 @@ function restoreTillId() {
         field.value = tillId;
     }
 }
+function switchCart(cartId) {
+    fetch("{{ route('sales.cart.switch') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cart_id: cartId })
+    }).then(() => location.reload());
+}
 
+function newCart() {
+    fetch("{{ route('sales.cart.new') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        }
+    }).then(() => location.reload());
+}
+
+function closeCart(event, cartId) {
+    event.stopPropagation();
+    fetch("{{ route('sales.cart.close') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cart_id: cartId })
+    }).then(() => location.reload());
+}
 
 </script>
 

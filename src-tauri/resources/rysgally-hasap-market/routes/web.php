@@ -171,6 +171,9 @@ Route::middleware(['license'])->group(function () {
                         Route::delete('/cart/{id}', 'removeFromCart')->name('cart.remove');
                         Route::post('/checkout', 'checkout')->name('cart.checkout');
                         Route::post('/start-shift', 'startShift')->name('start_shift');
+                        Route::post('/cart/switch', [SaleController::class, 'switchCart'])->name('cart.switch');
+Route::post('/cart/new', [SaleController::class, 'newCart'])->name('cart.new');
+Route::post('/cart/close', [SaleController::class, 'closeCart'])->name('cart.close');
                     });
 
                     Route::controller(CustomerController::class)->prefix('customers')->name('customers.')->group(function () {

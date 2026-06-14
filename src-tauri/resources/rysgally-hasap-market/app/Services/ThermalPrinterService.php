@@ -20,7 +20,7 @@ class ThermalPrinterService
         try {
             $items = json_decode($sale->items_json, true) ?? [];
 
-            $connector = new NetworkPrintConnector($this->host, $this->port);
+            $connector = new NetworkPrintConnector($this->host, $this->port, 3);
             $printer = new Printer($connector);
 
             // Header
@@ -84,7 +84,7 @@ class ThermalPrinterService
     public function testPrint(): bool
 {
     try {
-        $connector = new NetworkPrintConnector($this->host, $this->port);
+        $connector = new NetworkPrintConnector($this->host, $this->port, 3);
         $printer = new Printer($connector);
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text("=== TEST PRINT ===\n");
