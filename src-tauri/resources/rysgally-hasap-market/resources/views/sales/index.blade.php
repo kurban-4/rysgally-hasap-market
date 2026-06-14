@@ -13,7 +13,7 @@
             class="cart-tab {{ $cartTabId == $activeCartId ? 'active' : '' }}"
             onclick="switchCart({{ $cartTabId }})"
         >
-            <span>{{ $cartTab['label'] }}</span>
+            <span>{{ $cartTab['label'] ?? 'Client ' . $cartTabId }}</span>
             <span class="cart-tab-count">{{ count($cartTab['items']) }}</span>
             @if(count($carts) > 1)
             <span class="cart-tab-close" onclick="closeCart(event, {{ $cartTabId }})">×</span>

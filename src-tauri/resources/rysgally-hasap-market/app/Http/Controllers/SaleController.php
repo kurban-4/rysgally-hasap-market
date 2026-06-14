@@ -37,7 +37,16 @@ class SaleController extends Controller
         $carts = session()->get('pos_carts', [
             1 => ['items' => [], 'label' => 'Client 1']
         ]);
-
+foreach ($carts as $id => &$cartData) {
+    if (!isset($cartData['label'])) {
+        $cartData['label'] = 'Client ' . $id;
+    }
+    if (!isset($cartData['items'])) {
+        $cartData['items'] = [];
+    }
+}
+unset($cartData);
+session()->put('pos_carts', $carts);
         if (!isset($carts[$activeCartId])) {
             $activeCartId = array_key_first($carts);
             session()->put('pos_active_cart', $activeCartId);
