@@ -2,6 +2,7 @@
 
 use App\Models\Product; 
 use App\Models\Till;
+use App\Http\Controllers\SettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -42,4 +43,11 @@ Route::post('/setup-device', function (Request $request) {
         'id' => $till->id,
         'name' => $till->name
     ]);
+});
+
+// Printer connection endpoints
+Route::prefix('printer')->group(function () {
+    Route::get('/settings', [SettingsController::class, 'getPrinterSettings']);
+    Route::post('/test', [SettingsController::class, 'testPrinterConnection']);
+    Route::get('/usb-devices', [SettingsController::class, 'getAvailablePrinterUSBDevices']);
 });
