@@ -184,6 +184,7 @@ Route::post('/cart/close', [SaleController::class, 'closeCart'])->name('cart.clo
                         Route::delete('/delete/{transaction_id}', 'destroy')->name('destroy');
                         Route::get('/deleted', 'deleted')->name('deleted');
                         Route::post('/restore/{transaction_id}', 'restore')->name('restore');
+                        Route::patch('/status/{transaction_id}', 'updateStatus')->name('update.status');
                     });
                 });
 

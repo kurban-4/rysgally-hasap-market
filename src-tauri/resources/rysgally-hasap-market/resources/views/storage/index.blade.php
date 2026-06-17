@@ -122,7 +122,7 @@
                                 <tr class="clickable-row" onclick="window.location='{{ route('product.show', $item->product_id) }}'">
 
                                     <td class="ps-4">
-                                        <span class="ref-id">#{{ str_pad($item->product_id, 4, '0', STR_PAD_LEFT) }}</span>
+                                        <span class="ref-id">{{ $loop->iteration }}</span>
                                     </td>
 
                                     <td>
@@ -243,7 +243,7 @@
                     <div class="mobile-card clickable-row" onclick="window.location='{{ route('product.show', $item->product_id) }}'">
                         <div class="mobile-card-left">
                             <div class="fw-bold">{{ $item->product->name ?? '—' }}</div>
-                            <span class="ref-id">#{{ str_pad($item->product_id, 4, '0', STR_PAD_LEFT) }}</span>
+                            <span class="ref-id">{{ $loop->iteration }}</span>
                             <div class="mt-1 d-flex flex-wrap gap-1">
                                 <span class="category-badge">{{ $item->category ?? '—' }}</span>
                             </div>

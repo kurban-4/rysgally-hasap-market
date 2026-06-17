@@ -381,20 +381,36 @@ session()->put('pos_carts', $carts);
 
         DB::beginTransaction();
         try {
-            foreach ($cart as $item) {
-                $productExists = \App\Models\Product::where('id', $item['product_id'])->exists();
-                $storageExists = isset($item['storage_id']) && \App\Models\Storage::where('id', $item['storage_id'])->exists();
-
-                if (!$productExists || !$storageExists) {
-                    DB::rollBack();
-                    return redirect()->back()->with('error', 'Ошибка: один из товаров отсутствует в базе.');
-                }
+            // Batch load all storage records to avoid N+1 queries
+            $storageIds = array_filter(array_column($cart, 'storage_id'));
+            $storages = Storage::whereIn('id', $storageIds)->get()->keyBy('id');
+            
+            // Batch validate products
+            $productIds = array_unique(array_column($cart, 'product_id'));
+            $products = \App\Models\Product::whereIn('id', $productIds)->get();
+            
+            if ($products->count() < count($productIds)) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Ошибка: один из товаров отсутствует в базе.');
             }
 
             $transactionId = '#ORD-' . date('YmdHis');
             $saleItems     = [];
 
             foreach ($cart as $item) {
+                $storageId = $item['storage_id'] ?? null;
+                $storage = $storageId && isset($storages[$storageId]) ? $storages[$storageId] : null;
+                
+                if (!$storage) {
+                    // Try to find by product_id
+                    $storage = Storage::where('product_id', $item['product_id'])->first();
+                }
+                
+                if (!$storage) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Ошибка: один из товаров отсутствует в базе.');
+                }
+                
                 $saleItems[] = [
                     'product_id'       => $item['product_id'],
                     'name'             => $item['name'] ?? 'Unknown Product',
@@ -408,12 +424,9 @@ session()->put('pos_carts', $carts);
                     'price_overridden' => (bool) ($item['price_overridden'] ?? false),
                 ];
 
-                $storage = Storage::find($item['storage_id'] ?? null)
-                           ?? Storage::where('product_id', $item['product_id'])->first();
-
-                if ($storage) {
-                    $storage->decrement('quantity', $item['units_to_deduct']);
-                }
+                // Use direct update query for better performance
+                Storage::where('id', $storage->id)
+                    ->decrement('quantity', $item['units_to_deduct']);
             }
 
             $firstItem     = reset($cart);
@@ -446,9 +459,14 @@ session()->put('pos_carts', $carts);
             }
             session()->put('pos_carts', $carts);
 
-            // Печать
-            $printerService = new \App\Services\ThermalPrinterService();
-            $printerService->printReceipt($sale);
+            // Print receipt automatically
+            try {
+                $printerService = new \App\Services\ThermalPrinterService();
+                $printerService->printReceipt($sale);
+            } catch (\Exception $e) {
+                // Log printer errors but don't fail the checkout
+                Log::warning('Printer error: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success'     => true,

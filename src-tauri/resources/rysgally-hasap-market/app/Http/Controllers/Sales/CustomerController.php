@@ -15,6 +15,7 @@ class CustomerController extends Controller
         $orders = Sale::select('transaction_id', 'till_id')
             ->selectRaw('SUM(total_price) as total_sum')
             ->selectRaw('MAX(created_at) as order_time')
+            ->selectRaw("CASE WHEN COUNT(CASE WHEN status = 'returned' THEN 1 END) > 0 THEN 'returned' ELSE 'completed' END as status")
             ->with('till')
             ->groupBy('transaction_id', 'till_id')
             ->orderBy('order_time', 'desc')
@@ -421,5 +422,33 @@ class CustomerController extends Controller
         
         return redirect()->route('sales.customers.deleted')->with('success', 'Transaction restored successfully');
     }
+
+    public function updateStatus($transaction_id)
+    {
+        try {
+            $db_id = $this->normalizeTransactionId($transaction_id);
+            $status = request()->validate([
+                'status' => 'required|in:completed,returned'
+            ])['status'];
+
+            // Update all non-deleted sales with this transaction_id
+            $updated = Sale::where('transaction_id', $db_id)
+                ->withoutTrashed()
+                ->update(['status' => $status]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status updated successfully',
+                'status' => $status,
+                'updated_count' => $updated
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
+            ], 400);
+        }
+    }
 }
+
 

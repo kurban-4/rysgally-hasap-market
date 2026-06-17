@@ -127,6 +127,106 @@
                         </div>
 
                         
+                        <div class="detail-card">
+                            <div class="card-head">
+                                <div class="card-head-icon"><i class="bi bi-graph-up"></i></div>
+                                Quantity Breakdown
+                            </div>
+                            @php
+                                $completedTotal = 0;
+                                $returnedTotal = 0;
+                                
+                                // Get all sales records for this product
+                                $completedSales = \App\Models\Sale::where('status', 'completed')->get();
+                                $returnedSales = \App\Models\Sale::where('status', 'returned')->get();
+                                
+                                // Check completed sales
+                                foreach ($completedSales as $sale) {
+                                    // Check if this is a direct match
+                                    if ($sale->product_id == $product->id) {
+                                        // Only count from product_id if there's no items_json
+                                        if (empty($sale->items_json)) {
+                                            $completedTotal += (float)$sale->quantity;
+                                        }
+                                    }
+                                    
+                                    // Always check items_json for this product
+                                    if (!empty($sale->items_json)) {
+                                        $items = json_decode($sale->items_json, true);
+                                        if (is_array($items)) {
+                                            foreach ($items as $item) {
+                                                if (($item['product_id'] ?? null) == $product->id) {
+                                                    $completedTotal += (float)($item['quantity'] ?? 0);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Check returned sales
+                                foreach ($returnedSales as $sale) {
+                                    // Check if this is a direct match
+                                    if ($sale->product_id == $product->id) {
+                                        // Only count from product_id if there's no items_json
+                                        if (empty($sale->items_json)) {
+                                            $returnedTotal += (float)$sale->quantity;
+                                        }
+                                    }
+                                    
+                                    // Always check items_json for this product
+                                    if (!empty($sale->items_json)) {
+                                        $items = json_decode($sale->items_json, true);
+                                        if (is_array($items)) {
+                                            foreach ($items as $item) {
+                                                if (($item['product_id'] ?? null) == $product->id) {
+                                                    $returnedTotal += (float)($item['quantity'] ?? 0);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                $currentQuantity = (float)($storage?->quantity ?? 0);
+                                
+                                // Initial quantity = current + sold + returned
+                                $initialQuantity = $currentQuantity + $completedTotal + $returnedTotal;
+                                
+                                $unit = ($product->unit_type ?? 'piece') === 'weight' ? 'kg' : 'pcs';
+                                $isWeightFormat = $unit === 'kg';
+                            @endphp
+                            <div class="stat-rows" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="stat-row" style="padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; margin-bottom: 4px;">Initial Received</span>
+                                    <span class="stat-val" style="font-size: 1.5rem; font-weight: 600; color: #007bff;">
+                                        {{ $isWeightFormat ? number_format($initialQuantity, 3, '.', '') : (int)$initialQuantity }}
+                                        <small style="font-size: 0.75rem; margin-left: 4px;">{{ $unit }}</small>
+                                    </span>
+                                </div>
+                                <div class="stat-row" style="padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
+                                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; margin-bottom: 4px;">Sold</span>
+                                    <span class="stat-val" style="font-size: 1.5rem; font-weight: 600; color: #28a745;">
+                                        {{ $isWeightFormat ? number_format($completedTotal, 3, '.', '') : (int)$completedTotal }}
+                                        <small style="font-size: 0.75rem; margin-left: 4px;">{{ $unit }}</small>
+                                    </span>
+                                </div>
+                                <div class="stat-row" style="padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545;">
+                                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; margin-bottom: 4px;">Returned</span>
+                                    <span class="stat-val" style="font-size: 1.5rem; font-weight: 600; color: #dc3545;">
+                                        {{ $isWeightFormat ? number_format($returnedTotal, 3, '.', '') : (int)$returnedTotal }}
+                                        <small style="font-size: 0.75rem; margin-left: 4px;">{{ $unit }}</small>
+                                    </span>
+                                </div>
+                                <div class="stat-row" style="padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #ffc107;">
+                                    <span class="stat-label" style="display: block; font-size: 0.875rem; color: #6c757d; margin-bottom: 4px;">Remaining</span>
+                                    <span class="stat-val" style="font-size: 1.5rem; font-weight: 600; color: #ffc107;">
+                                        {{ $isWeightFormat ? number_format($currentQuantity, 3, '.', '') : (int)$currentQuantity }}
+                                        <small style="font-size: 0.75rem; margin-left: 4px;">{{ $unit }}</small>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        
                         @if($product->description)
                         <div class="detail-card">
                             <div class="card-head">

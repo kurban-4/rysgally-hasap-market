@@ -88,7 +88,10 @@
                                     {{ number_format($order->total_sum, 2) }}
                                     <small>TMT</small>
                                 </div>
-                                <span class="badge-done">Выполнено</span>
+                                <select class="status-dropdown" data-transaction-id="{{ ltrim($order->transaction_id, '#') }}" style="padding: 6px 10px; border: 2px solid {{ $order->status === 'returned' ? '#dc3545' : '#28a745' }}; border-radius: 6px; cursor: pointer; margin-top: 4px; width: 100%; font-weight: 500; background-color: {{ $order->status === 'returned' ? '#fff5f5' : '#f0f9f4' }}; color: {{ $order->status === 'returned' ? '#dc3545' : '#28a745' }};">
+                                    <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>{{ __('app.customers_status_completed') }}</option>
+                                    <option value="returned" {{ $order->status === 'returned' ? 'selected' : '' }}>{{ __('app.customers_status_returned') ?? 'Returned' }}</option>
+                                </select>
                                 <div class="mt-2" style="display: flex; gap: 8px;">
                                     <a href="{{ route('sales.customers.show', ['transaction_id' => ltrim($order->transaction_id, '#')]) }}"
                                        class="btn-detail" style="flex: 1;">
@@ -142,7 +145,10 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge-done">{{ __('app.customers_status_completed') }}</span>
+                                        <select class="status-dropdown" data-transaction-id="{{ ltrim($order->transaction_id, '#') }}" style="padding: 6px 12px; border: 2px solid {{ $order->status === 'returned' ? '#dc3545' : '#28a745' }}; border-radius: 6px; cursor: pointer; font-weight: 500; background-color: {{ $order->status === 'returned' ? '#fff5f5' : '#f0f9f4' }}; color: {{ $order->status === 'returned' ? '#dc3545' : '#28a745' }};">
+                                            <option value="completed" {{ $order->status === 'completed' ? 'selected' : '' }}>{{ __('app.customers_status_completed') }}</option>
+                                            <option value="returned" {{ $order->status === 'returned' ? 'selected' : '' }}>{{ __('app.customers_status_returned') ?? 'Returned' }}</option>
+                                        </select>
                                     </td>
                                     <td class="text-center fw-black text-orange">
                                         {{ number_format($order->total_sum, 2) }}
@@ -195,6 +201,53 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Handle status dropdown changes
+    document.querySelectorAll('.status-dropdown').forEach(dropdown => {
+        dropdown.addEventListener('change', function() {
+            const transactionId = this.getAttribute('data-transaction-id');
+            const newStatus = this.value;
+            const button = this;
+            const previousStatus = this.getAttribute('data-previous-status') || 'completed';
+
+            fetch(`/admin/sales/customers/status/${transactionId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the visual style based on new status
+                    if (newStatus === 'returned') {
+                        button.style.borderColor = '#dc3545';
+                        button.style.backgroundColor = '#fff5f5';
+                        button.style.color = '#dc3545';
+                    } else {
+                        button.style.borderColor = '#28a745';
+                        button.style.backgroundColor = '#f0f9f4';
+                        button.style.color = '#28a745';
+                    }
+                    button.setAttribute('data-previous-status', newStatus);
+                    console.log('Status updated successfully to: ' + newStatus);
+                } else {
+                    alert('Failed to update status: ' + data.message);
+                    this.value = previousStatus; // Reset to previous value
+                    console.error('Status update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating status');
+                this.value = previousStatus; // Reset to previous value
+            });
+        });
+    });
 });
 </script>
 

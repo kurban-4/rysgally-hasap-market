@@ -17,7 +17,8 @@ class Sale extends Model
         'customer_name',
         'till_id',
         'discount',
-        'items_json',     
+        'items_json',
+        'status',     
     ];
 
     protected $casts = [
